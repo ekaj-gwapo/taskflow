@@ -1,0 +1,126 @@
+{
+  "tasks": [
+    {
+      "id": "71191475-40b7-4438-a574-cd8ff5d0a227",
+      "title": "hugas",
+      "status": "IN_PROGRESS",
+      "assigneeId": "958095c6-3ea4-4b40-96cd-60656456f842"
+    },
+    {
+      "id": "7e7f36c6-c2b3-42cf-91e1-88d861f22a2e",
+      "title": "laba",
+      "status": "TODO",
+      "assigneeId": "388b9620-1409-4ef7-88e3-3ab8e4f2d6d2"
+    },
+    {
+      "id": "3663238a-f615-47a2-a3f2-5d9a0a455445",
+      "title": "ligo",
+      "status": "TODO",
+      "assigneeId": "cd69b8ee-1e9e-4780-bf88-ffb721866240"
+    },
+    {
+      "id": "39660ef3-786b-4fb8-8ca3-0884c49b972d",
+      "title": "Complete project documentation",
+      "status": "TODO",
+      "assigneeId": "4e3e5ba2-c4db-49ab-b476-cb39a0b70bcc"
+    },
+    {
+      "id": "903ad687-2b64-4369-bc87-e58f05378963",
+      "title": "Review code changes",
+      "status": "IN_PROGRESS",
+      "assigneeId": "4e3e5ba2-c4db-49ab-b476-cb39a0b70bcc"
+    },
+    {
+      "id": "f0e1e741-c3c0-4b07-bc9f-d597600e7117",
+      "title": "Update database schema",
+      "status": "TODO",
+      "assigneeId": "4dd46d9a-1688-4475-bb7b-c8f4b03a9848"
+    },
+    {
+      "id": "132a48d1-42f3-4d44-8b64-748c6f65a176",
+      "title": "Write unit tests",
+      "status": "COMPLETED",
+      "assigneeId": "4dd46d9a-1688-4475-bb7b-c8f4b03a9848"
+    },
+    {
+      "id": "626f2b7f-7ff5-4937-be80-d889077f4e64",
+      "title": "adfd",
+      "status": "TODO",
+      "assigneeId": "4e3e5ba2-c4db-49ab-b476-cb39a0b70bcc"
+    },
+    {
+      "id": "a54c89ab-656f-4ca7-b219-c45a847b2152",
+      "title": "Complete project documentation",
+      "status": "TODO",
+      "assigneeId": "a1e5970e-d9f0-4c77-8137-596972d53caf"
+    },
+    {
+      "id": "a4b26a96-342c-4ff1-9aee-e7eecd46decd",
+      "title": "Review code changes",
+      "status": "IN_PROGRESS",
+      "assigneeId": "a1e5970e-d9f0-4c77-8137-596972d53caf"
+    },
+    {
+      "id": "d0fd218d-c05f-411c-9bc8-1338d83229aa",
+      "title": "Update database schema",
+      "status": "TODO",
+      "assigneeId": "4c85eb3f-4e5c-47e8-9984-805ad559f5f9"
+    },
+    {
+      "id": "96cfe63f-0a96-4bec-8692-683ac95379ce",
+      "title": "Write unit tests",
+      "status": "COMPLETED",
+      "assigneeId": "4c85eb3f-4e5c-47e8-9984-805ad559f5f9"
+    }
+  ],
+  "users": [
+    {
+      "id": "1dae4ca9-4187-49e5-9113-d23154cc917a",
+      "name": "System Administrator",
+      "email": "admin@taskflow.com",
+      "role": "ADMIN"
+    },
+    {
+      "id": "521baf7d-1932-4545-b581-99684f4cf5ca",
+      "name": "Super Admin",
+      "email": "super-admin@taskflow.com",
+      "role": "SUPERADMIN"
+    },
+    {
+      "id": "958095c6-3ea4-4b40-96cd-60656456f842",
+      "name": "koy",
+      "email": "koy@gmail.com",
+      "role": "EMPLOYEE"
+    },
+    {
+      "id": "388b9620-1409-4ef7-88e3-3ab8e4f2d6d2",
+      "name": "arnel",
+      "email": "arnel@gmail.com",
+      "role": "EMPLOYEE"
+    },
+    {
+      "id": "cd69b8ee-1e9e-4780-bf88-ffb721866240",
+      "name": "paps",
+      "email": "paps@gmail",
+      "role": "EMPLOYEE"
+    },
+    {
+      "id": "4e3e5ba2-c4db-49ab-b476-cb39a0b70bcc",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "EMPLOYEE"
+    },
+    {
+      "id": "4dd46d9a-1688-4475-bb7b-c8f4b03a9848",
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "role": "EMPLOYEE"
+    },
+    {
+      "id": "82c02712-7932-44e9-987d-762f35a66ce3",
+      "name": "Admin User",
+      "email": "admin@example.com",
+      "role": "ADMIN"
+    }
+  ]
+}
