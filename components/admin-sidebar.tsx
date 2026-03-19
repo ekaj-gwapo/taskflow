@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -8,6 +9,38 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Users, ChevronRight, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+function Confetti() {
+  return (
+    <div className="absolute inset-0 z-10 pointer-events-none">
+      <div className="confetti-particle bg-red-400" style={{ '--dx': '30px', '--dy': '-40px' } as any}></div>
+      <div className="confetti-particle bg-blue-400" style={{ '--dx': '-35px', '--dy': '-20px' } as any}></div>
+      <div className="confetti-particle bg-yellow-400" style={{ '--dx': '20px', '--dy': '35px' } as any}></div>
+      <div className="confetti-particle bg-emerald-400" style={{ '--dx': '-25px', '--dy': '25px' } as any}></div>
+      <div className="confetti-particle bg-pink-400" style={{ '--dx': '10px', '--dy': '-45px' } as any}></div>
+      <div className="confetti-particle bg-purple-400" style={{ '--dx': '-10px', '--dy': '40px' } as any}></div>
+    </div>
+  )
+}
+
+function FlippingLogo({ front, back, alt }: { front: string; back: string; alt: string }) {
+  return (
+    <div className="group w-14 h-14 [perspective:1000px] cursor-pointer">
+      <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-md hover:shadow-xl rounded-full">
+        {/* Front Face */}
+        <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white border border-border flex items-center justify-center p-1">
+          <Image src={front} alt={alt} width={56} height={56} className="object-contain w-full h-full" />
+        </div>
+
+        {/* Back Face */}
+        <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white border border-border flex items-center justify-center overflow-hidden">
+          <Confetti />
+          <Image src={back} alt={`${alt} Back`} width={56} height={56} className="object-cover w-full h-full" />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface AdminSidebarProps {
   selectedEmployeeId: string | null
@@ -102,16 +135,13 @@ export function AdminSidebar({
 
   return (
     <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full">
-      {/* Sidebar Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <ClipboardList className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Admin Workspace</h2>
-            <p className="text-xs text-muted-foreground">Manage all tasks</p>
-          </div>
+      {/* Sidebar Header - Logos Row */}
+      <div className="p-4 border-b border-border bg-emerald-50/30">
+        <div className="flex justify-between items-center px-1">
+          <FlippingLogo front="/logos/logo4.png" back="/logos/logo-back1.jpg" alt="Logo 4" />
+          <FlippingLogo front="/logos/logo3.jpg" back="/logos/logo-back2.jpg" alt="Logo 3" />
+          <FlippingLogo front="/logos/logo1.jpg" back="/logos/logo-back3.jpg" alt="Logo 1" />
+          <FlippingLogo front="/logos/logo2.png" back="/logos/logo-back4.jpg" alt="Logo 2" />
         </div>
       </div>
 

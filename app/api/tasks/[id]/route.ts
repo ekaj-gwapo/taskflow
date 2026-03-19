@@ -97,6 +97,12 @@ export async function PUT(
       if (priority !== undefined && priority !== existingTask.priority) {
         return NextResponse.json({ error: "Employees cannot update priority" }, { status: 403 })
       }
+    } else if (role === "ADMIN") {
+        // ADMIN can update priority and assignee (implicitly via other logic if added later), 
+        // but user specifically requested to restrict status updates for "the admin".
+        if (status !== undefined) {
+            return NextResponse.json({ error: "Admins are restricted from updating task status" }, { status: 403 })
+        }
     }
 
     const dbStatus = status ? status.toUpperCase().replace('-', '_') : null
@@ -174,6 +180,12 @@ export async function DELETE(
     }
 
     const taskId = (await params).id?.toLowerCase()
+    
+    // Explicitly delete related data in order to avoid foreign key issues
+    // and ensure no orphaned records remain.
+    await db.execute("DELETE FROM step_notes WHERE stepId IN (SELECT id FROM action_steps WHERE taskId = ?)", [taskId])
+    await db.execute("DELETE FROM action_steps WHERE taskId = ?", [taskId])
+    await db.execute("DELETE FROM progress_notes WHERE taskId = ?", [taskId])
     await db.execute("DELETE FROM tasks WHERE LOWER(id) = ?", [taskId])
 
     return NextResponse.json(

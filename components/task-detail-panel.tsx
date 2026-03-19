@@ -19,6 +19,17 @@ import { X, Calendar, User, Send, MessageSquare, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import type { Task, TaskStatus } from "@/lib/store"
 import { formatDistanceToNow } from "date-fns"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface TaskDetailPanelProps {
   task: Task
@@ -37,6 +48,8 @@ export function TaskDetailPanel({
 }: TaskDetailPanelProps) {
   const { currentRole, currentUser, updateTaskStatus, addProgressNote, deleteTask, addActionStep, updateActionStepStatus, deleteActionStep, addStepNote, canAccessTask } = useTaskContext()
   const [noteContent, setNoteContent] = useState("")
+
+  const isStatusEditable = showStatusControl && currentRole !== "admin"
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     if (newStatus === "completed") {
@@ -122,7 +135,7 @@ export function TaskDetailPanel({
           <div className="p-4 border-b border-border flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">Status</span>
-          {showStatusControl ? (
+          {isStatusEditable ? (
             <Select
               value={task.status}
               onValueChange={(v) => handleStatusChange(v as TaskStatus)}
@@ -189,15 +202,35 @@ export function TaskDetailPanel({
           </div>
         )}
         {showDeleteButton && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            className="w-full mt-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-            Delete Task
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                Delete Task
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete the task and all its associated data. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete Task
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 

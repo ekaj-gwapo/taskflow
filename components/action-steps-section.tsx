@@ -9,6 +9,17 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { ChevronDown, Plus, Trash2, Send } from "lucide-react"
 import type { ActionStep, UserRole } from "@/lib/store"
 import { formatDistanceToNow } from "date-fns"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface ActionStepsSectionProps {
   steps: ActionStep[]
@@ -80,8 +91,8 @@ export function ActionStepsSection({
         </div>
       )}
 
-      {/* Add new step - Only for admins/superadmins */}
-      {(userRole === "admin" || userRole === "superadmin") && (
+      {/* Add new step - Only for admins/superadmins, and not if task is completed */}
+      {(userRole === "admin" || userRole === "superadmin") && taskStatus !== "completed" && (
         <div className="flex gap-2">
           <input
             type="text"
@@ -158,17 +169,38 @@ export function ActionStepsSection({
                   />
                 </button>
                 {(userRole === "admin" || userRole === "superadmin") && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDeleteStep(step.id)
-                    }}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 w-7 p-0"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 w-7 p-0"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Action Step?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete the step "{step.title}"? This cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteStep(step.id);
+                          }}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </div>
 

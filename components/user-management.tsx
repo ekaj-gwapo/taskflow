@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { UserPlus, Users, Mail, Shield, Smartphone, Trash2, Loader2, Search, Power, KeyRound } from "lucide-react"
+import { UserPlus, Users, Mail, Shield, Smartphone, Trash2, Loader2, Search, Power, KeyRound, MapPin } from "lucide-react"
 import { toast } from "sonner"
 
 interface User {
@@ -17,6 +17,7 @@ interface User {
   email: string
   role: string
   phone?: string
+  location?: string
   avatar?: string
   isActive?: number
 }
@@ -33,7 +34,8 @@ export function UserManagement() {
     email: "",
     password: "",
     role: "EMPLOYEE",
-    phone: ""
+    phone: "",
+    location: ""
   })
 
   const [resetPasswordId, setResetPasswordId] = useState<string | null>(null)
@@ -127,7 +129,7 @@ export function UserManagement() {
       
       if (res.ok) {
         toast.success("User created successfully")
-        setNewUser({ name: "", email: "", password: "", role: "EMPLOYEE", phone: "" })
+        setNewUser({ name: "", email: "", password: "", role: "EMPLOYEE", phone: "", location: "" })
         await fetchUsers()
         await refreshUsers()
       } else {
@@ -228,6 +230,14 @@ export function UserManagement() {
                   onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
                 />
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Location (Optional)</label>
+                <Input 
+                  placeholder="New York, NY"
+                  value={newUser.location}
+                  onChange={(e) => setNewUser({...newUser, location: e.target.value})}
+                />
+              </div>
               <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isCreating}>
                 {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create User Account"}
               </Button>
@@ -262,7 +272,7 @@ export function UserManagement() {
                     <tr className="border-b border-border bg-secondary/30">
                       <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact & Location</th>
                       <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -300,14 +310,22 @@ export function UserManagement() {
                           </Badge>
                         </td>
                         <td className="py-4 px-4 text-xs text-muted-foreground">
-                          {user.phone ? (
-                            <div className="flex items-center gap-1">
-                              <Smartphone className="h-3 w-3" />
-                              {user.phone}
-                            </div>
-                          ) : (
-                            "No phone"
-                          )}
+                          <div className="space-y-1">
+                            {user.phone ? (
+                              <div className="flex items-center gap-1">
+                                <Smartphone className="h-3 w-3" />
+                                {user.phone}
+                              </div>
+                            ) : (
+                              <span className="opacity-50">No phone</span>
+                            )}
+                            {user.location && (
+                              <div className="flex items-center gap-1 text-primary/80">
+                                <MapPin className="h-3 w-3" />
+                                {user.location}
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="py-4 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     }
 
     const users = await db.getAll(`
-      SELECT id, name, email, phone, role, avatarUrl as avatar, isActive, createdAt 
+      SELECT id, name, email, phone, location, role, avatarUrl as avatar, isActive, createdAt 
       FROM users
     `)
 

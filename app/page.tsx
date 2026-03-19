@@ -37,16 +37,16 @@ export default function Home() {
       </div>
 
       {/* Navigation */}
-      <nav className="border-b border-emerald-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <nav className="absolute top-0 left-0 right-0 z-50 bg-transparent">
         <div className="w-full px-8 py-6 flex justify-between items-center">
 
           {/* LEFT SIDE */}
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg flex items-center justify-center text-white font-bold text-2xl shadow-lg">
               T
             </div>
 
-            <span className="text-2xl md:text-3xl font-semibold text-emerald-900 tracking-tight">
+            <span className="text-2xl md:text-3xl font-semibold text-white tracking-tight drop-shadow-sm">
               Task Tracker
             </span>
           </div>
@@ -61,12 +61,12 @@ export default function Home() {
                 <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
 
                   {/* Front Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white">
+                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20">
                     <Image src="/logos/logo4.png" alt="Logo 4" width={64} height={64} className="object-cover w-full h-full" />
                   </div>
 
                   {/* Back Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white">
+                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20">
                     <Confetti />
                     <div className="w-full h-full rounded-full overflow-hidden">
                       <Image
@@ -86,12 +86,12 @@ export default function Home() {
                 <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
 
                   {/* Front Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white">
+                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20">
                     <Image src="/logos/logo3.jpg" alt="Logo 3" width={64} height={64} className="object-cover w-full h-full" />
                   </div>
 
                   {/* Back Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white">
+                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20">
                     <Confetti />
                     <div className="w-full h-full rounded-full overflow-hidden">
                       <Image
@@ -111,12 +111,12 @@ export default function Home() {
                 <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
 
                   {/* Front Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white">
+                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20">
                     <Image src="/logos/logo1.jpg" alt="Logo 1" width={64} height={64} className="object-cover w-full h-full" />
                   </div>
 
                   {/* Back Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white">
+                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20">
                     <Confetti />
                     <div className="w-full h-full rounded-full overflow-hidden">
                       <Image
@@ -136,12 +136,12 @@ export default function Home() {
                 <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
 
                   {/* Front Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white flex items-center justify-center">
+                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20 p-1">
                     <Image src="/logos/logo2.png" alt="Logo 2" width={100} height={100} className="object-contain" />
                   </div>
 
                   {/* Back Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white">
+                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20">
                     <Confetti />
                     <div className="w-full h-full rounded-full overflow-hidden">
                       <Image
@@ -159,7 +159,7 @@ export default function Home() {
             </div>
 
             <Link href="/auth/login">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 text-base font-semibold shadow-md">
+              <Button className="bg-white text-emerald-700 hover:bg-white/90 px-6 py-3 text-base font-bold shadow-xl border-none">
                 Login
               </Button>
             </Link>

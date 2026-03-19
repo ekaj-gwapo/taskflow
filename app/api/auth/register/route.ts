@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, role, phone } = await request.json();
+    const { name, email, password, role, phone, location } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -32,11 +32,11 @@ export async function POST(request: NextRequest) {
 
     // Insert user
     await db.execute(`
-      INSERT INTO users (id, name, email, password, role, phone, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [userId, name, email, hashedPassword, role || "EMPLOYEE", phone, new Date().toISOString(), new Date().toISOString()]);
+      INSERT INTO users (id, name, email, password, role, phone, location, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [userId, name, email, hashedPassword, role || "EMPLOYEE", phone, location, new Date().toISOString(), new Date().toISOString()]);
 
-    const user: any = await db.getOne("SELECT id, name, email, role, phone FROM users WHERE id = ?", [userId]);
+    const user: any = await db.getOne("SELECT id, name, email, role, phone, location FROM users WHERE id = ?", [userId]);
 
     const token = jwt.sign(
       { id: user.id, email: user.email, name: user.name, role: user.role },

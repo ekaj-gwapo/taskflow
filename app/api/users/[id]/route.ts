@@ -4,9 +4,10 @@ import db from "@/lib/db"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const { id } = await params
     const auth = requireAuth(request)
     if (auth.error) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -16,7 +17,7 @@ export async function GET(
       SELECT id, name, email, phone, location, role, createdAt 
       FROM users 
       WHERE id = ?
-    `, [params.id]);
+    `, [id]);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -34,9 +35,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const resolvedParams = await params
+    const id = resolvedParams.id
+
     const auth = requireAuth(request)
     if (auth.error) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -44,7 +48,8 @@ export async function PUT(
 
     // Users can only update their own profile
     const role = auth.user!.role?.toUpperCase()
-    if (auth.user!.id !== params.id && role !== "ADMIN" && role !== "SUPERADMIN") {
+    if (auth.user!.id !== id && role !== "ADMIN" && role !== "SUPERADMIN") {
+      console.log(`[API] Access denied for user ${auth.user!.id} attempting to update ${id}`)
       return NextResponse.json(
         { error: "Access denied" },
         { status: 403 }
@@ -52,21 +57,31 @@ export async function PUT(
     }
 
     const { name, phone, location } = await request.json()
+    console.log(`[API] Updating user ${id}:`, { name, phone, location })
 
-    await db.execute(`
-      UPDATE users 
-      SET name = COALESCE(?, name), 
-          phone = COALESCE(?, phone),
-          location = COALESCE(?, location),
-          updatedAt = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `, [name, phone, location, params.id]);
+    if (role === "EMPLOYEE") {
+      await db.execute(`
+        UPDATE users 
+        SET name = COALESCE(?, name),
+            updatedAt = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `, [name, id]);
+    } else {
+      await db.execute(`
+        UPDATE users 
+        SET name = COALESCE(?, name), 
+            phone = COALESCE(?, phone),
+            location = COALESCE(?, location),
+            updatedAt = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `, [name, phone, location, id]);
+    }
 
     const user = await db.getOne(`
       SELECT id, name, email, phone, location, role 
       FROM users 
       WHERE id = ?
-    `, [params.id]);
+    `, [id]);
 
     return NextResponse.json(
       { message: "User profile updated successfully", user },

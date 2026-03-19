@@ -272,29 +272,27 @@ export function EmployeeSidebar({
                       />
                     </div>
 
-                    <div>
-                      <label className="text-xs text-muted-foreground font-medium block mb-1">
-                        Phone
-                      </label>
-                      <Input
-                        value={tempProfileData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                        className="text-sm"
-                        placeholder="Enter phone"
-                      />
-                    </div>
+                    <div className="space-y-1">
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase">Phone Number</label>
+                    <input
+                      type="text"
+                      value={tempProfileData.phone}
+                      disabled
+                      className="w-full bg-muted/50 border border-border rounded-md px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
+                    />
+                    <p className="text-[9px] text-muted-foreground italic">Contact Admin to update</p>
+                  </div>
 
-                    <div>
-                      <label className="text-xs text-muted-foreground font-medium block mb-1">
-                        Location
-                      </label>
-                      <Input
-                        value={tempProfileData.location}
-                        onChange={(e) => handleInputChange("location", e.target.value)}
-                        className="text-sm"
-                        placeholder="Enter location"
-                      />
-                    </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase">Location</label>
+                    <input
+                      type="text"
+                      value={tempProfileData.location}
+                      disabled
+                      className="w-full bg-muted/50 border border-border rounded-md px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
+                    />
+                    <p className="text-[9px] text-muted-foreground italic">Contact Admin to update</p>
+                  </div>
                   </div>
 
                   <div className="flex gap-2">

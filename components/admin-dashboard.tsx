@@ -10,21 +10,35 @@ import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { Search, FileText, ChevronRight } from "lucide-react"
+import { Search, FileText, ChevronRight, Trash2 } from "lucide-react"
 import { WeeklyReportPanel } from "@/components/weekly-report-panel"
 import { TopCompletersChart } from "@/components/top-completers-chart"
 import { formatDate, formatDateTime } from "@/lib/utils"
 import type { Task } from "@/lib/store"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 
 function TaskRow({
   task,
   onSelect,
   isSelected,
+  onDelete,
 }: {
   task: Task
   onSelect: () => void
   isSelected: boolean
+  onDelete: () => void
 }) {
   const isOverdue =
     task.status !== "completed" && new Date(task.dueDate) < new Date()
@@ -35,9 +49,9 @@ function TaskRow({
     .join("")
 
   return (
-    <button
+    <div
       onClick={onSelect}
-      className={`w-full flex items-center px-4 py-3 text-left transition-colors hover:bg-accent/50 border-b border-border ${isSelected ? "bg-accent/70" : ""
+      className={`w-full flex items-center px-4 py-3 text-left cursor-pointer transition-colors hover:bg-accent/50 border-b border-border ${isSelected ? "bg-accent/70" : ""
         }`}
     >
       {/* TASK */}
@@ -91,18 +105,56 @@ function TaskRow({
         </div>
       </div>
 
-      <ChevronRight className="h-4 w-4 ml-2 shrink-0" />
-    </button>
+      <div className="flex items-center gap-2 ml-2">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button 
+              onClick={(e) => e.stopPropagation()}
+              className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              title="Delete Task"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the task "{task.title}" and all its associated action steps and notes. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Task
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </div>
+    </div>
   )
 }
 
 export function AdminDashboard() {
-  const { tasks, allEmployees } = useTaskContext()
+  const { tasks, allEmployees, deleteTask } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showReport, setShowReport] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+
+  const liveSelectedTask = useMemo(() => {
+    if (!selectedTask) return null;
+    return tasks.find(t => t.id === selectedTask.id) || null;
+  }, [tasks, selectedTask])
 
   const selectedEmployee = selectedEmployeeId
     ? allEmployees.find((e) => e.id === selectedEmployeeId) ?? null
@@ -182,16 +234,23 @@ export function AdminDashboard() {
               task={task}
               onSelect={() => setSelectedTask(task)}
               isSelected={selectedTask?.id === task.id}
+              onDelete={() => {
+                deleteTask(task.id);
+                if (selectedTask?.id === task.id) setSelectedTask(null);
+                toast.success("Task deleted successfully");
+              }}
             />
           ))}
         </div>
       </div>
 
-      {selectedTask && (
+      {liveSelectedTask && (
         <div className="w-[380px] border-l">
           <TaskDetailPanel
-            task={selectedTask}
+            task={liveSelectedTask}
             onClose={() => setSelectedTask(null)}
+            showDeleteButton={true}
+            showStatusControl={true}
           />
         </div>
       )}
