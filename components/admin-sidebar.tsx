@@ -11,21 +11,43 @@ import { Users, ChevronRight, ClipboardList, ArrowLeft, User, Mail, Phone, MapPi
 import { cn } from "@/lib/utils"
 
 function Confetti() {
+  const [particles] = useState(() => 
+    Array.from({ length: 12 }).map((_, i) => ({
+      id: i,
+      dx: `${Math.random() * 120 - 60}px`,
+      dy: `${Math.random() * 120 - 60}px`,
+      color: ['bg-red-400', 'bg-blue-400', 'bg-yellow-400', 'bg-emerald-400', 'bg-pink-400', 'bg-purple-400'][Math.floor(Math.random() * 6)],
+      delay: `${Math.random() * 0.2}s`
+    }))
+  )
+
   return (
-    <div className="absolute inset-0 z-10 pointer-events-none">
-      <div className="confetti-particle bg-red-400" style={{ '--dx': '30px', '--dy': '-40px' } as any}></div>
-      <div className="confetti-particle bg-blue-400" style={{ '--dx': '-35px', '--dy': '-20px' } as any}></div>
-      <div className="confetti-particle bg-yellow-400" style={{ '--dx': '20px', '--dy': '35px' } as any}></div>
-      <div className="confetti-particle bg-emerald-400" style={{ '--dx': '-25px', '--dy': '25px' } as any}></div>
-      <div className="confetti-particle bg-pink-400" style={{ '--dx': '10px', '--dy': '-45px' } as any}></div>
-      <div className="confetti-particle bg-purple-400" style={{ '--dx': '-10px', '--dy': '40px' } as any}></div>
+    <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center overflow-visible">
+      {particles.map(p => (
+        <div 
+          key={p.id}
+          className={cn("confetti-particle", p.color)} 
+          style={{ 
+            '--dx': p.dx, 
+            '--dy': p.dy,
+            animationDelay: p.delay
+          } as any}
+        />
+      ))}
     </div>
   )
 }
 
 function FlippingLogo({ front, back, alt }: { front: string; back: string; alt: string }) {
+  const [isHovered, setIsHovered] = useState(false)
+
   return (
-    <div className="group w-14 h-14 [perspective:1000px] cursor-pointer">
+    <div 
+      className="group w-14 h-14 [perspective:1000px] cursor-pointer relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {isHovered && <Confetti key={Date.now()} />}
       <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-md hover:shadow-xl rounded-full">
         {/* Front Face */}
         <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white border border-border flex items-center justify-center p-1">
@@ -34,7 +56,6 @@ function FlippingLogo({ front, back, alt }: { front: string; back: string; alt: 
 
         {/* Back Face */}
         <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white border border-border flex items-center justify-center overflow-hidden">
-          <Confetti />
           <Image src={back} alt={`${alt} Back`} width={56} height={56} className="object-cover w-full h-full" />
         </div>
       </div>

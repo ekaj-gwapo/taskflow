@@ -1,23 +1,14 @@
 "use client"
 
-import { useState } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ProfileDialog } from "@/components/profile-dialog"
 import { LayoutDashboard, LogOut } from "lucide-react"
 
 export function AppHeader() {
   const { currentUser, currentRole, logout } = useTaskContext()
-  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
 
   if (!currentUser) return null
 
-  const initials = currentUser.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -36,33 +27,17 @@ export function AppHeader() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2">
-            <Avatar 
-              className="h-7 w-7 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setIsProfileDialogOpen(true)}
-            >
-              {currentUser?.avatar ? (
-                <AvatarImage src={currentUser.avatar} />
-              ) : (
-                <AvatarFallback className="bg-secondary text-foreground text-xs">
-                  {initials}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <span className="text-sm text-foreground">{currentUser.name}</span>
-          </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={logout}
-            className="text-muted-foreground hover:text-foreground hover:bg-secondary"
+            className="text-red-500 hover:text-red-600 hover:bg-red-50 font-medium transition-colors"
           >
-            <LogOut className="h-4 w-4" />
-            <span className="sr-only">Logout</span>
+            <LogOut className="h-4 w-4 mr-2" />
+            <span>Logout</span>
           </Button>
         </div>
       </div>
-      <ProfileDialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen} />
     </header>
   )
 }

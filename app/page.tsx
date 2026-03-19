@@ -1,12 +1,75 @@
 "use client"
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowRight, Lock, Eye, FileText, CheckCircle2, UserCircle2, MonitorCheck } from 'lucide-react'
+import { cn } from "@/lib/utils"
 
-function Confetti() {
+function Confetti() { 
+  const [particles] = useState(() => 
+    Array.from({ length: 12 }).map((_, i) => ({
+      id: i,
+      dx: `${Math.random() * 120 - 60}px`,
+      dy: `${Math.random() * 120 - 60}px`,
+      color: ['bg-red-400', 'bg-blue-400', 'bg-yellow-400', 'bg-emerald-400', 'bg-pink-400', 'bg-purple-400'][Math.floor(Math.random() * 6)],
+      delay: `${Math.random() * 0.2}s`
+    }))
+  )
+
+  return (
+    <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center overflow-visible">
+      {particles.map(p => (
+        <div 
+          key={p.id}
+          className={cn("confetti-particle", p.color)} 
+          style={{ 
+            '--dx': p.dx, 
+            '--dy': p.dy,
+            animationDelay: p.delay
+          } as any}
+        />
+      ))}
+    </div>
+  )
+}
+
+function FlippingLogo({ src, backSrc, alt }: { src: string; backSrc: string; alt: string }) {
+  const [isHovered, setIsHovered] = useState(false)
+  
+  return (
+    <div 
+      className="group w-16 h-16 [perspective:1000px] cursor-pointer relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {isHovered && <Confetti key={Date.now()} />}
+      <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
+        {/* Front Face */}
+        <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center p-1">
+          <Image src={src} alt={alt} width={64} height={64} className="object-contain w-full h-full" />
+        </div>
+
+        {/* Back Face */}
+        <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden">
+          <div className="w-full h-full rounded-full overflow-hidden">
+            <Image
+              src={backSrc}
+              alt={`${alt} Back`}
+              width={64}
+              height={64}
+              className="object-cover w-full h-full"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function HeroConfetti() {
   return (
     <div className="absolute inset-0 z-10 pointer-events-none">
       <div className="confetti-particle bg-red-400" style={{ '--dx': '30px', '--dy': '-40px' } as any}></div>
@@ -56,105 +119,12 @@ export default function Home() {
 
             <div className="flex items-center gap-4">
 
-              {/* Logo 4 */}
-              <div className="group w-16 h-16 [perspective:1000px] cursor-pointer">
-                <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
-
-                  {/* Front Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20">
-                    <Image src="/logos/logo4.png" alt="Logo 4" width={64} height={64} className="object-cover w-full h-full" />
-                  </div>
-
-                  {/* Back Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20">
-                    <Confetti />
-                    <div className="w-full h-full rounded-full overflow-hidden">
-                      <Image
-                        src="/logos/logo-back1.jpg"
-                        alt="Logo 4 Back"
-                        width={64}
-                        height={64}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Logo 3 */}
-              <div className="group w-16 h-16 [perspective:1000px] cursor-pointer">
-                <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
-
-                  {/* Front Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20">
-                    <Image src="/logos/logo3.jpg" alt="Logo 3" width={64} height={64} className="object-cover w-full h-full" />
-                  </div>
-
-                  {/* Back Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20">
-                    <Confetti />
-                    <div className="w-full h-full rounded-full overflow-hidden">
-                      <Image
-                        src="/logos/logo-back2.jpg"
-                        alt="Logo 3 Back"
-                        width={64}
-                        height={64}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Logo 1 */}
-              <div className="group w-16 h-16 [perspective:1000px] cursor-pointer">
-                <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
-
-                  {/* Front Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20">
-                    <Image src="/logos/logo1.jpg" alt="Logo 1" width={64} height={64} className="object-cover w-full h-full" />
-                  </div>
-
-                  {/* Back Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20">
-                    <Confetti />
-                    <div className="w-full h-full rounded-full overflow-hidden">
-                      <Image
-                        src="/logos/logo-back3.jpg"
-                        alt="Logo 1 Back"
-                        width={64}
-                        height={64}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Logo 2 */}
-              <div className="group w-16 h-16 [perspective:1000px] cursor-pointer">
-                <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
-
-                  {/* Front Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20 p-1">
-                    <Image src="/logos/logo2.png" alt="Logo 2" width={100} height={100} className="object-contain" />
-                  </div>
-
-                  {/* Back Face */}
-                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20">
-                    <Confetti />
-                    <div className="w-full h-full rounded-full overflow-hidden">
-                      <Image
-                        src="/logos/logo-back4.jpg"
-                        alt="Logo 2 Back"
-                        width={64}
-                        height={64}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center gap-4">
+              <FlippingLogo src="/logos/logo4.png" backSrc="/logos/logo-back1.jpg" alt="Logo 4" />
+              <FlippingLogo src="/logos/logo3.jpg" backSrc="/logos/logo-back2.jpg" alt="Logo 3" />
+              <FlippingLogo src="/logos/logo1.jpg" backSrc="/logos/logo-back3.jpg" alt="Logo 1" />
+              <FlippingLogo src="/logos/logo2.png" backSrc="/logos/logo-back4.jpg" alt="Logo 2" />
+            </div>
 
             </div>
 

@@ -74,7 +74,7 @@ function TaskRow({
       {/* ✅ FIXED COLUMNS */}
       <div className="hidden md:flex items-center shrink-0 gap-6">
         {/* PRIORITY */}
-        <div className="w-20 flex justify-center">
+        <div className="w-24 flex justify-center">
           <PriorityBadge priority={task.priority} />
         </div>
 
@@ -84,7 +84,7 @@ function TaskRow({
         </div>
 
         {/* ASSIGNEE */}
-        <div className="w-36 flex items-center gap-2">
+        <div className="w-40 flex items-center gap-2">
           <Avatar className="h-5 w-5 shrink-0">
             {task.assignee?.avatar ? (
               <AvatarImage src={task.assignee.avatar} />
@@ -100,17 +100,17 @@ function TaskRow({
         </div>
 
         {/* DUE DATE */}
-        <div className="w-28 text-right text-xs whitespace-nowrap">
+        <div className="w-24 text-right text-xs whitespace-nowrap">
           {formatDate(task.dueDate)}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 ml-2">
+      <div className="flex items-center justify-end gap-2 ml-4 w-16">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <button 
               onClick={(e) => e.stopPropagation()}
-              className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
               title="Delete Task"
             >
               <Trash2 className="h-4 w-4" />
@@ -218,13 +218,13 @@ export function AdminDashboard() {
             <span className="flex-1 text-xs uppercase">Task</span>
 
             <div className="hidden md:flex items-center gap-6">
-              <span className="w-20 text-center text-xs">Priority</span>
+              <span className="w-24 text-center text-xs">Priority</span>
               <span className="w-32 text-center text-xs">Status</span>
-              <span className="w-36 text-xs">Assignee</span>
-              <span className="w-28 text-right text-xs">Due Date</span>
+              <span className="w-40 text-xs">Assignee</span>
+              <span className="w-24 text-right text-xs">Due Date</span>
             </div>
 
-            <span className="w-4" />
+            <span className="w-16" />
           </div>
 
           {/* ROWS */}

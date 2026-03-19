@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProfileDialog } from "@/components/profile-dialog"
@@ -8,6 +9,60 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ClipboardList, User, Mail, Phone, MapPin, Save, X } from "lucide-react"
+import { cn } from "@/lib/utils"
+
+function Confetti() {
+  const [particles] = useState(() => 
+    Array.from({ length: 12 }).map((_, i) => ({
+      id: i,
+      dx: `${Math.random() * 120 - 60}px`,
+      dy: `${Math.random() * 120 - 60}px`,
+      color: ['bg-red-400', 'bg-blue-400', 'bg-yellow-400', 'bg-emerald-400', 'bg-pink-400', 'bg-purple-400'][Math.floor(Math.random() * 6)],
+      delay: `${Math.random() * 0.2}s`
+    }))
+  )
+
+  return (
+    <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center overflow-visible">
+      {particles.map(p => (
+        <div 
+          key={p.id}
+          className={cn("confetti-particle", p.color)} 
+          style={{ 
+            '--dx': p.dx, 
+            '--dy': p.dy,
+            animationDelay: p.delay
+          } as any}
+        />
+      ))}
+    </div>
+  )
+}
+
+function FlippingLogo({ front, back, alt }: { front: string; back: string; alt: string }) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  return (
+    <div 
+      className="group w-14 h-14 [perspective:1000px] cursor-pointer relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {isHovered && <Confetti key={Date.now()} />}
+      <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-md hover:shadow-xl rounded-full">
+        {/* Front Face */}
+        <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white border border-border flex items-center justify-center p-1">
+          <Image src={front} alt={alt} width={56} height={56} className="object-contain w-full h-full" />
+        </div>
+
+        {/* Back Face */}
+        <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white border border-border flex items-center justify-center overflow-hidden">
+          <Image src={back} alt={`${alt} Back`} width={56} height={56} className="object-cover w-full h-full" />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface EmployeeSidebarProps {
   selectedEmployeeId: string | null
@@ -84,12 +139,13 @@ export function EmployeeSidebar({
   return (
     <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full">
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <ClipboardList className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <h2 className="text-lg font-semibold text-foreground">My Workspace</h2>
+      {/* Sidebar Header - Logos Row */}
+      <div className="p-4 border-b border-border bg-emerald-50/30">
+        <div className="flex justify-between items-center px-1 mb-4">
+          <FlippingLogo front="/logos/logo4.png" back="/logos/logo-back1.jpg" alt="Logo 4" />
+          <FlippingLogo front="/logos/logo3.jpg" back="/logos/logo-back2.jpg" alt="Logo 3" />
+          <FlippingLogo front="/logos/logo1.jpg" back="/logos/logo-back3.jpg" alt="Logo 1" />
+          <FlippingLogo front="/logos/logo2.png" back="/logos/logo-back4.jpg" alt="Logo 2" />
         </div>
         {currentUser && (
           <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50">
