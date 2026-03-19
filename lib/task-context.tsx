@@ -73,9 +73,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         name: userData.name,
         email: userData.email,
         role: userData.role.toLowerCase() as UserRole,
-        phone: userData.phone,
+        phone: userData.phone || userData.phone_number, // Handle different field names if any
         location: userData.location,
-        avatar: userData.avatar,
+        avatar: userData.avatar || userData.avatarUrl,
       }
       setCurrentUser(user)
       setCurrentRole(userData.role.toLowerCase() as UserRole)

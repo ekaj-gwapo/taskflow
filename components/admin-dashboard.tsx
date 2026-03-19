@@ -13,17 +13,9 @@ import { Input } from "@/components/ui/input"
 import { Search, FileText, ChevronRight } from "lucide-react"
 import { WeeklyReportPanel } from "@/components/weekly-report-panel"
 import { TopCompletersChart } from "@/components/top-completers-chart"
+import { formatDate, formatDateTime } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 
-// ✅ FORMAT DATE
-function formatDate(dateString: string) {
-  const date = new Date(dateString)
-  return date.toLocaleDateString("en-PH", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
-}
 
 function TaskRow({
   task,
@@ -68,17 +60,17 @@ function TaskRow({
       {/* ✅ FIXED COLUMNS */}
       <div className="hidden md:flex items-center shrink-0 gap-6">
         {/* PRIORITY */}
-        <div className="w-16 flex justify-center">
+        <div className="w-20 flex justify-center">
           <PriorityBadge priority={task.priority} />
         </div>
 
         {/* STATUS */}
-        <div className="w-[110px] flex justify-center">
+        <div className="w-32 flex justify-center">
           <StatusBadge status={task.status} />
         </div>
 
         {/* ASSIGNEE */}
-        <div className="w-[120px] flex items-center gap-2">
+        <div className="w-36 flex items-center gap-2">
           <Avatar className="h-5 w-5 shrink-0">
             {task.assignee?.avatar ? (
               <AvatarImage src={task.assignee.avatar} />
@@ -94,7 +86,7 @@ function TaskRow({
         </div>
 
         {/* DUE DATE */}
-        <div className="w-[110px] text-right text-xs whitespace-nowrap">
+        <div className="w-28 text-right text-xs whitespace-nowrap">
           {formatDate(task.dueDate)}
         </div>
       </div>
@@ -174,10 +166,10 @@ export function AdminDashboard() {
             <span className="flex-1 text-xs uppercase">Task</span>
 
             <div className="hidden md:flex items-center gap-6">
-              <span className="w-16 text-center text-xs">Priority</span>
-              <span className="w-[110px] text-center text-xs">Status</span>
-              <span className="w-[120px] text-xs">Assignee</span>
-              <span className="w-[110px] text-right text-xs">Due Date</span>
+              <span className="w-20 text-center text-xs">Priority</span>
+              <span className="w-32 text-center text-xs">Status</span>
+              <span className="w-36 text-xs">Assignee</span>
+              <span className="w-28 text-right text-xs">Due Date</span>
             </div>
 
             <span className="w-4" />

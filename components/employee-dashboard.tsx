@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { ClipboardList, Clock, CheckCircle2, AlertTriangle, Bell, ChevronRight } from "lucide-react"
+import { UrgentTasksSection } from "@/components/urgent-tasks-section"
+import { formatDate, formatDateTime } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 
 function NoteReminder({ task }: { task: Task }) {
@@ -109,15 +111,7 @@ function EmployeeTaskCard({
           <StatusBadge status={task.status} />
           <PriorityBadge priority={task.priority} />
           <span className="text-xs text-muted-foreground ml-auto">
-            Due{" "}
-            {task.dueDate.includes("T")
-              ? new Date(task.dueDate).toLocaleString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })
-              : task.dueDate}
+            Due {formatDateTime(task.dueDate)}
           </span>
         </div>
         <NoteReminder task={task} />
@@ -191,6 +185,12 @@ export function EmployeeDashboard() {
               </Card>
             ))}
           </div>
+
+          {/* Urgent Tasks Section */}
+          <UrgentTasksSection 
+            tasks={myTasks} 
+            onSelectTask={(task) => setSelectedTask(task)} 
+          />
 
           {/* Task Filter Tabs */}
           <Tabs value={filterStatus} onValueChange={setFilterStatus}>

@@ -18,7 +18,7 @@ export function EmployeeSidebar({
   selectedEmployeeId,
   onSelectEmployee,
 }: EmployeeSidebarProps) {
-  const { currentUser, tasks } = useTaskContext()
+  const { currentUser, tasks, login } = useTaskContext()
   const [activeTab, setActiveTab] = useState<"tasks" | "profile">("tasks")
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
@@ -37,9 +37,31 @@ export function EmployeeSidebar({
     setIsEditingProfile(true)
   }
 
-  const handleSaveProfile = () => {
-    setProfileData(tempProfileData)
-    setIsEditingProfile(false)
+  const handleSaveProfile = async () => {
+    if (!currentUser) return
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`/api/users/${currentUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(tempProfileData),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Update context
+        login(data.user.role.toLowerCase() as any, data.user.id, data.user)
+        setProfileData(tempProfileData)
+        setIsEditingProfile(false)
+      } else {
+        console.error("Failed to update profile")
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error)
+    }
   }
 
   const handleCancelEdit = () => {

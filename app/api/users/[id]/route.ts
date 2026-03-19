@@ -12,11 +12,11 @@ export async function GET(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const user = db.prepare(`
-      SELECT id, name, email, phone, role, createdAt 
+    const user = await db.getOne(`
+      SELECT id, name, email, phone, location, role, createdAt 
       FROM users 
       WHERE id = ?
-    `).get(params.id);
+    `, [params.id]);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -51,21 +51,22 @@ export async function PUT(
       )
     }
 
-    const { name, phone } = await request.json()
+    const { name, phone, location } = await request.json()
 
-    db.prepare(`
+    await db.execute(`
       UPDATE users 
       SET name = COALESCE(?, name), 
           phone = COALESCE(?, phone),
+          location = COALESCE(?, location),
           updatedAt = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(name, phone, params.id);
+    `, [name, phone, location, params.id]);
 
-    const user = db.prepare(`
-      SELECT id, name, email, phone, role 
+    const user = await db.getOne(`
+      SELECT id, name, email, phone, location, role 
       FROM users 
       WHERE id = ?
-    `).get(params.id);
+    `, [params.id]);
 
     return NextResponse.json(
       { message: "User profile updated successfully", user },

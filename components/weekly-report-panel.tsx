@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { X, FileText, CheckCircle2, Clock, AlertTriangle, ListTodo, Plus, ChevronDown, ChevronUp } from "lucide-react"
+import { formatDate } from "@/lib/utils"
 
 interface WeeklyReportPanelProps {
   onClose: () => void
@@ -167,10 +168,10 @@ export function WeeklyReportPanel({ onClose }: WeeklyReportPanelProps) {
                     >
                       <div>
                         <p className="text-xs font-medium text-foreground">
-                          Week of {report.weekStart}
+                          Week of {formatDate(report.weekStart)}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">
-                          Created {report.createdAt}
+                          Created {formatDate(report.createdAt)}
                         </p>
                       </div>
                       {isExpanded ? (

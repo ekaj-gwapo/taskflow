@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { X, Calendar, User, Send, MessageSquare, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import type { Task, TaskStatus } from "@/lib/store"
 import { formatDistanceToNow } from "date-fns"
 
@@ -38,6 +39,13 @@ export function TaskDetailPanel({
   const [noteContent, setNoteContent] = useState("")
 
   const handleStatusChange = (newStatus: TaskStatus) => {
+    if (newStatus === "completed") {
+      const incompleteSteps = task.actionSteps?.filter(s => !s.completed) || []
+      if (incompleteSteps.length > 0) {
+        toast.error(`Cannot complete task: ${incompleteSteps.length} action steps are still incomplete.`)
+        return
+      }
+    }
     updateTaskStatus(task.id, newStatus)
   }
 
@@ -123,7 +131,9 @@ export function TaskDetailPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
-                <SelectItem value="todo">To Do</SelectItem>
+                {!(currentRole === "employee" && task.status !== "todo") && (
+                  <SelectItem value="todo">To Do</SelectItem>
+                )}
                 <SelectItem value="in-progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
