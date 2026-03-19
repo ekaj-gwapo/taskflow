@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth-utils"
 
 export async function POST(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = requireAuth(request)
@@ -12,8 +12,7 @@ export async function POST(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const params = await props.params
-    const { id } = params
+    const { id } = await params
 
     if (auth.user?.id !== id && auth.user?.role?.toUpperCase() !== "SUPERADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })

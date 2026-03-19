@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { UserPlus, Users, Mail, Shield, Smartphone, Trash2, Loader2, Search } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { UserPlus, Users, Mail, Shield, Smartphone, Trash2, Loader2, Search, Power, KeyRound } from "lucide-react"
 import { toast } from "sonner"
 
 interface User {
@@ -17,9 +18,11 @@ interface User {
   role: string
   phone?: string
   avatar?: string
+  isActive?: number
 }
 
 export function UserManagement() {
+  const { refreshUsers } = useTaskContext()
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
@@ -33,6 +36,61 @@ export function UserManagement() {
     phone: ""
   })
 
+  const [resetPasswordId, setResetPasswordId] = useState<string | null>(null)
+  const [newPassword, setNewPassword] = useState("")
+  const [isResetting, setIsResetting] = useState(false)
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!resetPasswordId) return
+    try {
+      setIsResetting(true)
+      const res = await fetch(`/api/users/${resetPasswordId}/reset-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({ newPassword })
+      })
+      if (res.ok) {
+        toast.success("Password reset successfully")
+        setResetPasswordId(null)
+        setNewPassword("")
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Failed to reset password")
+      }
+    } catch (e) {
+      toast.error("An error occurred")
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
+  const toggleUserStatus = async (id: string, currentStatus: number = 1) => {
+    try {
+      const newStatus = currentStatus === 1 ? 0 : 1
+      const res = await fetch(`/api/users/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({ isActive: newStatus })
+      })
+      if (res.ok) {
+        toast.success(`User ${newStatus === 1 ? 'activated' : 'deactivated'} successfully`)
+        fetchUsers()
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Failed to update status")
+      }
+    } catch (e) {
+      toast.error("An error occurred")
+    }
+  }
+
   useEffect(() => {
     fetchUsers()
   }, [])
@@ -40,7 +98,10 @@ export function UserManagement() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true)
-      const res = await fetch("/api/users")
+      const token = localStorage.getItem("token")
+      const res = await fetch("/api/users", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const data = await res.json()
       if (data.users) {
         setUsers(data.users)
@@ -67,7 +128,8 @@ export function UserManagement() {
       if (res.ok) {
         toast.success("User created successfully")
         setNewUser({ name: "", email: "", password: "", role: "EMPLOYEE", phone: "" })
-        fetchUsers()
+        await fetchUsers()
+        await refreshUsers()
       } else {
         toast.error(data.error || "Failed to create user")
       }
@@ -206,10 +268,10 @@ export function UserManagement() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-accent/30 transition-colors group">
+                      <tr key={user.id} className={`hover:bg-accent/30 transition-colors group ${user.isActive === 0 ? "opacity-60 bg-muted/30" : ""}`}>
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9 border border-border">
+                            <Avatar className={`h-9 w-9 border border-border ${user.isActive === 0 ? "grayscale" : ""}`}>
                               {user.avatar ? (
                                 <AvatarImage src={user.avatar} />
                               ) : (
@@ -219,7 +281,12 @@ export function UserManagement() {
                               )}
                             </Avatar>
                             <div>
-                              <p className="text-sm font-semibold">{user.name}</p>
+                              <div className="text-sm font-semibold flex items-center gap-2">
+                                {user.name}
+                                {user.isActive === 0 && (
+                                  <Badge variant="destructive" className="h-5 px-1.5 py-0">Deactivated</Badge>
+                                )}
+                              </div>
                               <div className="flex items-center text-xs text-muted-foreground gap-1">
                                 <Mail className="h-3 w-3" />
                                 {user.email}
@@ -243,9 +310,26 @@ export function UserManagement() {
                           )}
                         </td>
                         <td className="py-4 px-4 text-right">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setResetPasswordId(user.id)}
+                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              title="Reset Password"
+                            >
+                              <KeyRound className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => toggleUserStatus(user.id, user.isActive ?? 1)}
+                              className={`h-8 w-8 ${user.isActive === 0 ? 'text-green-600 bg-green-100 hover:bg-green-200' : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'}`}
+                              title={user.isActive === 0 ? "Activate User" : "Deactivate User"}
+                            >
+                              <Power className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -256,6 +340,36 @@ export function UserManagement() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={!!resetPasswordId} onOpenChange={(open) => !open && setResetPasswordId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Enter a new password for this user. They will use this to sign in.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleResetPassword} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">New Password</label>
+              <Input
+                required
+                type="password"
+                placeholder="••••••••"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                minLength={6}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setResetPasswordId(null)}>Cancel</Button>
+              <Button type="submit" disabled={isResetting}>
+                {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Reset Password"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

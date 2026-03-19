@@ -42,6 +42,7 @@ interface TaskContextType {
 
   // Employees
   allEmployees: User[]
+  refreshUsers: () => Promise<void>
 
   // Access Control & Employee Action Tracking
   getEmployeeVisibleTasks: () => Task[]
@@ -520,6 +521,21 @@ const url = `/api/tasks/${taskId}/progress-notes`
     restoreSession()
   }, [])
 
+  const refreshUsers = useCallback(async () => {
+    if (!currentUser || (currentRole !== 'admin' && currentRole !== 'superadmin')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+      const usersRes = await fetch('/api/users', { headers });
+      if (usersRes.ok) {
+        const data = await usersRes.json();
+        setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee'));
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    }
+  }, [currentUser, currentRole]);
+
   // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
@@ -536,21 +552,15 @@ const url = `/api/tasks/${taskId}/progress-notes`
           setTasks(data.tasks || []);
         }
 
-        // Fetch Employees (for Admin/SuperAdmin)
-        if (currentRole === 'admin' || currentRole === 'superadmin') {
-          const usersRes = await fetch('/api/users', { headers });
-          if (usersRes.ok) {
-            const data = await usersRes.json();
-            setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee'));
-          }
-        }
+        // Fetch Employees
+        await refreshUsers();
       } catch (error) {
         console.error('Failed to fetch data:', error);
       }
     };
 
     fetchData();
-  }, [currentUser, currentRole]);
+  }, [currentUser, currentRole, refreshUsers]);
 
   return (
     <TaskContext.Provider
@@ -572,6 +582,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
         reports,
         createReport,
         allEmployees,
+        refreshUsers,
         getEmployeeVisibleTasks,
         canAccessTask,
         getEmployeeActionSummary,
