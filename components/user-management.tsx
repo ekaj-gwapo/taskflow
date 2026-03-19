@@ -5,7 +5,7 @@ import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { UserPlus, Users, Mail, Shield, Smartphone, Trash2, Loader2, Search } from "lucide-react"
 import { toast } from "sonner"
@@ -16,6 +16,7 @@ interface User {
   email: string
   role: string
   phone?: string
+  avatar?: string
 }
 
 export function UserManagement() {
@@ -209,9 +210,13 @@ export function UserManagement() {
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9 border border-border">
-                              <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                                {user.name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U"}
-                              </AvatarFallback>
+                              {user.avatar ? (
+                                <AvatarImage src={user.avatar} />
+                              ) : (
+                                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                                  {user.name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U"}
+                                </AvatarFallback>
+                              )}
                             </Avatar>
                             <div>
                               <p className="text-sm font-semibold">{user.name}</p>

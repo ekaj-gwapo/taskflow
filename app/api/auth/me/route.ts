@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = auth.user!.id;
-    const user = await db.getOne("SELECT id, name, email, role, phone FROM users WHERE id = ?", [userId]);
+    const user = await db.getOne("SELECT id, name, email, role, phone, location, avatarUrl as avatar, createdAt, updatedAt FROM users WHERE id = ?", [userId]);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

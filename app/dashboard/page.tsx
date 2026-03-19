@@ -11,17 +11,21 @@ import { UserManagement } from "@/components/user-management"
 import { AdminSidebar } from "@/components/admin-sidebar"
 
 function AppContent() {
-  const { currentUser, currentRole } = useTaskContext()
+  const { currentUser, currentRole, isLoadingSession } = useTaskContext()
   const router = useRouter()
 
   useEffect(() => {
-    if (!currentUser || !currentRole) {
-      router.push("/auth/login")
+    if (!isLoadingSession && (!currentUser || !currentRole)) {
+      router.replace("/auth/login")
     }
-  }, [currentUser, currentRole, router])
+  }, [currentUser, currentRole, isLoadingSession, router])
 
-  if (!currentUser || !currentRole) {
-    return null // Or a loading spinner
+  if (isLoadingSession || !currentUser || !currentRole) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <span className="inline-block h-6 w-6 border-2 border-primary border-r-transparent animate-spin rounded-full" />
+      </div>
+    )
   }
 
   return (

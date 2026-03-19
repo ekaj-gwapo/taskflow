@@ -8,7 +8,7 @@ import { TaskDetailPanel } from "@/components/task-detail-panel"
 import { AdminSidebar } from "@/components/admin-sidebar"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Search, FileText, ChevronRight } from "lucide-react"
 import { WeeklyReportPanel } from "@/components/weekly-report-panel"
@@ -58,9 +58,13 @@ function TaskRow({
         <StatusBadge status={task.status} />
         <div className="flex items-center gap-1.5">
           <Avatar className="h-5 w-5">
-            <AvatarFallback className="bg-secondary text-foreground text-[9px]">
-              {initials}
-            </AvatarFallback>
+            {task.assignee?.avatar ? (
+              <AvatarImage src={task.assignee.avatar} />
+            ) : (
+              <AvatarFallback className="bg-secondary text-foreground text-[9px]">
+                {initials}
+              </AvatarFallback>
+            )}
           </Avatar>
           <span className="text-xs text-muted-foreground w-20 truncate">
             {task.assigneeName || "Unassigned"}

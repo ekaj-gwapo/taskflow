@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { useTaskContext } from "@/lib/task-context"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProfileDialog } from "@/components/profile-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,7 @@ export function EmployeeSidebar({
   const { currentUser, tasks } = useTaskContext()
   const [activeTab, setActiveTab] = useState<"tasks" | "profile">("tasks")
   const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
   const [profileData, setProfileData] = useState({
     name: currentUser?.name || "",
     email: currentUser?.email || "",
@@ -70,9 +72,13 @@ export function EmployeeSidebar({
         {currentUser && (
           <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50">
             <Avatar className="h-10 w-10 shrink-0">
-              <AvatarFallback className="bg-primary text-primary-foreground font-medium">
-                {initials}
-              </AvatarFallback>
+              {currentUser?.avatar ? (
+                <AvatarImage src={currentUser.avatar} />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground font-medium">
+                  {initials}
+                </AvatarFallback>
+              )}
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{currentUser.name}</p>
@@ -160,12 +166,20 @@ export function EmployeeSidebar({
             <div className="space-y-4">
               {!isEditingProfile ? (
                 <div className="space-y-4">
-                  <div className="text-center mb-6">
-                    <Avatar className="h-16 w-16 mx-auto mb-3">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xl font-medium">
-                        {initials}
-                      </AvatarFallback>
+                  <div className="text-center mb-6 relative group inline-block mx-auto w-full">
+                    <Avatar 
+                      className="h-16 w-16 mx-auto mb-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setIsProfileDialogOpen(true)}
+                    >
+                      {currentUser?.avatar ? (
+                        <AvatarImage src={currentUser.avatar} />
+                      ) : (
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xl font-medium">
+                          {initials}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
+                    <p className="text-[10px] text-muted-foreground -mt-2 mb-2 cursor-pointer hover:underline" onClick={() => setIsProfileDialogOpen(true)}>Click to change photo</p>
                   </div>
 
                   <div className="space-y-3">
@@ -284,6 +298,7 @@ export function EmployeeSidebar({
           )}
         </div>
       </ScrollArea>
+      <ProfileDialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen} />
     </aside>
   )
 }

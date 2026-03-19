@@ -108,8 +108,10 @@ export function TaskDetailPanel({
         </Button>
       </div>
 
-      {/* Meta */}
-      <div className="p-4 border-b border-border flex flex-col gap-3">
+      <ScrollArea className="flex-1">
+        <div className="flex flex-col pb-4">
+          {/* Meta */}
+          <div className="p-4 border-b border-border flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">Status</span>
           {showStatusControl ? (
@@ -199,12 +201,13 @@ export function TaskDetailPanel({
             onDeleteStep={handleDeleteActionStep}
             onAddStepNote={handleAddStepNote}
             userRole={currentRole || undefined}
+            taskStatus={task.status}
           />
         </div>
       ) : null}
 
       {/* Progress Notes */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex flex-col">
         <div className="flex items-center gap-2 px-4 pt-4 pb-2">
           <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -212,7 +215,7 @@ export function TaskDetailPanel({
           </span>
         </div>
 
-        <ScrollArea className="flex-1 px-4">
+        <div className="px-4">
           {task.progressNotes.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">
               No progress notes yet.
@@ -251,10 +254,13 @@ export function TaskDetailPanel({
               })}
             </div>
           )}
-        </ScrollArea>
+        </div>
+      </div>
+        </div>
+      </ScrollArea>
 
-        {/* Note Input */}
-        {showNoteInput && task.status === "in-progress" && (
+      {/* Note Input */}
+      {showNoteInput && task.status === "in-progress" && (
           <div className="p-4 border-t border-border">
             <div className="flex gap-2">
               <Textarea
@@ -284,7 +290,6 @@ export function TaskDetailPanel({
             </p>
           </div>
         )}
-      </div>
     </div>
   )
 }

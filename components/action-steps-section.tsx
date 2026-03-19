@@ -17,6 +17,7 @@ interface ActionStepsSectionProps {
   onDeleteStep: (stepId: string) => void
   onAddStepNote: (stepId: string, content: string) => void
   userRole?: UserRole
+  taskStatus?: string
 }
 
 export function ActionStepsSection({
@@ -26,6 +27,7 @@ export function ActionStepsSection({
   onDeleteStep,
   onAddStepNote,
   userRole = "employee",
+  taskStatus,
 }: ActionStepsSectionProps) {
   const [newStepTitle, setNewStepTitle] = useState("")
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set())
@@ -119,6 +121,7 @@ export function ActionStepsSection({
                     checked={step.completed}
                     onCheckedChange={(checked) => onUpdateStepStatus(step.id, checked === true)}
                     className="h-4 w-4"
+                    disabled={taskStatus !== "in-progress"}
                   />
                 )}
                 {userRole !== "employee" && (

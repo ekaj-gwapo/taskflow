@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { useTaskContext } from "@/lib/task-context"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, ChevronRight, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield } from "lucide-react"
+import { Users, ChevronRight, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface AdminSidebarProps {
@@ -56,6 +56,12 @@ export function AdminSidebar({
     .map((n) => n[0])
     .join("")
     .toUpperCase() || "A"
+
+  const [searchQuery, setSearchQuery] = useState("")
+  const filteredEmployees = allEmployees.filter(e => 
+    e.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    e.email.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   const getEmployeeTaskStats = (employeeId: string) => {
     const employeeTasks = tasks.filter((t) => t.assigneeId === employeeId)
@@ -135,8 +141,25 @@ export function AdminSidebar({
               {/* Show Employee List */}
               {!viewingEmployeeId ? (
             <>
+              <div className="px-3 pb-3">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search employees..."
+                    className="pl-8 bg-secondary/50 border-transparent focus-visible:bg-background"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+
               {/* Employee List */}
-              {allEmployees.map((employee) => {
+              {filteredEmployees.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  No employees found
+                </div>
+              ) : (
+                filteredEmployees.map((employee) => {
                 const stats = getEmployeeTaskStats(employee.id)
                 const initials = employee.name
                   .split(" ")
@@ -154,11 +177,15 @@ export function AdminSidebar({
                     )}
                   >
                     <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback
-                        className="text-xs font-medium bg-secondary text-foreground"
-                      >
-                        {initials}
-                      </AvatarFallback>
+                      {employee.avatar ? (
+                        <AvatarImage src={employee.avatar} />
+                      ) : (
+                        <AvatarFallback
+                          className="text-xs font-medium bg-secondary text-foreground"
+                        >
+                          {initials}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
@@ -185,7 +212,7 @@ export function AdminSidebar({
                     <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   </button>
                 )
-              })}
+              }))}
             </>
           ) : (
             <>
@@ -218,9 +245,13 @@ export function AdminSidebar({
                       return (
                         <>
                           <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-xs font-medium bg-primary text-primary-foreground">
-                              {initials}
-                            </AvatarFallback>
+                            {emp?.avatar ? (
+                              <AvatarImage src={emp.avatar} />
+                            ) : (
+                              <AvatarFallback className="text-xs font-medium bg-primary text-primary-foreground">
+                                {initials}
+                              </AvatarFallback>
+                            )}
                           </Avatar>
                           <div>
                             <p className="text-sm font-medium text-foreground">{emp?.name}</p>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,12 @@ export function LoginScreen() {
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      router.replace("/dashboard")
+    }
+  }, [router])
   
   const [formData, setFormData] = useState({
     name: "",
@@ -52,7 +58,7 @@ export function LoginScreen() {
       // Store token and login user
       localStorage.setItem("token", data.token)
       login(data.user.role.toLowerCase(), data.user.id, data.user)
-      router.push("/dashboard")
+      router.replace("/dashboard")
     } catch (err) {
       setError("An error occurred. Please try again.")
     } finally {
@@ -94,7 +100,7 @@ export function LoginScreen() {
       // Store token and login user
       localStorage.setItem("token", data.token)
       login(data.user.role.toLowerCase(), data.user.id, data.user)
-      router.push("/dashboard")
+      router.replace("/dashboard")
     } catch (err) {
       setError("An error occurred. Please try again.")
     } finally {

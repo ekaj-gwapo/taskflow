@@ -19,6 +19,7 @@ interface TaskContextType {
   // Auth
   currentUser: User | null
   currentRole: UserRole | null
+  isLoadingSession: boolean
   login: (role: UserRole, userId?: string, userData?: any) => void
   logout: () => void
 
@@ -58,6 +59,7 @@ const TaskContext = createContext<TaskContextType | null>(null)
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null)
+  const [isLoadingSession, setIsLoadingSession] = useState(true)
   const [tasks, setTasks] = useState<Task[]>([])
   const [reports, setReports] = useState<WeeklyReport[]>([])
   const [allEmployees, setAllEmployees] = useState<User[]>([])
@@ -72,6 +74,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         role: userData.role.toLowerCase() as UserRole,
         phone: userData.phone,
         location: userData.location,
+        avatar: userData.avatar,
       }
       setCurrentUser(user)
       setCurrentRole(userData.role.toLowerCase() as UserRole)
@@ -489,7 +492,10 @@ const url = `/api/tasks/${taskId}/progress-notes`
   useEffect(() => {
     const restoreSession = async () => {
       const token = localStorage.getItem("token")
-      if (!token || currentUser) return
+      if (!token) {
+        setIsLoadingSession(false)
+        return
+      }
 
       try {
         const response = await fetch("/api/auth/me", {
@@ -506,11 +512,13 @@ const url = `/api/tasks/${taskId}/progress-notes`
         }
       } catch (error) {
         console.error("Session restoration error:", error)
+      } finally {
+        setIsLoadingSession(false)
       }
     }
 
     restoreSession()
-  }, [currentUser])
+  }, [])
 
   // Fetch initial data
   useEffect(() => {
@@ -549,6 +557,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
       value={{
         currentUser,
         currentRole,
+        isLoadingSession,
         login,
         logout,
         tasks,

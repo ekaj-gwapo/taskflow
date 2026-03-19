@@ -1,12 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProfileDialog } from "@/components/profile-dialog"
 import { LayoutDashboard, LogOut } from "lucide-react"
 
 export function AppHeader() {
   const { currentUser, currentRole, logout } = useTaskContext()
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
 
   if (!currentUser) return null
 
@@ -34,10 +37,17 @@ export function AppHeader() {
 
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2">
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-secondary text-foreground text-xs">
-                {initials}
-              </AvatarFallback>
+            <Avatar 
+              className="h-7 w-7 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setIsProfileDialogOpen(true)}
+            >
+              {currentUser?.avatar ? (
+                <AvatarImage src={currentUser.avatar} />
+              ) : (
+                <AvatarFallback className="bg-secondary text-foreground text-xs">
+                  {initials}
+                </AvatarFallback>
+              )}
             </Avatar>
             <span className="text-sm text-foreground">{currentUser.name}</span>
           </div>
@@ -52,6 +62,7 @@ export function AppHeader() {
           </Button>
         </div>
       </div>
+      <ProfileDialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen} />
     </header>
   )
 }
