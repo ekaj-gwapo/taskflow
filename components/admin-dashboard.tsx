@@ -10,9 +10,18 @@ import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { Search, FileText, ChevronRight, Trash2 } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Search, FileText, ChevronRight, Trash2, Filter } from "lucide-react"
 import { WeeklyReportPanel } from "@/components/weekly-report-panel"
 import { TopCompletersChart } from "@/components/top-completers-chart"
+import { WorkloadDistribution } from "@/components/workload-distribution"
+import { RecentlyCompletedTasks } from "@/components/recently-completed-tasks"
 import { formatDate, formatDateTime } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 import {
@@ -108,7 +117,7 @@ function TaskRow({
       <div className="flex items-center justify-end gap-2 ml-4 w-16">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <button 
+            <button
               onClick={(e) => e.stopPropagation()}
               className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
               title="Delete Task"
@@ -125,7 +134,7 @@ function TaskRow({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
+              <AlertDialogAction
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete();
@@ -148,8 +157,56 @@ export function AdminDashboard() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showReport, setShowReport] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterPriority, setFilterPriority] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+
+  // Track the newest completed task to trigger notifications
+  const [lastCheckTime, setLastCheckTime] = useState(Date.now());
+  
+  // Real-time notification effect
+  useMemo(() => {
+    const newlyCompleted = tasks.filter(t => 
+      t.status === "completed" && 
+      t.completedAt && 
+      new Date(t.completedAt).getTime() > lastCheckTime
+    );
+    
+    if (newlyCompleted.length > 0) {
+      newlyCompleted.forEach(task => {
+        toast.success(`🎉 Task Completed: ${task.title}`, {
+          description: `By ${task.assigneeName}`
+        });
+        
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioContextClass) {
+            const audioCtx = new AudioContextClass();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+          }
+        } catch (e) {
+          console.error("Audio playback failed", e);
+        }
+      });
+      
+      const newestTime = Math.max(...newlyCompleted.map(t => new Date(t.completedAt!).getTime()));
+      setLastCheckTime(newestTime);
+    }
+  }, [tasks]);
 
   const liveSelectedTask = useMemo(() => {
     if (!selectedTask) return null;
@@ -163,9 +220,21 @@ export function AdminDashboard() {
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
       const status = t.status?.toLowerCase()
+      const priority = t.priority?.toLowerCase()
+      
+      let matchesStatus = false
+      if (filterStatus === "all") {
+        matchesStatus = true
+      } else if (filterStatus === "overdue") {
+        matchesStatus = t.status !== "completed" && new Date(t.dueDate) < new Date()
+      } else {
+        matchesStatus = status === filterStatus
+      }
+
       return (
         (selectedEmployeeId === null || t.assigneeId === selectedEmployeeId) &&
-        (filterStatus === "all" || status === filterStatus) &&
+        matchesStatus &&
+        (filterPriority === "all" || priority === filterPriority) &&
         (
           searchQuery === "" ||
           t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -173,7 +242,7 @@ export function AdminDashboard() {
         )
       )
     })
-  }, [tasks, filterStatus, searchQuery, selectedEmployeeId])
+  }, [tasks, filterStatus, filterPriority, searchQuery, selectedEmployeeId])
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden relative">
@@ -188,23 +257,69 @@ export function AdminDashboard() {
       </div>
 
       <div className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
-        <StatsCards tasks={tasks} />
-        {!selectedEmployeeId && <TopCompletersChart />}
+        <StatsCards tasks={selectedEmployeeId ? tasks.filter(t => t.assigneeId === selectedEmployeeId) : tasks} />
 
-        {/* SEARCH */}
-        <div className="flex justify-between">
-          <div className="relative max-w-xs w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-              placeholder="Search tasks..."
-            />
+        {!selectedEmployeeId && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div className="flex flex-col gap-6 w-full">
+              <WorkloadDistribution />
+              <RecentlyCompletedTasks />
+            </div>
+            <div className="w-full">
+              <TopCompletersChart />
+            </div>
+          </div>
+        )}
+
+        {/* SEARCH & FILTER */}
+        <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
+          <div className="w-full flex flex-col sm:flex-row gap-3 items-center flex-1">
+            <div className="relative w-full sm:w-80 shrink-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-background border-border text-foreground"
+                placeholder="Search tasks or Assignee"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 flex-wrap sm:flex-nowrap">
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
+                  <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                  <SelectValue placeholder="All Priorities" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
+                  <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="flex gap-2">
-            <button onClick={() => setShowReport(!showReport)}>
+          <div className="flex gap-2 w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
+            <button
+              onClick={() => setShowReport(!showReport)}
+              className="flex items-center justify-center p-2 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground shrink-0 border border-border bg-background"
+              title="Weekly Report"
+            >
               <FileText className="h-4 w-4" />
             </button>
             <CreateTaskDialog />
@@ -212,35 +327,49 @@ export function AdminDashboard() {
         </div>
 
         {/* TABLE */}
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg flex flex-col bg-card min-h-[500px]">
           {/* HEADER */}
-          <div className="flex items-center px-4 py-2.5 border-b bg-muted">
-            <span className="flex-1 text-xs uppercase">Task</span>
+          <div className="flex flex-col w-full h-full">
+            <div className="flex items-center px-4 py-2.5 border-b bg-muted shrink-0">
+              <span className="flex-1 text-xs uppercase text-muted-foreground font-semibold">Task</span>
 
-            <div className="hidden md:flex items-center gap-6">
-              <span className="w-24 text-center text-xs">Priority</span>
-              <span className="w-32 text-center text-xs">Status</span>
-              <span className="w-40 text-xs">Assignee</span>
-              <span className="w-24 text-right text-xs">Due Date</span>
+              <div className="hidden md:flex items-center gap-6">
+                <span className="w-24 text-center text-xs text-muted-foreground font-semibold">Priority</span>
+                <span className="w-32 text-center text-xs text-muted-foreground font-semibold">Status</span>
+                <span className="w-40 text-xs text-muted-foreground font-semibold">Assignee</span>
+                <span className="w-24 text-right text-xs text-muted-foreground font-semibold">Due Date</span>
+              </div>
+
+              <span className="w-16" />
             </div>
 
-            <span className="w-16" />
+            {/* ROWS */}
+            <div className="flex flex-col flex-1">
+              {filteredTasks.length > 0 ? (
+                filteredTasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onSelect={() => setSelectedTask(task)}
+                    isSelected={selectedTask?.id === task.id}
+                    onDelete={() => {
+                      deleteTask(task.id);
+                      if (selectedTask?.id === task.id) setSelectedTask(null);
+                      toast.success("Task deleted successfully");
+                    }}
+                  />
+                ))
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[300px]">
+                  <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                  <p className="text-lg font-medium text-foreground">No tasks found</p>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                    Try adjusting your filters or search query to find what you're looking for.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-
-          {/* ROWS */}
-          {filteredTasks.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              onSelect={() => setSelectedTask(task)}
-              isSelected={selectedTask?.id === task.id}
-              onDelete={() => {
-                deleteTask(task.id);
-                if (selectedTask?.id === task.id) setSelectedTask(null);
-                toast.success("Task deleted successfully");
-              }}
-            />
-          ))}
         </div>
       </div>
 

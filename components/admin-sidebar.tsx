@@ -243,7 +243,10 @@ export function AdminSidebar({
                 return (
                   <button
                     key={employee.id}
-                    onClick={() => setViewingEmployeeId(employee.id)}
+                    onClick={() => {
+                      setViewingEmployeeId(employee.id)
+                      onSelectEmployee(employee.id)
+                    }}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
                       "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -264,23 +267,27 @@ export function AdminSidebar({
                       <p className="text-sm font-medium truncate">
                         {employee.name}
                       </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[11px]">
-                          {stats.total} task{stats.total !== 1 ? "s" : ""}
-                        </span>
-                        {stats.inProgress > 0 && (
-                          <span className="flex items-center gap-1 text-[11px] text-[hsl(var(--warning))]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--warning))]" />
-                            {stats.inProgress}
-                          </span>
-                        )}
-                        {stats.overdue > 0 && (
-                          <span className="flex items-center gap-1 text-[11px] text-destructive">
-                            <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                            {stats.overdue}
-                          </span>
-                        )}
-                      </div>
+                      {(stats.total - stats.completed >= 5 || stats.inProgress > 0 || stats.overdue > 0) && (
+                        <div className="flex items-center gap-2 mt-1">
+                          {(stats.total - stats.completed) >= 5 && (
+                            <span className="flex items-center gap-1 text-[10px] text-destructive font-bold bg-destructive/10 px-1.5 py-0.5 rounded-full">
+                              OVERLOADED
+                            </span>
+                          )}
+                          {stats.inProgress > 0 && (
+                            <span className="flex items-center gap-1 text-[11px] text-[hsl(var(--warning))] font-medium">
+                              <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--warning))]" />
+                              {stats.inProgress}
+                            </span>
+                          )}
+                          {stats.overdue > 0 && (
+                            <span className="flex items-center gap-1 text-[11px] text-destructive font-medium">
+                              <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                              {stats.overdue}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   </button>

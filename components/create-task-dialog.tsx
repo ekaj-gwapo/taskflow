@@ -26,7 +26,7 @@ import { Plus, X } from "lucide-react"
 import type { TaskPriority } from "@/lib/store"
 
 export function CreateTaskDialog() {
-  const { createTask, allEmployees } = useTaskContext()
+  const { createTask, allEmployees, tasks } = useTaskContext()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -116,11 +116,15 @@ export function CreateTaskDialog() {
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border">
-                  {allEmployees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      {emp.name}
-                    </SelectItem>
-                  ))}
+                  {allEmployees.map((emp) => {
+                    const activeCount = tasks.filter(t => t.assigneeId === emp.id && t.status !== "completed").length
+                    const isOverloaded = activeCount >= 5
+                    return (
+                      <SelectItem key={emp.id} value={emp.id} disabled={isOverloaded}>
+                        {emp.name} {isOverloaded ? "(Overloaded)" : `(${activeCount}/5 active)`}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -217,16 +221,7 @@ export function CreateTaskDialog() {
             )}
           </div>
 
-          {/* Logo Placeholder Section */}
-          <div className="border-t border-border pt-4 mt-2">
-            <Label className="text-foreground text-sm font-semibold mb-3 block">Logo/Image Placeholder</Label>
-            <div className="w-full h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-secondary/30">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">Logo placeholder</p>
-                <p className="text-xs text-muted-foreground">Insert your logo here</p>
-              </div>
-            </div>
-          </div>
+
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">

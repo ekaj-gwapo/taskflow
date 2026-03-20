@@ -31,14 +31,15 @@ function CustomTooltip({
   payload,
 }: {
   active?: boolean
-  payload?: Array<{ payload: { name: string; completed: number; total: number } }>
+  payload?: Array<{ payload: { name: string; score: number; completed: number; total: number } }>
 }) {
   if (!active || !payload?.length) return null
   const data = payload[0].payload
   return (
     <div className="rounded-lg border border-border bg-popover px-3 py-2 shadow-md">
       <p className="text-sm font-medium text-foreground">{data.name}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">
+      <p className="text-xs font-bold text-primary mt-1">{data.score} Points</p>
+      <p className="text-[10px] text-muted-foreground mt-0.5">
         {data.completed} of {data.total} tasks completed
       </p>
     </div>
@@ -51,7 +52,15 @@ export function TopCompletersChart() {
   const leaderboard = useMemo(() => {
     const stats = allEmployees.map((emp) => {
       const empTasks = tasks.filter((t) => t.assigneeId === emp.id)
-      const completed = empTasks.filter((t) => t.status === "completed").length
+      const completedTasks = empTasks.filter((t) => t.status === "completed")
+      const completed = completedTasks.length
+
+      const easyTasks = completedTasks.filter((t) => t.priority === "low").length
+      const mediumTasks = completedTasks.filter((t) => t.priority === "medium").length
+      const hardTasks = completedTasks.filter((t) => t.priority === "high").length
+
+      const score = (easyTasks * 1) + (mediumTasks * 3) + (hardTasks * 5)
+
       return {
         id: emp.id,
         name: emp.name,
@@ -61,22 +70,23 @@ export function TopCompletersChart() {
           .join("")
           .toUpperCase(),
         completed,
+        score,
         total: empTasks.length,
         rate: empTasks.length > 0 ? Math.round((completed / empTasks.length) * 100) : 0,
       }
     })
-    return stats.sort((a, b) => b.completed - a.completed).slice(0, 5)
+    return stats.sort((a, b) => b.score - a.score || b.completed - a.completed).slice(0, 5)
   }, [tasks, allEmployees])
 
-  const maxCompleted = Math.max(...leaderboard.map((e) => e.completed), 1)
+  const maxScore = Math.max(...leaderboard.map((e) => e.score), 1)
 
   return (
-    <Card className="border-border bg-card">
+    <Card className="border-border bg-card h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Trophy className="h-4 w-4 text-[hsl(45,93%,47%)]" />
           <CardTitle className="text-sm font-semibold text-foreground">
-            Top 5 Task Completers
+            Top 5 Performers (Points)
           </CardTitle>
         </div>
       </CardHeader>
@@ -106,7 +116,7 @@ export function TopCompletersChart() {
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} cursor={false} />
-              <Bar dataKey="completed" radius={[4, 4, 0, 0]} maxBarSize={36}>
+              <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={36}>
                 {leaderboard.map((_, index) => (
                   <Cell key={index} fill={RANK_COLORS[index] ?? RANK_COLORS[4]} />
                 ))}
@@ -163,10 +173,10 @@ export function TopCompletersChart() {
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
                     <p className="text-sm font-bold text-foreground">
-                      {person.completed}
+                      {person.score}
                     </p>
                     <p className="text-[10px] text-muted-foreground leading-none">
-                      completed
+                      pts
                     </p>
                   </div>
                   {/* Progress bar */}
@@ -175,13 +185,13 @@ export function TopCompletersChart() {
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
-                          width: `${(person.completed / maxCompleted) * 100}%`,
+                          width: `${Math.min((person.score / maxScore) * 100, 100)}%`,
                           backgroundColor: RANK_COLORS[index] ?? RANK_COLORS[4],
                         }}
                       />
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-0.5 text-right">
-                      {person.rate}%
+                      {person.completed} tasks
                     </p>
                   </div>
                 </div>
