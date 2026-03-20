@@ -11,7 +11,7 @@ export function WorkloadDistribution() {
 
   const workloadData = useMemo(() => {
     const stats = allEmployees.map((emp) => {
-      const activeTasks = tasks.filter((t) => t.assigneeId === emp.id && t.status !== "completed")
+      const activeTasks = tasks.filter((t) => (t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id) && t.status !== "completed")
       
       const high = activeTasks.filter((t) => t.priority === "high").length
       const medium = activeTasks.filter((t) => t.priority === "medium").length

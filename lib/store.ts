@@ -42,8 +42,8 @@ export interface Task {
   description: string
   status: TaskStatus
   priority: TaskPriority
-  assigneeId: string
-  assigneeName: string
+  assigneeId?: string
+  assigneeName?: string
   assignee?: {
     id: string
     name: string
@@ -51,6 +51,14 @@ export interface Task {
     role: UserRole
     avatar?: string
   }
+  assignees?: {
+    id: string
+    name: string
+    email: string
+    role: UserRole
+    avatar?: string
+    points: number
+  }[]
   createdAt: string
   dueDate: string
   completedAt: string | null

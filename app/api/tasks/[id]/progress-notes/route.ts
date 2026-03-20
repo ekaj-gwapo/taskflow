@@ -32,11 +32,18 @@ export async function POST(
 
     // Permission check: admins/superadmins can add to any, employee only to their own
     const role = auth.user!.role?.toUpperCase()
-    if (role === "EMPLOYEE" && task.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
+    if (role === "EMPLOYEE") {
+      const assignment = await db.getOne(
+        "SELECT 1 FROM task_assignments WHERE taskId = ? AND userId = ?",
+        [taskId, auth.user!.id]
       )
+
+      if (!assignment && task.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
+        return NextResponse.json(
+          { error: "Access denied" },
+          { status: 403 }
+        )
+      }
     }
 
     const noteId = uuidv4();

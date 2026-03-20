@@ -25,7 +25,7 @@ interface TaskContextType {
 
   // Tasks
   tasks: Task[]
-  createTask: (task: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes">, actionSteps?: string[]) => void
+  createTask: (task: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees"> & { assigneeIds: string[] }, actionSteps?: string[]) => void
   updateTaskStatus: (taskId: string, status: TaskStatus) => void
   deleteTask: (taskId: string) => void
   addProgressNote: (taskId: string, content: string) => void
@@ -90,7 +90,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const createTask = useCallback(
-    async (taskData: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes">, actionSteps?: string[]) => {
+    async (taskData: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees"> & { assigneeIds: string[] }, actionSteps?: string[]) => {
       try {
         const token = localStorage.getItem("token")
         const response = await fetch("/api/tasks", {
@@ -423,11 +423,11 @@ const url = `/api/tasks/${taskId}/progress-notes`
 
   // Access Control: Get only tasks visible to current employee
   const getEmployeeVisibleTasks = useCallback(() => {
-    if (currentRole === "admin") {
+    if (currentRole === "admin" || currentRole === "superadmin") {
       return []
     }
     if (currentRole === "employee" && currentUser) {
-      return tasks.filter((t) => t.assigneeId === currentUser.id)
+      return tasks.filter((t) => t.assignees?.some(a => a.id === currentUser.id) || t.assigneeId === currentUser.id)
     }
     return []
   }, [tasks, currentRole, currentUser])
@@ -435,12 +435,12 @@ const url = `/api/tasks/${taskId}/progress-notes`
   // Access Control: Check if current user can access a specific task
   const canAccessTask = useCallback(
     (taskId: string) => {
-      if (currentRole === "admin") {
+      if (currentRole === "admin" || currentRole === "superadmin") {
         return true
       }
       if (currentRole === "employee" && currentUser) {
         const task = tasks.find((t) => t.id === taskId)
-        return task ? task.assigneeId === currentUser.id : false
+        return task ? !!(task.assignees?.some(a => a.id === currentUser.id) || task.assigneeId === currentUser.id) : false
       }
       return false
     },
@@ -458,7 +458,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
       }
     }
 
-    const employeeTasks = tasks.filter((t) => t.assigneeId === currentUser.id)
+    const employeeTasks = tasks.filter((t) => t.assignees?.some(a => a.id === currentUser.id) || t.assigneeId === currentUser.id)
     let totalStepsCompleted = 0
     let totalStepsIncomplete = 0
     const taskBreakdown: Array<{ taskId: string; title: string; completedSteps: number; totalSteps: number }> = []

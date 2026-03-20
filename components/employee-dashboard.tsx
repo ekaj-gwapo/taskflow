@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress"
 import { ClipboardList, Clock, CheckCircle2, AlertTriangle, Bell, ChevronRight } from "lucide-react"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
 import { formatDate, formatDateTime } from "@/lib/utils"
-import type { Task } from "@/lib/store"
+import type { Task, User } from "@/lib/store"
 
 function NoteReminder({ task }: { task: Task }) {
   const [minutes, setMinutes] = useState(0)
@@ -71,13 +71,18 @@ function EmployeeTaskCard({
   task,
   onSelect,
   isSelected,
+  currentUser,
 }: {
   task: Task
   onSelect: () => void
   isSelected: boolean
+  currentUser: User | null
 }) {
   const isOverdue =
     task.status?.toLowerCase() !== "completed" && new Date(task.dueDate) < new Date()
+
+  const myAssigneeData = task.assignees?.find(a => a.id === currentUser?.id)
+  const myPoints = myAssigneeData ? myAssigneeData.points : 0
 
   return (
     <button
@@ -110,6 +115,11 @@ function EmployeeTaskCard({
         <div className="flex items-center gap-2 mt-3">
           <StatusBadge status={task.status} />
           <PriorityBadge priority={task.priority} />
+          {myPoints > 0 && (
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-[hsl(var(--chart-2))]/15 text-[hsl(var(--chart-2))] shadow-sm border border-[hsl(var(--chart-2))]/20">
+              ✨ {myPoints} Pts
+            </span>
+          )}
           <span className="text-xs text-muted-foreground ml-auto">
             Due {formatDateTime(task.dueDate)}
           </span>
@@ -126,7 +136,7 @@ export function EmployeeDashboard() {
   const [filterStatus, setFilterStatus] = useState<string>("all")
 
   const myTasks = useMemo(() => {
-    return tasks.filter((t) => t.assigneeId === currentUser?.id)
+    return tasks.filter((t) => t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)
   }, [tasks, currentUser])
 
   // Ensure selected task is accessible
@@ -228,6 +238,7 @@ export function EmployeeDashboard() {
                         )
                       }
                       isSelected={selectedTask?.id === task.id}
+                      currentUser={currentUser}
                     />
                   ))}
                 </div>

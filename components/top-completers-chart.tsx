@@ -51,15 +51,22 @@ export function TopCompletersChart() {
 
   const leaderboard = useMemo(() => {
     const stats = allEmployees.map((emp) => {
-      const empTasks = tasks.filter((t) => t.assigneeId === emp.id)
+      const empTasks = tasks.filter((t) => t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id)
       const completedTasks = empTasks.filter((t) => t.status === "completed")
       const completed = completedTasks.length
 
-      const easyTasks = completedTasks.filter((t) => t.priority === "low").length
-      const mediumTasks = completedTasks.filter((t) => t.priority === "medium").length
-      const hardTasks = completedTasks.filter((t) => t.priority === "high").length
-
-      const score = (easyTasks * 1) + (mediumTasks * 3) + (hardTasks * 5)
+      let score = 0;
+      completedTasks.forEach(t => {
+        const assignment = t.assignees?.find(a => a.id === emp.id)
+        if (assignment && typeof assignment.points === 'number') {
+          score += assignment.points;
+        } else {
+          // fallback for older tasks without an assignment record
+          if (t.priority === "high") score += 5;
+          else if (t.priority === "medium") score += 3;
+          else score += 2;
+        }
+      });
 
       return {
         id: emp.id,

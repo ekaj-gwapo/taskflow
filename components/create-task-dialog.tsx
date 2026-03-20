@@ -22,7 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Plus, X } from "lucide-react"
+import { Plus, X, Users, User } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import type { TaskPriority } from "@/lib/store"
 
 export function CreateTaskDialog() {
@@ -30,7 +33,8 @@ export function CreateTaskDialog() {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [assigneeId, setAssigneeId] = useState("")
+  const [assignmentType, setAssignmentType] = useState<"individual" | "team">("individual")
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([])
   const [priority, setPriority] = useState<TaskPriority>("medium")
   const [dueDate, setDueDate] = useState("")
   const [actionSteps, setActionSteps] = useState<string[]>([])
@@ -47,23 +51,21 @@ export function CreateTaskDialog() {
   }
 
   const handleSubmit = () => {
-    if (!title.trim() || !assigneeId || !dueDate) return
-    const assignee = allEmployees.find((e) => e.id === assigneeId)
-    if (!assignee) return
+    if (!title.trim() || assigneeIds.length === 0 || !dueDate) return
 
     createTask({
       title: title.trim(),
       description: description.trim(),
       status: "todo",
       priority,
-      assigneeId,
-      assigneeName: assignee.name,
+      assigneeIds,
       dueDate,
     }, actionSteps)
 
     setTitle("")
     setDescription("")
-    setAssigneeId("")
+    setAssignmentType("individual")
+    setAssigneeIds([])
     setPriority("medium")
     setDueDate("")
     setActionSteps([])
@@ -108,65 +110,201 @@ export function CreateTaskDialog() {
               className="bg-secondary border-border text-foreground placeholder:text-muted-foreground resize-none"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <Label className="text-foreground text-sm">Assign To</Label>
-              <Select value={assigneeId} onValueChange={setAssigneeId}>
-                <SelectTrigger className="bg-secondary border-border text-foreground">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
+          {assignmentType === "team" ? (
+            <div className="grid grid-cols-2 gap-4">
+              {/* Left Column: Assign To (Tall) */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-foreground text-sm flex items-center gap-1.5">
+                    <Users className="h-4 w-4" />
+                    Assign To
+                  </Label>
+                  <RadioGroup
+                    value={assignmentType}
+                    onValueChange={(val) => {
+                      setAssignmentType(val as "individual" | "team")
+                      if (val === "individual" && assigneeIds.length > 1) {
+                        setAssigneeIds([assigneeIds[0]])
+                      }
+                    }}
+                    className="flex gap-3"
+                  >
+                    <div className="flex items-center space-x-1">
+                      <RadioGroupItem value="individual" id="team-indiv" className="h-3 w-3" />
+                      <Label htmlFor="team-indiv" className="cursor-pointer text-xs font-medium text-muted-foreground m-0">Indiv</Label>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <RadioGroupItem value="team" id="team-team" className="h-3 w-3" />
+                      <Label htmlFor="team-team" className="cursor-pointer text-xs font-medium text-muted-foreground m-0">Team</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <div className="flex flex-col gap-1 border border-border p-2 rounded-md h-[235px] overflow-y-auto bg-secondary/30 mt-1">
                   {allEmployees.map((emp) => {
-                    const activeCount = tasks.filter(t => t.assigneeId === emp.id && t.status !== "completed").length
+                    const activeCount = tasks.filter(t => (t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id) && t.status !== "completed").length
                     const isOverloaded = activeCount >= 5
                     return (
-                      <SelectItem key={emp.id} value={emp.id} disabled={isOverloaded}>
-                        {emp.name} {isOverloaded ? "(Overloaded)" : `(${activeCount}/5 active)`}
-                      </SelectItem>
+                      <label
+                        key={emp.id}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm transition-colors ${
+                          isOverloaded ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-secondary/80"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={assigneeIds.includes(emp.id)}
+                          disabled={isOverloaded}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setAssigneeIds([...assigneeIds, emp.id])
+                            } else {
+                              setAssigneeIds(assigneeIds.filter(id => id !== emp.id))
+                            }
+                          }}
+                        />
+                        <span className="text-foreground font-medium">{emp.name}</span>
+                        <span className="text-muted-foreground text-[10px] ml-auto">
+                          {isOverloaded ? "(Overloaded)" : `(${activeCount}/5 active)`}
+                        </span>
+                      </label>
                     )
                   })}
-                </SelectContent>
-              </Select>
+                </div>
+              </div>
+
+              {/* Right Column: Stacked Inputs */}
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label className="text-foreground text-sm">Priority</Label>
+                  <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
+                    <SelectTrigger className="bg-secondary border-border text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="due-date" className="text-foreground text-sm">Due Date</Label>
+                  <Input
+                    id="due-date"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="bg-secondary border-border text-foreground"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label className="text-foreground text-sm">Date Created</Label>
+                  <Input
+                    type="text"
+                    readOnly
+                    value={new Date().toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                    className="bg-secondary border-border text-muted-foreground cursor-default"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label className="text-foreground text-sm">Priority</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
-                <SelectTrigger className="bg-secondary border-border text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="due-date" className="text-foreground text-sm">Due Date</Label>
-            <Input
-              id="due-date"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="bg-secondary border-border text-foreground"
-            />
-          </div>
-            <div className="flex flex-col gap-2">
-              <Label className="text-foreground text-sm">Date Created</Label>
-              <Input
-                type="text"
-                readOnly
-                value={new Date().toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-                className="bg-secondary border-border text-muted-foreground cursor-default"
-              />
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-foreground text-sm flex items-center gap-1.5">
+                      <User className="h-4 w-4" />
+                      Assign To
+                    </Label>
+                    <RadioGroup
+                      value={assignmentType}
+                      onValueChange={(val) => {
+                        setAssignmentType(val as "individual" | "team")
+                        if (val === "individual" && assigneeIds.length > 1) {
+                          setAssigneeIds([assigneeIds[0]])
+                        }
+                      }}
+                      className="flex gap-3"
+                    >
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem value="individual" id="indiv-individual" className="h-3 w-3" />
+                        <Label htmlFor="indiv-individual" className="cursor-pointer text-xs font-medium text-muted-foreground m-0">Indiv</Label>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem value="team" id="indiv-team" className="h-3 w-3" />
+                        <Label htmlFor="indiv-team" className="cursor-pointer text-xs font-medium text-muted-foreground m-0">Team</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <Select
+                    value={assigneeIds[0] || ""}
+                    onValueChange={(val) => setAssigneeIds([val])}
+                  >
+                    <SelectTrigger className="bg-secondary border-border text-foreground">
+                      <SelectValue placeholder="Select from employees..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      {allEmployees.map((emp) => {
+                        const activeCount = tasks.filter(t => (t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id) && t.status !== "completed").length
+                        const isOverloaded = activeCount >= 5
+                        return (
+                          <SelectItem key={emp.id} value={emp.id} disabled={isOverloaded}>
+                            {emp.name} {isOverloaded ? "(Overloaded)" : `(${activeCount}/5 active)`}
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-foreground text-sm">Priority</Label>
+                  <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
+                    <SelectTrigger className="bg-secondary border-border text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="due-date" className="text-foreground text-sm">Due Date</Label>
+                  <Input
+                    id="due-date"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="bg-secondary border-border text-foreground"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-foreground text-sm">Date Created</Label>
+                  <Input
+                    type="text"
+                    readOnly
+                    value={new Date().toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                    className="bg-secondary border-border text-muted-foreground cursor-default"
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Action Steps Section */}
           <div className="border-t border-border pt-4 mt-2">
@@ -229,7 +367,7 @@ export function CreateTaskDialog() {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!title.trim() || !assigneeId || !dueDate}
+            disabled={!title.trim() || assigneeIds.length === 0 || !dueDate}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Create Task

@@ -30,21 +30,43 @@ export function RecentlyCompletedTasks() {
         {recentTasks.length > 0 ? (
           <div className="flex flex-col gap-3">
             {recentTasks.map(task => {
-              const initials = (task.assigneeName || "Unassigned").split(" ").map(n => n[0]).join("").toUpperCase()
+              const displayAssignees = task.assignees && task.assignees.length > 0 ? task.assignees : []
               return (
                 <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 transition-colors">
-                  <Avatar className="h-8 w-8 shrink-0 border border-emerald-500/30">
-                    {task.assignee?.avatar ? (
-                      <AvatarImage src={task.assignee.avatar} />
-                    ) : (
+                  {displayAssignees.length > 0 ? (
+                    <div className="flex -space-x-3 overflow-hidden shrink-0 items-center">
+                      {displayAssignees.slice(0, 3).map((a) => (
+                        <Avatar key={a.id} className="h-8 w-8 shrink-0 border-2 border-background ring-1 ring-emerald-500/30">
+                          {a.avatar ? (
+                            <AvatarImage src={a.avatar} />
+                          ) : (
+                            <AvatarFallback className="text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                              {a.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                      ))}
+                      {displayAssignees.length > 3 && (
+                        <div className="flex items-center justify-center h-8 w-8 shrink-0 rounded-full border-2 border-background ring-1 ring-emerald-500/30 bg-secondary text-[10px] font-medium text-foreground z-10">
+                          +{displayAssignees.length - 3}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Avatar className="h-8 w-8 shrink-0 border border-emerald-500/30">
                       <AvatarFallback className="text-[10px] font-semibold bg-emerald-100 text-emerald-800">
-                        {initials}
+                        UN
                       </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
+                    </Avatar>
+                  )}
+                  
+                  <div className="flex-1 min-w-0 flex flex-col justify-center h-8">
                     <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
-                    <p className="text-[11px] text-muted-foreground truncate font-medium">{task.assigneeName}</p>
+                    <p className="text-[11px] text-muted-foreground truncate font-medium">
+                      {displayAssignees.length > 0 
+                        ? displayAssignees.map(a => a.name).join(", ") 
+                        : "Unassigned"}
+                    </p>
                   </div>
                   <div className="flex flex-col items-end shrink-0 text-muted-foreground">
                     <span className="text-[10px] font-medium bg-secondary px-1.5 py-0.5 rounded-sm">

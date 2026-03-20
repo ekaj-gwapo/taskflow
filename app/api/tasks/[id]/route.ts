@@ -29,11 +29,17 @@ export async function GET(
     }
 
     // Check access: admin can view all, employee can only view their own
-    if (auth.user!.role === "EMPLOYEE" && task.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
+    if (auth.user!.role === "EMPLOYEE") {
+      const assignment = await db.getOne(
+        "SELECT 1 FROM task_assignments WHERE taskId = ? AND userId = ?",
+        [taskId, auth.user!.id]
       )
+      if (!assignment && task.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
+        return NextResponse.json(
+          { error: "Access denied" },
+          { status: 403 }
+        )
+      }
     }
 
     const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [taskId])
@@ -43,10 +49,20 @@ export async function GET(
     })))
     const progressNotes = await db.getAll("SELECT * FROM progress_notes WHERE taskId = ?", [taskId])
 
+    const assigneesData = await db.getAll(`
+      SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
+      FROM task_assignments ta
+      JOIN users u ON ta.userId = u.id
+      WHERE ta.taskId = ?
+    `, [taskId]) as any[]
+
     const formattedTask = {
       ...task,
       status: task.status ? task.status.toLowerCase().replace('_', '-') : 'todo',
-      assignee: task.assigneeId ? { id: task.assigneeId, name: task.assigneeName, email: task.assigneeEmail, role: task.assigneeRole } : null,
+      assignees: assigneesData,
+      assigneeId: assigneesData[0]?.id || null,
+      assigneeName: assigneesData[0]?.name || null,
+      assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
       createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole } : null,
       actionSteps: actionStepsWithNotes,
       progressNotes
@@ -89,7 +105,12 @@ export async function PUT(
     // EMPLOYEE can only update status if they are the assignee
     const role = auth.user!.role.toUpperCase()
     if (role === "EMPLOYEE") {
-      if (existingTask.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
+      const assignment = await db.getOne(
+        "SELECT 1 FROM task_assignments WHERE taskId = ? AND userId = ?",
+        [taskId, auth.user!.id]
+      )
+
+      if (!assignment && existingTask.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 })
       }
       
@@ -147,10 +168,20 @@ export async function PUT(
     })))
     const progressNotes = await db.getAll("SELECT * FROM progress_notes WHERE taskId = ?", [taskId])
 
+    const assigneesData = await db.getAll(`
+      SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
+      FROM task_assignments ta
+      JOIN users u ON ta.userId = u.id
+      WHERE ta.taskId = ?
+    `, [taskId]) as any[]
+
     const formattedTask = {
       ...task,
       status: task.status ? task.status.toLowerCase().replace('_', '-') : 'todo',
-      assignee: task.assigneeId ? { id: task.assigneeId, name: task.assigneeName, email: task.assigneeEmail, role: task.assigneeRole } : null,
+      assignees: assigneesData,
+      assigneeId: assigneesData[0]?.id || null,
+      assigneeName: assigneesData[0]?.name || null,
+      assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
       createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole } : null,
       actionSteps: actionStepsWithNotes,
       progressNotes

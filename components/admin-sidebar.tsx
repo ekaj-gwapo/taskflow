@@ -7,11 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, ChevronRight, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 function Confetti() {
-  const [particles] = useState(() => 
+  const [particles] = useState(() =>
     Array.from({ length: 12 }).map((_, i) => ({
       id: i,
       dx: `${Math.random() * 120 - 60}px`,
@@ -24,11 +24,11 @@ function Confetti() {
   return (
     <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center overflow-visible">
       {particles.map(p => (
-        <div 
+        <div
           key={p.id}
-          className={cn("confetti-particle", p.color)} 
-          style={{ 
-            '--dx': p.dx, 
+          className={cn("confetti-particle", p.color)}
+          style={{
+            '--dx': p.dx,
             '--dy': p.dy,
             animationDelay: p.delay
           } as any}
@@ -42,7 +42,7 @@ function FlippingLogo({ front, back, alt }: { front: string; back: string; alt: 
   const [isHovered, setIsHovered] = useState(false)
 
   return (
-    <div 
+    <div
       className="group w-14 h-14 [perspective:1000px] cursor-pointer relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -83,6 +83,7 @@ export function AdminSidebar({
     location: currentUser?.location || "",
   })
   const [tempProfileData, setTempProfileData] = useState(profileData)
+  const [isEmployeesExpanded, setIsEmployeesExpanded] = useState(false)
 
   const handleEditProfile = () => {
     setTempProfileData(profileData)
@@ -134,8 +135,8 @@ export function AdminSidebar({
     .toUpperCase() || "A"
 
   const [searchQuery, setSearchQuery] = useState("")
-  const filteredEmployees = allEmployees.filter(e => 
-    e.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredEmployees = allEmployees.filter(e =>
+    e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     e.email.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -170,22 +171,20 @@ export function AdminSidebar({
       <div className="flex gap-1 p-3 border-b border-border">
         <button
           onClick={() => setActiveTab("employees")}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "employees"
+          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "employees"
               ? "bg-primary text-primary-foreground"
               : "bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground"
-          }`}
+            }`}
         >
           <Users className="h-4 w-4" />
           <span>Employees</span>
         </button>
         <button
           onClick={() => setActiveTab("profile")}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "profile"
+          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "profile"
               ? "bg-primary text-primary-foreground"
               : "bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground"
-          }`}
+            }`}
         >
           <User className="h-4 w-4" />
           <span>Profile</span>
@@ -194,8 +193,8 @@ export function AdminSidebar({
 
       {currentUser?.role?.toLowerCase() === "superadmin" && (
         <div className="px-3 py-2 border-b border-border">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="w-full justify-start gap-2 text-primary hover:text-primary hover:bg-primary/10"
             onClick={() => window.location.href = "/"}
           >
@@ -213,175 +212,225 @@ export function AdminSidebar({
             <div className="flex flex-col gap-0.5">
               {/* Show Employee List */}
               {!viewingEmployeeId ? (
-            <>
-              <div className="px-3 pb-3">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search employees..."
-                    className="pl-8 bg-secondary/50 border-transparent focus-visible:bg-background"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Employee List */}
-              {filteredEmployees.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  No employees found
-                </div>
-              ) : (
-                filteredEmployees.map((employee) => {
-                const stats = getEmployeeTaskStats(employee.id)
-                const initials = employee.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-
-                return (
+                <>
                   <button
-                    key={employee.id}
                     onClick={() => {
-                      setViewingEmployeeId(employee.id)
-                      onSelectEmployee(employee.id)
+                      setViewingEmployeeId('team-projects')
+                      onSelectEmployee('team-projects')
                     }}
-                    className={cn(
-                      "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                      "text-muted-foreground hover:bg-accent hover:text-foreground"
-                    )}
+                    className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors text-muted-foreground hover:bg-accent hover:text-foreground mb-4 shadow-[0_2px_4px_rgba(0,0,0,0.02)] border border-border bg-gradient-to-r from-secondary/50 to-transparent"
                   >
-                    <Avatar className="h-8 w-8 shrink-0">
-                      {employee.avatar ? (
-                        <AvatarImage src={employee.avatar} />
-                      ) : (
-                        <AvatarFallback
-                          className="text-xs font-medium bg-secondary text-foreground"
-                        >
-                          {initials}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {employee.name}
-                      </p>
-                      {(stats.total - stats.completed >= 5 || stats.inProgress > 0 || stats.overdue > 0) && (
-                        <div className="flex items-center gap-2 mt-1">
-                          {(stats.total - stats.completed) >= 5 && (
-                            <span className="flex items-center gap-1 text-[10px] text-destructive font-bold bg-destructive/10 px-1.5 py-0.5 rounded-full">
-                              OVERLOADED
-                            </span>
-                          )}
-                          {stats.inProgress > 0 && (
-                            <span className="flex items-center gap-1 text-[11px] text-[hsl(var(--warning))] font-medium">
-                              <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--warning))]" />
-                              {stats.inProgress}
-                            </span>
-                          )}
-                          {stats.overdue > 0 && (
-                            <span className="flex items-center gap-1 text-[11px] text-destructive font-medium">
-                              <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                              {stats.overdue}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[hsl(var(--chart-2))]/10 text-[hsl(var(--chart-2))] border border-[hsl(var(--chart-2))]/20">
+                      <Users className="h-4 w-4" />
                     </div>
+                    <span className="flex-1 text-sm font-semibold text-foreground">
+                      Team Projects
+                    </span>
                     <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   </button>
-                )
-              }))}
-            </>
-          ) : (
-            <>
-              {/* Back button */}
-              <button
-                onClick={() => {
-                  setViewingEmployeeId(null)
-                  onSelectEmployee(null)
-                }}
-                className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors text-muted-foreground hover:bg-accent hover:text-foreground mb-3"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="text-sm font-medium">Back to Employees</span>
-              </button>
 
-              {/* Divider */}
-              <div className="h-px bg-border mx-2 my-2" />
-
-              {/* Selected Employee Header */}
-              {viewingEmployeeId && allEmployees.find(e => e.id === viewingEmployeeId) && (
-                <div className="p-3 rounded-lg bg-secondary/30 mb-3">
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      const emp = allEmployees.find(e => e.id === viewingEmployeeId)
-                      const initials = emp?.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                      return (
-                        <>
-                          <Avatar className="h-8 w-8">
-                            {emp?.avatar ? (
-                              <AvatarImage src={emp.avatar} />
-                            ) : (
-                              <AvatarFallback className="text-xs font-medium bg-primary text-primary-foreground">
-                                {initials}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{emp?.name}</p>
-                            <p className="text-xs text-muted-foreground">{emp?.email}</p>
-                          </div>
-                        </>
-                      )
-                    })()}
-                  </div>
-                </div>
-              )}
-
-              {/* Employee Tasks */}
-              {viewingEmployeeId && (() => {
-                const employeeTasks = tasks.filter(t => t.assigneeId === viewingEmployeeId)
-                if (employeeTasks.length === 0) {
-                  return (
-                    <div className="py-8 text-center text-sm text-muted-foreground">
-                      <ClipboardList className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                      <p>No tasks assigned</p>
+                  <button
+                    onClick={() => setIsEmployeesExpanded(!isEmployeesExpanded)}
+                    className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors text-muted-foreground hover:bg-accent hover:text-foreground mb-2 shadow-[0_2px_4px_rgba(0,0,0,0.02)] border border-border bg-gradient-to-r from-secondary/50 to-transparent"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary border border-primary/20">
+                      <User className="h-4 w-4" />
                     </div>
-                  )
-                }
-                return (
-                  <div className="space-y-2">
-                    {employeeTasks.map(task => (
-                      <button
-                        key={task.id}
-                        onClick={() => onSelectEmployee(viewingEmployeeId)}
-                        className="w-full flex flex-col items-start gap-1 p-2.5 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 transition-colors text-left"
-                      >
-                        <p className="text-sm font-medium text-foreground truncate w-full">{task.title}</p>
-                        <div className="flex items-center gap-2 w-full">
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                            task.status === "completed"
-                              ? "bg-green-100 text-green-700"
-                              : task.status === "in-progress"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-700"
-                          }`}>
-                            {task.status === "completed" ? "Completed" : task.status === "in-progress" ? "In Progress" : "To Do"}
-                          </span>
+                    <span className="flex-1 text-sm font-semibold text-foreground">
+                      Employees
+                    </span>
+                    {isEmployeesExpanded ? (
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    )}
+                  </button>
+
+                  {isEmployeesExpanded && (
+                    <div className="animate-in slide-in-from-top-2 duration-200">
+                      <div className="px-3 pb-3">
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search employees..."
+                            className="pl-8 bg-secondary/50 border-transparent focus-visible:bg-background"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                          />
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                )
-              })()}
-            </>
-          )}
+                      </div>
+
+                      {/* Employee List */}
+                      {filteredEmployees.length === 0 ? (
+                        <div className="py-8 text-center text-sm text-muted-foreground">
+                          No employees found
+                        </div>
+                      ) : (
+                        filteredEmployees.map((employee) => {
+                          const stats = getEmployeeTaskStats(employee.id)
+                          const initials = employee.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+
+                          return (
+                            <button
+                              key={employee.id}
+                              onClick={() => {
+                                setViewingEmployeeId(employee.id)
+                                onSelectEmployee(employee.id)
+                              }}
+                              className={cn(
+                                "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                                "text-muted-foreground hover:bg-accent hover:text-foreground"
+                              )}
+                            >
+                              <Avatar className="h-8 w-8 shrink-0">
+                                {employee.avatar ? (
+                                  <AvatarImage src={employee.avatar} />
+                                ) : (
+                                  <AvatarFallback
+                                    className="text-xs font-medium bg-secondary text-foreground"
+                                  >
+                                    {initials}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">
+                                  {employee.name}
+                                </p>
+                                {(stats.total - stats.completed >= 5 || stats.inProgress > 0 || stats.overdue > 0) && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {(stats.total - stats.completed) >= 5 && (
+                                      <span className="flex items-center gap-1 text-[10px] text-destructive font-bold bg-destructive/10 px-1.5 py-0.5 rounded-full">
+                                        OVERLOADED
+                                      </span>
+                                    )}
+                                    {stats.inProgress > 0 && (
+                                      <span className="flex items-center gap-1 text-[11px] text-[hsl(var(--warning))] font-medium">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--warning))]" />
+                                        {stats.inProgress}
+                                      </span>
+                                    )}
+                                    {stats.overdue > 0 && (
+                                      <span className="flex items-center gap-1 text-[11px] text-destructive font-medium">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                                        {stats.overdue}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            </button>
+                          )
+                        }))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Back button */}
+                  <button
+                    onClick={() => {
+                      setViewingEmployeeId(null)
+                      onSelectEmployee(null)
+                    }}
+                    className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors text-muted-foreground hover:bg-accent hover:text-foreground mb-3"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm font-medium">Back to Employees</span>
+                  </button>
+
+                  {/* Divider */}
+                  <div className="h-px bg-border mx-2 my-2" />
+
+                  {/* Selected Employee Header */}
+                  {viewingEmployeeId === 'team-projects' && (
+                    <div className="p-3 rounded-lg bg-[hsl(var(--chart-2))]/5 border border-[hsl(var(--chart-2))]/10 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[hsl(var(--chart-2))]/10 text-[hsl(var(--chart-2))] border border-[hsl(var(--chart-2))]/20">
+                          <Users className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">Team Projects</p>
+                          <p className="text-xs text-muted-foreground">Collaborative team tasks</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {viewingEmployeeId && viewingEmployeeId !== 'team-projects' && allEmployees.find(e => e.id === viewingEmployeeId) && (
+                    <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 mb-3">
+                      <div className="flex items-center gap-3">
+                        {(() => {
+                          const emp = allEmployees.find(e => e.id === viewingEmployeeId)
+                          const initials = emp?.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                          return (
+                            <>
+                              <Avatar className="h-10 w-10 border border-primary/20">
+                                {emp?.avatar ? (
+                                  <AvatarImage src={emp.avatar} />
+                                ) : (
+                                  <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                                    {initials}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">{emp?.name}</p>
+                                <p className="text-xs text-muted-foreground">{emp?.email}</p>
+                              </div>
+                            </>
+                          )
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Employee Tasks */}
+                  {viewingEmployeeId && viewingEmployeeId !== 'team-projects' && (() => {
+                    const employeeTasks = tasks.filter(t => t.assigneeId === viewingEmployeeId)
+                    if (employeeTasks.length === 0) {
+                      return (
+                        <div className="py-8 text-center text-sm text-muted-foreground">
+                          <ClipboardList className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                          <p>No tasks assigned</p>
+                        </div>
+                      )
+                    }
+                    return (
+                      <div className="space-y-2">
+                        {employeeTasks.map(task => (
+                          <button
+                            key={task.id}
+                            onClick={() => onSelectEmployee(viewingEmployeeId)}
+                            className="w-full flex flex-col items-start gap-1 p-2.5 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 transition-colors text-left"
+                          >
+                            <p className="text-sm font-medium text-foreground truncate w-full">{task.title}</p>
+                            <div className="flex items-center gap-2 w-full">
+                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${task.status === "completed"
+                                  ? "bg-green-100 text-green-700"
+                                  : task.status === "in-progress"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}>
+                                {task.status === "completed" ? "Completed" : task.status === "in-progress" ? "In Progress" : "To Do"}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                </>
+              )}
             </div>
           )}
 

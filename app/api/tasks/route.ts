@@ -17,22 +17,19 @@ export async function GET(request: NextRequest) {
     if (role === "ADMIN" || role === "SUPERADMIN") {
       tasks = await db.getAll(`
         SELECT t.*, 
-               u1.name as assigneeName, u1.email as assigneeEmail, u1.role as assigneeRole, u1.avatarUrl as assigneeAvatar,
                u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar
         FROM tasks t
-        LEFT JOIN users u1 ON t.assigneeId = u1.id
         LEFT JOIN users u2 ON t.createdById = u2.id
         ORDER BY t.createdAt DESC
       `) as any[]
     } else {
       tasks = await db.getAll(`
         SELECT t.*, 
-               u1.name as assigneeName, u1.email as assigneeEmail, u1.role as assigneeRole, u1.avatarUrl as assigneeAvatar,
                u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar
         FROM tasks t
-        LEFT JOIN users u1 ON t.assigneeId = u1.id
+        JOIN task_assignments ta ON t.id = ta.taskId
         LEFT JOIN users u2 ON t.createdById = u2.id
-        WHERE t.assigneeId = ?
+        WHERE ta.userId = ?
         ORDER BY t.createdAt DESC
       `, [user.id]) as any[]
     }
@@ -45,11 +42,22 @@ export async function GET(request: NextRequest) {
         notes: await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[]
       })))
       const progressNotes = await db.getAll("SELECT * FROM progress_notes WHERE taskId = ?", [t.id]) as any[]
+      
+      const assigneesData = await db.getAll(`
+        SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
+        FROM task_assignments ta
+        JOIN users u ON ta.userId = u.id
+        WHERE ta.taskId = ?
+      `, [t.id]) as any[]
 
       return {
         ...t,
         status: t.status ? t.status.toLowerCase().replace('_', '-') : 'todo',
-        assignee: t.assigneeId ? { id: t.assigneeId, name: t.assigneeName, email: t.assigneeEmail, role: t.assigneeRole, avatar: t.assigneeAvatar } : null,
+        assignees: assigneesData,
+        // Keep single assignee keys populated for backwards compatibility
+        assigneeId: assigneesData[0]?.id || null,
+        assigneeName: assigneesData[0]?.name || null,
+        assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
         createdBy: t.createdById ? { id: t.createdById, name: t.creatorName, email: t.creatorEmail, role: t.creatorRole, avatar: t.creatorAvatar } : null,
         actionSteps: actionStepsWithNotes,
         progressNotes
@@ -73,22 +81,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { title, description, priority, dueDate, assigneeId, actionSteps } = await request.json()
+    const { title, description, priority, dueDate, assigneeId, assigneeIds, actionSteps } = await request.json()
 
-    if (!title || !assigneeId || !dueDate) {
+    const uIds = assigneeIds || (assigneeId ? [assigneeId] : [])
+
+    if (!title || uIds.length === 0 || !dueDate) {
       return NextResponse.json(
-        { error: "Title, assigneeId, and dueDate are required" },
+        { error: "Title, at least one assignee, and dueDate are required" },
         { status: 400 }
       )
     }
 
     const taskId = uuidv4()
+    const taskPriority = priority || "MEDIUM"
+    
+    // Calculate points per assignee
+    let points = 2; // EASY
+    if (taskPriority.toUpperCase() === 'MEDIUM') points = 3;
+    if (taskPriority.toUpperCase() === 'HIGH') points = 5;
     
     // Insert task
     await db.execute(`
       INSERT INTO tasks (id, title, description, priority, dueDate, assigneeId, createdById, status, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [taskId, title, description, priority || "MEDIUM", new Date(dueDate).toISOString(), assigneeId, auth.user!.id, "TODO", new Date().toISOString(), new Date().toISOString()])
+    `, [taskId, title, description, taskPriority, new Date(dueDate).toISOString(), uIds[0], auth.user!.id, "TODO", new Date().toISOString(), new Date().toISOString()])
+
+    // Insert task assignees
+    for (const uId of uIds) {
+      await db.execute(`
+        INSERT INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?)
+      `, [taskId, uId, points]);
+    }
 
     // Insert action steps if provided
     if (actionSteps && actionSteps.length > 0) {
@@ -104,13 +127,18 @@ export async function POST(request: NextRequest) {
     // Fetch the created task to return it
     const task: any = await db.getOne(`
       SELECT t.*, 
-             u1.name as assigneeName, u1.email as assigneeEmail, u1.role as assigneeRole, u1.avatarUrl as assigneeAvatar,
              u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar
       FROM tasks t
-      LEFT JOIN users u1 ON t.assigneeId = u1.id
       LEFT JOIN users u2 ON t.createdById = u2.id
       WHERE t.id = ?
     `, [taskId])
+
+    const assigneesData = await db.getAll(`
+      SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
+      FROM task_assignments ta
+      JOIN users u ON ta.userId = u.id
+      WHERE ta.taskId = ?
+    `, [taskId]) as any[]
 
     const actionStepsData = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [taskId]) as any[]
     const actionStepsWithNotes = await Promise.all(actionStepsData.map(async (as: any) => ({
@@ -121,7 +149,10 @@ export async function POST(request: NextRequest) {
     const formattedTask = {
       ...task,
       status: task.status ? task.status.toLowerCase().replace('_', '-') : 'todo',
-      assignee: task.assigneeId ? { id: task.assigneeId, name: task.assigneeName, email: task.assigneeEmail, role: task.assigneeRole, avatar: task.assigneeAvatar } : null,
+      assignees: assigneesData,
+      assigneeId: assigneesData[0]?.id || null,
+      assigneeName: assigneesData[0]?.name || null,
+      assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
       createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole, avatar: task.creatorAvatar } : null,
       actionSteps: actionStepsWithNotes,
       progressNotes: []

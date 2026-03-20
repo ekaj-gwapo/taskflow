@@ -31,11 +31,18 @@ export async function POST(
 
     // Employee can only add notes to steps in their own tasks
     const role = auth.user!.role?.toUpperCase()
-    if (role === "EMPLOYEE" && task.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
+    if (role === "EMPLOYEE") {
+      const assignment = await db.getOne(
+        "SELECT 1 FROM task_assignments WHERE taskId = ? AND userId = ?",
+        [(await params).id, auth.user!.id]
       )
+
+      if (!assignment && task.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
+        return NextResponse.json(
+          { error: "Access denied" },
+          { status: 403 }
+        )
+      }
     }
 
     const noteId = uuidv4();
