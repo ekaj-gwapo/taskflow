@@ -65,16 +65,15 @@ function FlippingLogo({ front, back, alt }: { front: string; back: string; alt: 
 }
 
 interface EmployeeSidebarProps {
-  selectedEmployeeId: string | null
-  onSelectEmployee: (employeeId: string | null) => void
+  selectedCategory: "individual" | "team" | "profile"
+  onSelectCategory: (category: "individual" | "team" | "profile") => void
 }
 
 export function EmployeeSidebar({
-  selectedEmployeeId,
-  onSelectEmployee,
+  selectedCategory,
+  onSelectCategory,
 }: EmployeeSidebarProps) {
   const { currentUser, tasks, login } = useTaskContext()
-  const [activeTab, setActiveTab] = useState<"tasks" | "profile">("tasks")
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
   const [profileData, setProfileData] = useState({
@@ -85,7 +84,14 @@ export function EmployeeSidebar({
   })
   const [tempProfileData, setTempProfileData] = useState(profileData)
 
-  const myTasks = tasks.filter((t) => t.assigneeId === currentUser?.id)
+  const individualTasks = tasks.filter((t) => 
+    (t.assignees?.length === 1 && t.assignees[0].id === currentUser?.id) || 
+    (t.assigneeId === currentUser?.id && (!t.assignees || t.assignees.length <= 1))
+  )
+
+  const teamTasks = tasks.filter((t) => 
+    (t.assignees && t.assignees.length > 1 && t.assignees.some(a => a.id === currentUser?.id))
+  )
 
   const handleEditProfile = () => {
     setTempProfileData(profileData)
@@ -166,83 +172,79 @@ export function EmployeeSidebar({
         )}
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-1 p-3 border-b border-border">
-        <button
-          onClick={() => setActiveTab("tasks")}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "tasks"
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground"
-          }`}
-        >
-          <ClipboardList className="h-4 w-4" />
-          <span>My Tasks</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("profile")}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "profile"
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground"
-          }`}
-        >
-          <User className="h-4 w-4" />
-          <span>Profile</span>
-        </button>
+      {/* Navigation */}
+      <div className="p-4 space-y-6">
+        <div>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3 px-2">Tasks</p>
+          <div className="space-y-1">
+            <button
+              onClick={() => onSelectCategory("individual")}
+              className={cn(
+                "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                selectedCategory === "individual"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <User className="h-4 w-4" />
+                <span>Individual Tasks</span>
+              </div>
+              <span className={cn(
+                "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                selectedCategory === "individual" ? "bg-white/20" : "bg-secondary text-muted-foreground"
+              )}>
+                {individualTasks.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => onSelectCategory("team")}
+              className={cn(
+                "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all border border-transparent",
+                selectedCategory === "team"
+                  ? "bg-[hsl(var(--chart-2))] text-white shadow-sm"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-[hsl(var(--chart-2))]/20"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <ClipboardList className="h-4 w-4" />
+                <span>Team Tasks</span>
+              </div>
+              <span className={cn(
+                "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                selectedCategory === "team" ? "bg-white/20" : "bg-secondary text-muted-foreground"
+              )}>
+                {teamTasks.length}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3 px-2">Settings</p>
+          <button
+            onClick={() => onSelectCategory("profile")}
+            className={cn(
+              "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+              selectedCategory === "profile"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+          >
+            <User className="h-4 w-4" />
+            <span>Profile Settings</span>
+          </button>
+        </div>
       </div>
 
-      {/* Content - Scrollable */}
+      {/* Profile Detail View (If selected in sidebar) */}
       <ScrollArea className="flex-1">
         <div className="p-4">
-          {/* My Tasks Tab */}
-          {activeTab === "tasks" && (
-            <div className="space-y-3">
-              {myTasks.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  <ClipboardList className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                  <p>No tasks assigned yet</p>
-                </div>
-              ) : (
-                myTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="p-3 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              task.status === "completed"
-                                ? "bg-green-100 text-green-700"
-                                : task.status === "in-progress"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-gray-100 text-gray-700"
-                            }`}
-                          >
-                            {task.status === "completed" ? "Completed" : task.status === "in-progress" ? "In Progress" : "To Do"}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            Due {task.dueDate.includes("T")
-                              ? new Date(task.dueDate).toLocaleDateString()
-                              : task.dueDate}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* Profile Tab */}
-          {activeTab === "profile" && (
+          {selectedCategory === "profile" && (
             <div className="space-y-4">
               {!isEditingProfile ? (
+                /* ... (rest of profile code is same, just conditionally rendered) ... */
                 <div className="space-y-4">
                   <div className="text-center mb-6 relative group inline-block mx-auto w-full">
                     <Avatar 

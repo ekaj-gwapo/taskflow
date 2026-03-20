@@ -82,7 +82,7 @@ export function TopCompletersChart() {
         rate: empTasks.length > 0 ? Math.round((completed / empTasks.length) * 100) : 0,
       }
     })
-    return stats.sort((a, b) => b.score - a.score || b.completed - a.completed).slice(0, 5)
+    return stats.sort((a, b) => b.score - a.score || b.completed - a.completed).slice(0, 10)
   }, [tasks, allEmployees])
 
   const maxScore = Math.max(...leaderboard.map((e) => e.score), 1)
@@ -93,7 +93,7 @@ export function TopCompletersChart() {
         <div className="flex items-center gap-2">
           <Trophy className="h-4 w-4 text-[hsl(45,93%,47%)]" />
           <CardTitle className="text-sm font-semibold text-foreground">
-            Top 5 Performers (Points)
+            Top Performers (Leaderboard)
           </CardTitle>
         </div>
       </CardHeader>
@@ -102,7 +102,7 @@ export function TopCompletersChart() {
         <div className="h-40 mb-5">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={leaderboard}
+              data={leaderboard.slice(0, 5)}
               margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
             >
               <CartesianGrid
@@ -124,7 +124,7 @@ export function TopCompletersChart() {
               />
               <Tooltip content={<CustomTooltip />} cursor={false} />
               <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={36}>
-                {leaderboard.map((_, index) => (
+                {leaderboard.slice(0, 5).map((_, index) => (
                   <Cell key={index} fill={RANK_COLORS[index] ?? RANK_COLORS[4]} />
                 ))}
               </Bar>
@@ -134,7 +134,7 @@ export function TopCompletersChart() {
 
         {/* Ranked List */}
         <div className="flex flex-col gap-2">
-          {leaderboard.map((person, index) => {
+          {leaderboard.slice(0, 8).map((person, index) => {
             const RankIcon = RANK_ICONS[index]
             return (
               <div

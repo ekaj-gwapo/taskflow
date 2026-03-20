@@ -10,7 +10,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { ClipboardList, Clock, CheckCircle2, AlertTriangle, Bell, ChevronRight } from "lucide-react"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
-import { formatDate, formatDateTime } from "@/lib/utils"
+import { cn, formatDate, formatDateTime } from "@/lib/utils"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import type { Task, User } from "@/lib/store"
 
 function NoteReminder({ task }: { task: Task }) {
@@ -132,12 +133,25 @@ function EmployeeTaskCard({
 
 export function EmployeeDashboard() {
   const { tasks, currentUser, canAccessTask } = useTaskContext()
+  const [selectedCategory, setSelectedCategory] = useState<"individual" | "team" | "profile">("individual")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>("all")
 
-  const myTasks = useMemo(() => {
-    return tasks.filter((t) => t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)
+  const individualTasks = useMemo(() => {
+    return tasks.filter((t) => 
+      ((t.assignees?.length === 1 && t.assignees[0].id === currentUser?.id) || 
+       (t.assigneeId === currentUser?.id && (!t.assignees || t.assignees.length <= 1)))
+    )
   }, [tasks, currentUser])
+
+  const teamTasks = useMemo(() => {
+    return tasks.filter((t) => 
+      (t.assignees && t.assignees.length > 1 && t.assignees.some(a => a.id === currentUser?.id))
+    )
+  }, [tasks, currentUser])
+
+  const currentCategoryTasks = selectedCategory === "individual" ? individualTasks : teamTasks
+
 
   // Ensure selected task is accessible
   useEffect(() => {
@@ -147,19 +161,20 @@ export function EmployeeDashboard() {
   }, [selectedTask, canAccessTask])
 
   const filteredTasks = useMemo(() => {
-    if (filterStatus === "all") return myTasks
-    return myTasks.filter((t) => t.status?.toLowerCase() === filterStatus)
-  }, [myTasks, filterStatus])
+    if (filterStatus === "all") return currentCategoryTasks
+    return currentCategoryTasks.filter((t) => t.status?.toLowerCase() === filterStatus)
+  }, [currentCategoryTasks, filterStatus])
 
-  const todo = myTasks.filter((t) => t.status?.toLowerCase() === "todo").length
-  const inProgress = myTasks.filter((t) => t.status?.toLowerCase() === "in-progress").length
-  const completed = myTasks.filter((t) => t.status?.toLowerCase() === "completed").length
-  const overdue = myTasks.filter(
+  const myTasks = [...individualTasks, ...teamTasks]
+  const todo = currentCategoryTasks.filter((t) => t.status?.toLowerCase() === "todo").length
+  const inProgress = currentCategoryTasks.filter((t) => t.status?.toLowerCase() === "in-progress").length
+  const completed = currentCategoryTasks.filter((t) => t.status?.toLowerCase() === "completed").length
+  const overdue = currentCategoryTasks.filter(
     (t) => t.status?.toLowerCase() !== "completed" && new Date(t.dueDate) < new Date()
   ).length
 
   const stats = [
-    { label: "My Tasks", value: myTasks.length, icon: ClipboardList, iconBg: "bg-primary/10", iconColor: "text-primary" },
+    { label: selectedCategory === "individual" ? "Individual Tasks" : "Team Tasks", value: currentCategoryTasks.length, icon: ClipboardList, iconBg: "bg-primary/10", iconColor: "text-primary" },
     { label: "In Progress", value: inProgress, icon: Clock, iconBg: "bg-[hsl(var(--warning))]/10", iconColor: "text-[hsl(var(--warning))]" },
     { label: "Completed", value: completed, icon: CheckCircle2, iconBg: "bg-[hsl(var(--success))]/10", iconColor: "text-[hsl(var(--success))]" },
     { label: "Overdue", value: overdue, icon: AlertTriangle, iconBg: "bg-destructive/10", iconColor: "text-destructive" },
@@ -170,8 +185,8 @@ export function EmployeeDashboard() {
       {/* Sidebar with My Tasks and Profile */}
       <div className="hidden lg:block">
         <EmployeeSidebar
-          selectedEmployeeId={null}
-          onSelectEmployee={() => {}}
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
         />
       </div>
 
@@ -198,7 +213,7 @@ export function EmployeeDashboard() {
 
           {/* Urgent Tasks Section */}
           <UrgentTasksSection 
-            tasks={myTasks} 
+            tasks={currentCategoryTasks} 
             onSelectTask={(task) => setSelectedTask(task)} 
           />
 
@@ -207,7 +222,7 @@ export function EmployeeDashboard() {
             <div className="flex items-center justify-between">
               <TabsList className="bg-secondary border border-border h-9">
                 <TabsTrigger value="all" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground">
-                  All ({myTasks.length})
+                  All ({currentCategoryTasks.length})
                 </TabsTrigger>
                 <TabsTrigger value="todo" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground">
                   To Do ({todo})
@@ -222,9 +237,52 @@ export function EmployeeDashboard() {
             </div>
 
             <TabsContent value={filterStatus}>
-              {filteredTasks.length === 0 ? (
+              {selectedCategory === "profile" ? (
+                 <div className="py-12 text-center text-sm text-muted-foreground rounded-lg border border-border bg-card mt-4">
+                  Viewing Profile Settings in sidebar.
+                </div>
+              ) : filteredTasks.length === 0 ? (
                 <div className="py-12 text-center text-sm text-muted-foreground rounded-lg border border-border bg-card mt-4">
                   No tasks in this category.
+                </div>
+              ) : selectedCategory === "team" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                  {filteredTasks.map((task) => (
+                    <Card 
+                      key={task.id} 
+                      className={cn(
+                        "cursor-pointer transition-all hover:shadow-md border-t-4",
+                        selectedTask?.id === task.id ? "ring-2 ring-primary border-primary" : "border-t-[hsl(var(--chart-2))]",
+                        task.status === "completed" ? "opacity-75" : ""
+                      )}
+                      onClick={() => setSelectedTask(selectedTask?.id === task.id ? null : task)}
+                    >
+                      <CardContent className="p-4 flex flex-col h-full">
+                        <div className="flex justify-between items-start mb-2">
+                          <StatusBadge status={task.status} />
+                          <PriorityBadge priority={task.priority} />
+                        </div>
+                        <h3 className="font-bold text-sm mb-1 line-clamp-1">{task.title}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-2 flex-1 mb-3">
+                          {task.description}
+                        </p>
+                        <div className="flex items-center justify-between mt-auto">
+                          <div className="flex -space-x-2 overflow-hidden">
+                            {task.assignees?.map((a) => (
+                              <Avatar key={a.id} className="h-6 w-6 border-2 border-background">
+                                <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
+                                  {a.name[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                            ))}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-medium">
+                            Due {formatDate(task.dueDate)}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               ) : (
                 <div className="grid gap-3 mt-4">
