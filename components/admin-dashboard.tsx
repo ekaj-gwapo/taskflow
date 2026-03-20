@@ -176,8 +176,8 @@ export function AdminDashboard() {
   }, [tasks, filterStatus, searchQuery, selectedEmployeeId])
 
   return (
-    <div className="flex flex-1 min-h-0">
-      <div className="hidden lg:block w-80 border-r">
+    <div className="flex flex-1 min-h-0 overflow-hidden relative">
+      <div className="hidden lg:block w-80 shrink-0 border-r border-border overflow-y-auto">
         <AdminSidebar
           selectedEmployeeId={selectedEmployeeId}
           onSelectEmployee={(id) => {
@@ -187,7 +187,7 @@ export function AdminDashboard() {
         />
       </div>
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
         <StatsCards tasks={tasks} />
         {!selectedEmployeeId && <TopCompletersChart />}
 
@@ -245,7 +245,7 @@ export function AdminDashboard() {
       </div>
 
       {liveSelectedTask && (
-        <div className="w-[380px] border-l">
+        <div className="w-[380px] shrink-0 border-l border-border overflow-y-auto bg-background shadow-xl lg:shadow-none absolute lg:relative right-0 h-full z-10">
           <TaskDetailPanel
             task={liveSelectedTask}
             onClose={() => setSelectedTask(null)}
@@ -256,7 +256,7 @@ export function AdminDashboard() {
       )}
 
       {showReport && (
-        <div className="w-[380px] border-l">
+        <div className="w-[380px] shrink-0 border-l border-border overflow-y-auto bg-background shadow-xl lg:shadow-none absolute lg:relative right-0 h-full z-10">
           <WeeklyReportPanel onClose={() => setShowReport(false)} />
         </div>
       )}

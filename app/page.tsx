@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -83,6 +84,14 @@ function HeroConfetti() {
 }
 
 export default function Home() {
+  const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem("token")) {
+      router.replace("/dashboard")
+    }
+  }, [router])
+
   return (
     <div className="min-h-screen bg-[#f9f6f0] relative">
 
