@@ -13,122 +13,64 @@ const dbGet = promisify(db.get.bind(db));
 const dbAll = promisify(db.all.bind(db));
 
 async function seedData() {
+  console.log('--- Database Reset & Seeding Started ---');
   try {
-    // Create sample employees
-    const employee1Id = uuidv4();
-    const employee2Id = uuidv4();
-    const adminId = uuidv4();
+    // 1. Clear all data
+    console.log('Clearing tables...');
+    const tables = ['task_assignments', 'step_notes', 'progress_notes', 'action_steps', 'tasks', 'users'];
+    for (const table of tables) {
+      try {
+        await dbRun(`DELETE FROM ${table}`);
+      } catch (e: any) {
+        console.warn(`  ! Could not clear ${table} (it might not exist): ${e.message}`);
+      }
+    }
 
     const hashedPassword = await bcrypt.hash('Password123!', 10);
 
-    // Insert employees
+    // Create Super Admin (SUPERADMIN)
+    const superAdminId = uuidv4();
     await dbRun(`
-      INSERT OR IGNORE INTO users (id, name, email, password, role, phone, createdAt, updatedAt)
+      INSERT INTO users (id, name, email, password, role, phone, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [employee1Id, 'John Doe', 'john@example.com', hashedPassword, 'EMPLOYEE', '555-0001']);
+    `, [superAdminId, 'Super Admin', 'superadmin@example.com', hashedPassword, 'SUPERADMIN', '555-0000']);
 
+    // Create Head Admin (HEAD_ADMIN)
+    const headAdminId = uuidv4();
     await dbRun(`
-      INSERT OR IGNORE INTO users (id, name, email, password, role, phone, createdAt, updatedAt)
+      INSERT INTO users (id, name, email, password, role, phone, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [employee2Id, 'Jane Smith', 'jane@example.com', hashedPassword, 'EMPLOYEE', '555-0002']);
+    `, [headAdminId, 'Head Admin', 'headadmin@example.com', hashedPassword, 'HEAD_ADMIN', '555-0001']);
 
-    // Insert admin
+    // Create 2nd Admin (ADMIN)
+    const adminId = uuidv4();
     await dbRun(`
-      INSERT OR IGNORE INTO users (id, name, email, password, role, phone, createdAt, updatedAt)
+      INSERT INTO users (id, name, email, password, role, phone, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [adminId, 'Admin User', 'admin@example.com', hashedPassword, 'ADMIN', '555-0000']);
+    `, [adminId, 'Second Admin', 'admin@example.com', hashedPassword, 'ADMIN', '555-0002']);
 
-    // Create sample tasks assigned to employees
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const task1Id = uuidv4();
+    // Create Regular Employee (EMPLOYEE)
+    const employeeId = uuidv4();
     await dbRun(`
-      INSERT OR IGNORE INTO tasks (id, title, description, priority, status, dueDate, assigneeId, createdById, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [
-      task1Id,
-      'Complete project documentation',
-      'Write comprehensive documentation for the new feature',
-      'HIGH',
-      'TODO',
-      tomorrow.toISOString(),
-      employee1Id,
-      adminId
-    ]);
+      INSERT INTO users (id, name, email, password, role, phone, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    `, [employeeId, 'Regular Employee', 'employee@example.com', hashedPassword, 'EMPLOYEE', '555-0003']);
 
-    const task2Id = uuidv4();
-    await dbRun(`
-      INSERT OR IGNORE INTO tasks (id, title, description, priority, status, dueDate, assigneeId, createdById, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [
-      task2Id,
-      'Review code changes',
-      'Review the pull request and provide feedback',
-      'MEDIUM',
-      'IN_PROGRESS',
-      tomorrow.toISOString(),
-      employee1Id,
-      adminId
-    ]);
-
-    const task3Id = uuidv4();
-    await dbRun(`
-      INSERT OR IGNORE INTO tasks (id, title, description, priority, status, dueDate, assigneeId, createdById, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [
-      task3Id,
-      'Update database schema',
-      'Migrate the database to support new requirements',
-      'HIGH',
-      'TODO',
-      tomorrow.toISOString(),
-      employee2Id,
-      adminId
-    ]);
-
-    const task4Id = uuidv4();
-    await dbRun(`
-      INSERT OR IGNORE INTO tasks (id, title, description, priority, status, dueDate, assigneeId, createdById, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [
-      task4Id,
-      'Write unit tests',
-      'Increase test coverage for the authentication module',
-      'MEDIUM',
-      'COMPLETED',
-      tomorrow.toISOString(),
-      employee2Id,
-      adminId
-    ]);
-
-    // Add action steps to a task
-    const step1Id = uuidv4();
-    await dbRun(`
-      INSERT OR IGNORE INTO action_steps (id, title, completed, taskId, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [step1Id, 'Create documentation template', 0, task1Id]);
-
-    const step2Id = uuidv4();
-    await dbRun(`
-      INSERT OR IGNORE INTO action_steps (id, title, completed, taskId, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [step2Id, 'Write implementation guide', 0, task1Id]);
-
-    console.log('✅ Successfully seeded sample data:');
+    console.log('✅ Successfully seeded sample data to start from zero:');
     console.log('');
-    console.log('Employee Users:');
-    console.log('  Email: john@example.com | Password: Password123!');
-    console.log('  Email: jane@example.com | Password: Password123!');
+    console.log('Super Admin (SUPERADMIN):');
+    console.log('  Email: superadmin@example.com | Password: Password123!');
     console.log('');
-    console.log('Admin User:');
+    console.log('Head Admin (HEAD_ADMIN):');
+    console.log('  Email: headadmin@example.com | Password: Password123!');
+    console.log('');
+    console.log('2nd Admin (ADMIN):');
     console.log('  Email: admin@example.com | Password: Password123!');
     console.log('');
-    console.log('Sample Tasks:');
-    console.log('  ✓ Complete project documentation (John - TODO)');
-    console.log('  ✓ Review code changes (John - IN_PROGRESS)');
-    console.log('  ✓ Update database schema (Jane - TODO)');
-    console.log('  ✓ Write unit tests (Jane - COMPLETED)');
+    console.log('Regular Employee (EMPLOYEE):');
+    console.log('  Email: employee@example.com | Password: Password123!');
+    console.log('');
+    
   } catch (error: any) {
     console.error('Error seeding data:', error.message);
   } finally {

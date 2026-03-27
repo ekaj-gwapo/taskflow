@@ -17,10 +17,12 @@ export async function GET(
     const task: any = await db.getOne(`
       SELECT t.*, 
              u1.name as assigneeName, u1.email as assigneeEmail, u1.role as assigneeRole,
-             u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole
+             u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole,
+             u3.name as delegatorName, u3.email as delegatorEmail, u3.role as delegatorRole, u3.avatarUrl as delegatorAvatar
       FROM tasks t
       LEFT JOIN users u1 ON t.assigneeId = u1.id
       LEFT JOIN users u2 ON t.createdById = u2.id
+      LEFT JOIN users u3 ON t.delegatedById = u3.id
       WHERE LOWER(t.id) = ?
     `, [taskId])
 
@@ -64,6 +66,7 @@ export async function GET(
       assigneeName: assigneesData[0]?.name || null,
       assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
       createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole } : null,
+      delegatedBy: task.delegatedById ? { id: task.delegatedById, name: task.delegatorName, email: task.delegatorEmail, role: task.delegatorRole, avatar: task.delegatorAvatar } : null,
       actionSteps: actionStepsWithNotes,
       progressNotes
     }
@@ -88,8 +91,8 @@ export async function PUT(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { status, priority } = await request.json()
-    console.debug("PUT /api/tasks/:id", { id: (await params).id, body: { status, priority }, user: auth.user })
+    const { status, priority, assigneeIds } = await request.json()
+    console.debug("PUT /api/tasks/:id", { id: (await params).id, body: { status, priority, assigneeIds }, user: auth.user })
 
     const taskId = (await params).id?.toLowerCase()
 
@@ -141,23 +144,56 @@ export async function PUT(
       completedAt = existingTask.completedAt
     }
 
+    let newDelegatedById = existingTask.delegatedById;
+    let newDelegatedAt = existingTask.delegatedAt;
+    let newAssigneeId = existingTask.assigneeId;
+    if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
+      if (role === "ADMIN") {
+        newDelegatedById = auth.user!.id;
+        newDelegatedAt = new Date().toISOString();
+      } else if (role === "SUPERADMIN" || role === "HEAD_ADMIN") {
+        newDelegatedById = null;
+        newDelegatedAt = null;
+      }
+      newAssigneeId = assigneeIds.length > 0 ? assigneeIds[0] : null;
+    }
+
     await db.execute(`
       UPDATE tasks 
       SET status = COALESCE(?, status), 
           priority = COALESCE(?, priority),
           completedAt = COALESCE(?, completedAt),
+          delegatedById = ?,
+          delegatedAt = ?,
+          assigneeId = ?,
           updatedAt = ?
       WHERE LOWER(id) = ?
-    `, [dbStatus, priority ? priority.toUpperCase() : null, completedAt, new Date().toISOString(), (await params).id?.toLowerCase()])
+    `, [dbStatus, priority ? priority.toUpperCase() : null, completedAt, newDelegatedById, newDelegatedAt, newAssigneeId, new Date().toISOString(), (await params).id?.toLowerCase()])
+
+    // Handle task_assignments if updating assignees
+    if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
+      await db.execute("DELETE FROM task_assignments WHERE LOWER(taskId) = ?", [(await params).id?.toLowerCase()]);
+      
+      let points = 2;
+      const currentPriority = priority ? priority.toUpperCase() : existingTask.priority;
+      if (currentPriority === "MEDIUM") points = 3;
+      if (currentPriority === "HIGH") points = 5;
+
+      for (const uId of assigneeIds) {
+        await db.execute("INSERT INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?)", [(await params).id?.toLowerCase(), uId, points]);
+      }
+    }
 
     // Fetch updated task
     const task: any = await db.getOne(`
       SELECT t.*, 
              u1.name as assigneeName, u1.email as assigneeEmail, u1.role as assigneeRole,
-             u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole
+             u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole,
+             u3.name as delegatorName, u3.email as delegatorEmail, u3.role as delegatorRole, u3.avatarUrl as delegatorAvatar
       FROM tasks t
       LEFT JOIN users u1 ON t.assigneeId = u1.id
       LEFT JOIN users u2 ON t.createdById = u2.id
+      LEFT JOIN users u3 ON t.delegatedById = u3.id
       WHERE LOWER(t.id) = ?
     `, [(await params).id?.toLowerCase()])
 
@@ -183,6 +219,7 @@ export async function PUT(
       assigneeName: assigneesData[0]?.name || null,
       assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
       createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole } : null,
+      delegatedBy: task.delegatedById ? { id: task.delegatedById, name: task.delegatorName, email: task.delegatorEmail, role: task.delegatorRole, avatar: task.delegatorAvatar } : null,
       actionSteps: actionStepsWithNotes,
       progressNotes
     }

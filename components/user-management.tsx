@@ -217,8 +217,9 @@ export function UserManagement() {
                   value={newUser.role}
                   onChange={(e) => setNewUser({...newUser, role: e.target.value})}
                 >
-                  <option value="EMPLOYEE">Employee</option>
-                  <option value="ADMIN">Admin (Assign Tasks)</option>
+                  <option value="EMPLOYEE">Regular Employee</option>
+                  <option value="ADMIN">2nd Admin</option>
+                  <option value="HEAD_ADMIN">Head Admin</option>
                   <option value="SUPERADMIN">Super Admin</option>
                 </select>
               </div>
@@ -305,8 +306,8 @@ export function UserManagement() {
                           </div>
                         </td>
                         <td className="py-4 px-4">
-                          <Badge variant={user.role === "SUPERADMIN" ? "destructive" : user.role === "ADMIN" ? "default" : "secondary"}>
-                            {user.role}
+                          <Badge variant={user.role === "SUPERADMIN" ? "destructive" : user.role === "HEAD_ADMIN" ? "default" : user.role === "ADMIN" ? "secondary" : "outline"}>
+                            {user.role === "SUPERADMIN" ? "Super Admin" : user.role === "HEAD_ADMIN" ? "Head Admin" : user.role === "ADMIN" ? "2nd Admin" : "Regular Employee"}
                           </Badge>
                         </td>
                         <td className="py-4 px-4 text-xs text-muted-foreground">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { StatsCards } from "@/components/stats-cards"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, FileText, ChevronRight, Trash2, Filter, Users } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText } from "lucide-react"
 import { WeeklyReportPanel } from "@/components/weekly-report-panel"
 import { TopCompletersChart } from "@/components/top-completers-chart"
 import { WorkloadDistribution } from "@/components/workload-distribution"
@@ -44,11 +44,19 @@ function TaskRow({
   onSelect,
   isSelected,
   onDelete,
+  isDelegatedView,
+  currentUserRole,
+  currentUserId,
+  taskCreatorId,
 }: {
   task: Task
   onSelect: () => void
   isSelected: boolean
   onDelete: () => void
+  isDelegatedView?: boolean
+  currentUserRole?: string
+  currentUserId?: string
+  taskCreatorId?: string
 }) {
   const isOverdue =
     task.status !== "completed" && new Date(task.dueDate) < new Date()
@@ -67,6 +75,12 @@ function TaskRow({
           <span className="text-sm font-medium truncate">
             {task.title}
           </span>
+          {task.delegatedById && (
+            <span className="flex items-center gap-1 text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+              <Share2 className="h-2.5 w-2.5" />
+              Delegated
+            </span>
+          )}
           {isOverdue && (
             <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">
               Overdue
@@ -124,14 +138,24 @@ function TaskRow({
           )}
         </div>
 
-        {/* DUE DATE */}
-        <div className="w-24 text-right text-xs whitespace-nowrap">
-          {formatDate(task.dueDate)}
+        {/* DUE DATE OR DELEGATED AT */}
+        <div className="w-24 text-right text-xs whitespace-nowrap text-muted-foreground">
+          {isDelegatedView && task.delegatedAt ? (
+            <div className="flex flex-col items-end">
+              <span className="font-medium text-foreground">{formatDate(task.delegatedAt)}</span>
+              <span className="text-[10px] opacity-70">
+                {new Date(task.delegatedAt).toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })}
+              </span>
+            </div>
+          ) : (
+            formatDate(task.dueDate)
+          )}
         </div>
       </div>
 
       <div className="flex items-center justify-end gap-2 ml-4 w-16">
-        <AlertDialog>
+        {(currentUserRole === "SUPERADMIN" || currentUserRole === "HEAD_ADMIN" || taskCreatorId === currentUserId) && (
+          <AlertDialog>
           <AlertDialogTrigger asChild>
             <button
               onClick={(e) => e.stopPropagation()}
@@ -162,6 +186,7 @@ function TaskRow({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        )}
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </div>
     </div>
@@ -222,7 +247,7 @@ function TeamProjectCard({ task, onSelect, isSelected }: { task: Task; onSelect:
 }
 
 export function AdminDashboard() {
-  const { tasks, allEmployees, deleteTask } = useTaskContext()
+  const { tasks, allEmployees, deleteTask, currentUser } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showReport, setShowReport] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -235,6 +260,7 @@ export function AdminDashboard() {
   const [teamSearchQuery, setTeamSearchQuery] = useState("")
   
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+  const [myTaskTab, setMyTaskTab] = useState<"assigned" | "delegated">("assigned")
 
   // Track the newest completed task to trigger notifications
   const [lastCheckTime, setLastCheckTime] = useState(Date.now());
@@ -288,9 +314,18 @@ export function AdminDashboard() {
     return tasks.find(t => t.id === selectedTask.id) || null;
   }, [tasks, selectedTask])
 
-  const selectedEmployee = selectedEmployeeId
-    ? allEmployees.find((e) => e.id === selectedEmployeeId) ?? null
-    : null
+  const matchesHierarchy = useCallback((t: Task) => {
+    if (selectedEmployeeId === null) return true // Dashboard view
+    if (selectedEmployeeId === 'team-projects') return (t.assignees && t.assignees.length > 1)
+    if (selectedEmployeeId === 'my-tasks') {
+      if (myTaskTab === 'assigned') {
+        return (t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)
+      } else {
+        return t.delegatedById === currentUser?.id
+      }
+    }
+    return (t.assignees?.some(a => a.id === selectedEmployeeId) || t.assigneeId === selectedEmployeeId)
+  }, [selectedEmployeeId, myTaskTab, currentUser])
 
   const filteredTasks = useMemo(() => {
     const isTeamView = selectedEmployeeId === 'team-projects'
@@ -312,10 +347,7 @@ export function AdminDashboard() {
       }
 
       return (
-        (selectedEmployeeId === null || 
-          (selectedEmployeeId === 'team-projects' ? (t.assignees && t.assignees.length > 1) : 
-           (t.assignees?.some(a => a.id === selectedEmployeeId) || t.assigneeId === selectedEmployeeId))
-        ) &&
+        matchesHierarchy(t) &&
         matchesStatus &&
         (currentPriority === "all" || priority === currentPriority) &&
         (
@@ -326,7 +358,11 @@ export function AdminDashboard() {
         )
       )
     })
-  }, [tasks, filterStatus, filterPriority, searchQuery, teamFilterStatus, teamFilterPriority, teamSearchQuery, selectedEmployeeId])
+  }, [tasks, filterStatus, filterPriority, searchQuery, teamFilterStatus, teamFilterPriority, teamSearchQuery, selectedEmployeeId, myTaskTab, currentUser])
+
+  const selectedEmployee = selectedEmployeeId
+    ? allEmployees.find((e) => e.id === selectedEmployeeId) ?? null
+    : null
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden relative">
@@ -341,7 +377,7 @@ export function AdminDashboard() {
       </div>
 
       <div className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
-        <StatsCards tasks={selectedEmployeeId === 'team-projects' ? tasks.filter(t => t.assignees && t.assignees.length > 1) : selectedEmployeeId ? tasks.filter(t => t.assignees?.some(a => a.id === selectedEmployeeId) || t.assigneeId === selectedEmployeeId) : tasks} />
+        <StatsCards tasks={tasks.filter(matchesHierarchy)} />
 
         {!selectedEmployeeId && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
@@ -416,6 +452,19 @@ export function AdminDashboard() {
           </div>
         </div>
 
+        {selectedEmployeeId === 'my-tasks' && (
+          <Tabs value={myTaskTab} onValueChange={(v) => setMyTaskTab(v as any)} className="w-full">
+            <TabsList className="bg-secondary/50 border border-border p-1">
+              <TabsTrigger value="assigned" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Assigned to Me
+              </TabsTrigger>
+              <TabsTrigger value="delegated" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Delegated by Me
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+
         {/* TABLE OR GRID */}
         {selectedEmployeeId === 'team-projects' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
@@ -448,8 +497,12 @@ export function AdminDashboard() {
                 <div className="hidden md:flex items-center gap-6">
                   <span className="w-24 text-center text-xs text-muted-foreground font-semibold">Priority</span>
                   <span className="w-32 text-center text-xs text-muted-foreground font-semibold">Status</span>
-                  <span className="w-40 text-xs text-muted-foreground font-semibold">Assignee</span>
-                  <span className="w-24 text-right text-xs text-muted-foreground font-semibold">Due Date</span>
+                  <span className="w-40 text-xs text-muted-foreground font-semibold">
+                    {selectedEmployeeId === 'my-tasks' && myTaskTab === 'delegated' ? 'Delegated To' : 'Assignee'}
+                  </span>
+                  <span className="w-24 text-right text-xs text-muted-foreground font-semibold">
+                    {selectedEmployeeId === 'my-tasks' && myTaskTab === 'delegated' ? 'Delegated At' : 'Due Date'}
+                  </span>
                 </div>
 
                 <span className="w-16" />
@@ -464,6 +517,10 @@ export function AdminDashboard() {
                       task={task}
                       onSelect={() => setSelectedTask(task)}
                       isSelected={selectedTask?.id === task.id}
+                      isDelegatedView={selectedEmployeeId === 'my-tasks' && myTaskTab === 'delegated'}
+                      currentUserRole={currentUser?.role?.toUpperCase()}
+                      currentUserId={currentUser?.id}
+                      taskCreatorId={task.createdBy?.id}
                       onDelete={() => {
                         deleteTask(task.id);
                         if (selectedTask?.id === task.id) setSelectedTask(null);
@@ -491,7 +548,11 @@ export function AdminDashboard() {
           <TaskDetailPanel
             task={liveSelectedTask}
             onClose={() => setSelectedTask(null)}
-            showDeleteButton={true}
+            showDeleteButton={
+              currentUser?.role?.toUpperCase() === "SUPERADMIN" || 
+              currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || 
+              liveSelectedTask.createdBy?.id === currentUser?.id
+            }
             showStatusControl={true}
           />
         </div>

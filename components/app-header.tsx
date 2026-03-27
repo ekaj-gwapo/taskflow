@@ -2,7 +2,7 @@
 
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, LogOut } from "lucide-react"
+import { LayoutDashboard, LogOut, Shield } from "lucide-react"
 
 export function AppHeader() {
   const { currentUser, currentRole, logout } = useTaskContext()
@@ -21,12 +21,23 @@ export function AppHeader() {
           {/* To add your logo: Replace the above div with: <img src="/logo.png" alt="Logo" className="h-10 w-10 rounded-lg object-contain" /> */}
           
           <span className="font-semibold text-foreground tracking-tight">TaskFlow</span>
-          <span className="hidden sm:inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            {currentRole === "admin" ? "Admin" : "Employee"}
+          <span className="hidden sm:inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground uppercase">
+            {currentRole === "superadmin" ? "Super Admin" : currentRole === "head_admin" ? "Head Admin" : currentRole === "admin" ? "2nd Admin" : "Employee"}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {currentRole === "superadmin" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.href = "/super-admin"}
+              className="hidden md:flex"
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Users
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

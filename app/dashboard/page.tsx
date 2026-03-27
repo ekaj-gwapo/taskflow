@@ -32,7 +32,7 @@ function AppContent() {
     <div className="flex flex-col h-screen">
       <AppHeader />
       <main className="flex-1 flex min-h-0">
-        {currentRole === "superadmin" ? (
+        {(currentRole === "superadmin") ? (
           <div className="flex-1 flex min-h-0">
             <div className="hidden lg:block w-80 shrink-0 border-r border-border">
               <AdminSidebar selectedEmployeeId={null} onSelectEmployee={() => {}} />
@@ -41,7 +41,7 @@ function AppContent() {
               <UserManagement />
             </div>
           </div>
-        ) : currentRole === "admin" ? (
+        ) : (currentRole === "admin" || currentRole === "head_admin") ? (
           <AdminDashboard />
         ) : (
           <EmployeeDashboard />

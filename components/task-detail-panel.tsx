@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { X, Calendar, User, Send, MessageSquare, Trash2 } from "lucide-react"
+import { X, Calendar, User, Send, MessageSquare, Trash2, Share2 } from "lucide-react"
 import { toast } from "sonner"
 import type { Task, TaskStatus } from "@/lib/store"
 import { formatDistanceToNow } from "date-fns"
@@ -46,7 +46,7 @@ export function TaskDetailPanel({
   showNoteInput = false,
   showDeleteButton = false,
 }: TaskDetailPanelProps) {
-  const { currentRole, currentUser, updateTaskStatus, addProgressNote, deleteTask, addActionStep, updateActionStepStatus, deleteActionStep, addStepNote, canAccessTask } = useTaskContext()
+  const { currentRole, currentUser, updateTaskStatus, addProgressNote, deleteTask, addActionStep, updateActionStepStatus, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees } = useTaskContext()
   const [noteContent, setNoteContent] = useState("")
 
   const isStatusEditable = showStatusControl && currentRole !== "admin"
@@ -117,6 +117,16 @@ export function TaskDetailPanel({
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
             {task.description}
           </p>
+          {task.createdBy && (
+            <div className="text-xs text-muted-foreground mt-2 flex flex-col gap-0.5">
+              <span>Created by <span className="font-medium text-foreground/80">{task.createdBy.name}</span> <span className="uppercase text-[9px] bg-secondary px-1 py-0.5 rounded ml-1">{task.createdBy.role}</span></span>
+              {task.delegatedBy && (
+                <span className="flex items-center gap-1 mt-0.5">
+                  <span className="text-primary/70">↳</span> Delegated by <span className="font-medium text-foreground/80">{task.delegatedBy.name}</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <Button
           variant="ghost"
@@ -167,9 +177,26 @@ export function TaskDetailPanel({
             </div>
 
             <div className="flex flex-col gap-2.5">
-              <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
-                <User className="h-3 w-3" />
-                Assignees
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                  <User className="h-3 w-3" />
+                  Assignees
+                </div>
+                {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && (
+                  <Select
+                    value={task.assignees?.[0]?.id || ""}
+                    onValueChange={(val) => updateTaskAssignees(task.id, [val])}
+                  >
+                    <SelectTrigger className="h-6 text-xs bg-secondary hover:bg-secondary/80 border-0 shadow-none w-max max-w-[140px] px-2 gap-1.5 focus:ring-0">
+                       <span className="truncate pr-1 text-muted-foreground font-semibold uppercase text-[9px]">Reassign</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allEmployees.map((emp) => (
+                        <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="grid gap-2">
                 {task.assignees && task.assignees.length > 0 ? (
@@ -223,6 +250,22 @@ export function TaskDetailPanel({
                   </span>
                   <span className="text-xs text-[hsl(var(--success))] font-bold bg-[hsl(var(--success))]/5 px-2 py-1 rounded-md">
                     {new Date(task.completedAt).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              )}
+              {task.delegatedAt && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground flex items-center gap-2">
+                    <Share2 className="h-3.5 w-3.5 text-blue-500/70" />
+                    Delegated At
+                  </span>
+                  <span className="text-xs font-medium px-2 py-1 rounded-md text-blue-600 bg-blue-50 border border-blue-100/50">
+                    {new Date(task.delegatedAt).toLocaleString(undefined, {
                       month: "short",
                       day: "numeric",
                       hour: "numeric",

@@ -37,10 +37,12 @@ async function verify() {
       dueDate DATETIME,
       assigneeId TEXT,
       createdById TEXT,
+      delegatedById TEXT,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (assigneeId) REFERENCES users(id),
-      FOREIGN KEY (createdById) REFERENCES users(id)
+      FOREIGN KEY (createdById) REFERENCES users(id),
+      FOREIGN KEY (delegatedById) REFERENCES users(id)
     );
   `);
 

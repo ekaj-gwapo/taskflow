@@ -27,6 +27,7 @@ interface TaskContextType {
   tasks: Task[]
   createTask: (task: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees"> & { assigneeIds: string[] }, actionSteps?: string[]) => void
   updateTaskStatus: (taskId: string, status: TaskStatus) => void
+  updateTaskAssignees: (taskId: string, assigneeIds: string[]) => void
   deleteTask: (taskId: string) => void
   addProgressNote: (taskId: string, content: string) => void
 
@@ -165,6 +166,47 @@ const url = `/api/tasks/${taskId}`
       } catch (error) {
         console.error("Update task status error:", error)
         if (!toast) return // already toasted
+      }
+    },
+    [toast]
+  )
+
+  const updateTaskAssignees = useCallback(
+    async (taskId: string, assigneeIds: string[]) => {
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) return
+        
+        const url = `/api/tasks/${taskId}`
+        const response = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ assigneeIds }),
+        })
+
+        if (!response.ok) {
+           const errorData = await response.json()
+           throw new Error(errorData.error || "Failed to update task assignees")
+        }
+
+        const data = await response.json()
+        setTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? data.task : t))
+        )
+        toast({
+          title: "Assignees Updated",
+          description: "Task assignees updated successfully.",
+        })
+      } catch (error) {
+        console.error("Update task assignees error:", error)
+        toast({
+          title: "Update Failed",
+          description: "Failed to update task assignees.",
+          variant: "destructive",
+        })
       }
     },
     [toast]
@@ -423,7 +465,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
 
   // Access Control: Get only tasks visible to current employee
   const getEmployeeVisibleTasks = useCallback(() => {
-    if (currentRole === "admin" || currentRole === "superadmin") {
+    if (currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") {
       return []
     }
     if (currentRole === "employee" && currentUser) {
@@ -435,7 +477,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
   // Access Control: Check if current user can access a specific task
   const canAccessTask = useCallback(
     (taskId: string) => {
-      if (currentRole === "admin" || currentRole === "superadmin") {
+      if (currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") {
         return true
       }
       if (currentRole === "employee" && currentUser) {
@@ -522,14 +564,20 @@ const url = `/api/tasks/${taskId}/progress-notes`
   }, [])
 
   const refreshUsers = useCallback(async () => {
-    if (!currentUser || (currentRole !== 'admin' && currentRole !== 'superadmin')) return;
+    if (!currentUser || (currentRole !== 'admin' && currentRole !== 'superadmin' && currentRole !== 'head_admin')) return;
     try {
       const token = localStorage.getItem('token');
       const headers = { 'Authorization': `Bearer ${token}` };
       const usersRes = await fetch('/api/users', { headers });
       if (usersRes.ok) {
         const data = await usersRes.json();
-        setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee'));
+        if (currentRole === 'superadmin') {
+          setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() !== 'superadmin'));
+        } else if (currentRole === 'head_admin') {
+          setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee' || u.role.toLowerCase() === 'admin'));
+        } else {
+          setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee'));
+        }
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -573,6 +621,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
         tasks,
         createTask,
         updateTaskStatus,
+        updateTaskAssignees,
         deleteTask,
         addProgressNote,
         addActionStep,

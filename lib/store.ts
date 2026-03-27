@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "employee" | "superadmin"
+export type UserRole = "admin" | "employee" | "superadmin" | "head_admin"
 
 export interface User {
   id: string
@@ -59,6 +59,22 @@ export interface Task {
     avatar?: string
     points: number
   }[]
+  createdBy?: {
+    id: string
+    name: string
+    email: string
+    role: UserRole
+    avatar?: string
+  } | null
+  delegatedById?: string | null
+  delegatedBy?: {
+    id: string
+    name: string
+    email: string
+    role: UserRole
+    avatar?: string
+  } | null
+  delegatedAt?: string | null
   createdAt: string
   dueDate: string
   completedAt: string | null

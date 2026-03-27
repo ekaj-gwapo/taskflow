@@ -14,21 +14,25 @@ export async function GET(request: NextRequest) {
     const role = user.role.toUpperCase()
 
     let tasks: any[]
-    if (role === "ADMIN" || role === "SUPERADMIN") {
+    if (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN") {
       tasks = await db.getAll(`
         SELECT t.*, 
-               u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar
+               u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar,
+               u3.name as delegatorName, u3.email as delegatorEmail, u3.role as delegatorRole, u3.avatarUrl as delegatorAvatar
         FROM tasks t
         LEFT JOIN users u2 ON t.createdById = u2.id
+        LEFT JOIN users u3 ON t.delegatedById = u3.id
         ORDER BY t.createdAt DESC
       `) as any[]
     } else {
       tasks = await db.getAll(`
         SELECT t.*, 
-               u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar
+               u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar,
+               u3.name as delegatorName, u3.email as delegatorEmail, u3.role as delegatorRole, u3.avatarUrl as delegatorAvatar
         FROM tasks t
         JOIN task_assignments ta ON t.id = ta.taskId
         LEFT JOIN users u2 ON t.createdById = u2.id
+        LEFT JOIN users u3 ON t.delegatedById = u3.id
         WHERE ta.userId = ?
         ORDER BY t.createdAt DESC
       `, [user.id]) as any[]
@@ -59,6 +63,8 @@ export async function GET(request: NextRequest) {
         assigneeName: assigneesData[0]?.name || null,
         assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
         createdBy: t.createdById ? { id: t.createdById, name: t.creatorName, email: t.creatorEmail, role: t.creatorRole, avatar: t.creatorAvatar } : null,
+        delegatedBy: t.delegatedById ? { id: t.delegatedById, name: t.delegatorName, email: t.delegatorEmail, role: t.delegatorRole, avatar: t.delegatorAvatar } : null,
+        delegatedAt: t.delegatedAt || null,
         actionSteps: actionStepsWithNotes,
         progressNotes
       }
@@ -102,9 +108,9 @@ export async function POST(request: NextRequest) {
     
     // Insert task
     await db.execute(`
-      INSERT INTO tasks (id, title, description, priority, dueDate, assigneeId, createdById, status, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [taskId, title, description, taskPriority, new Date(dueDate).toISOString(), uIds[0], auth.user!.id, "TODO", new Date().toISOString(), new Date().toISOString()])
+      INSERT INTO tasks (id, title, description, priority, dueDate, assigneeId, createdById, delegatedById, status, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [taskId, title, description, taskPriority, new Date(dueDate).toISOString(), uIds[0] || null, auth.user!.id, null, "TODO", new Date().toISOString(), new Date().toISOString()])
 
     // Insert task assignees
     for (const uId of uIds) {
@@ -127,9 +133,11 @@ export async function POST(request: NextRequest) {
     // Fetch the created task to return it
     const task: any = await db.getOne(`
       SELECT t.*, 
-             u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar
+             u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar,
+             u3.name as delegatorName, u3.email as delegatorEmail, u3.role as delegatorRole, u3.avatarUrl as delegatorAvatar
       FROM tasks t
       LEFT JOIN users u2 ON t.createdById = u2.id
+      LEFT JOIN users u3 ON t.delegatedById = u3.id
       WHERE t.id = ?
     `, [taskId])
 
@@ -154,6 +162,7 @@ export async function POST(request: NextRequest) {
       assigneeName: assigneesData[0]?.name || null,
       assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
       createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole, avatar: task.creatorAvatar } : null,
+      delegatedBy: task.delegatedById ? { id: task.delegatedById, name: task.delegatorName, email: task.delegatorEmail, role: task.delegatorRole, avatar: task.delegatorAvatar } : null,
       actionSteps: actionStepsWithNotes,
       progressNotes: []
     }
