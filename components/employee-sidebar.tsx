@@ -214,7 +214,7 @@ export function EmployeeSidebar({
                     "block text-sm font-semibold",
                     selectedCategory === "individual" ? "text-white" : "text-foreground"
                   )}>
-                    Individual Tasks
+                    My Tasks
                   </span>
                   {hasUnseenIndividualTasks && (
                     <span className="inline-block h-2 w-2 rounded-full bg-destructive border border-background animate-pulse ml-2" />

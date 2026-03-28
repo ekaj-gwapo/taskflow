@@ -45,11 +45,10 @@ function NoteReminder({ task }: { task: Task }) {
   const progress = Math.min((minutes / 30) * 100, 100)
 
   return (
-    <div className={`flex items-center gap-2 mt-2 px-2.5 py-1.5 rounded-md text-xs ${
-      isOverdue
+    <div className={`flex items-center gap-2 mt-2 px-2.5 py-1.5 rounded-md text-xs ${isOverdue
         ? "bg-destructive/10 text-destructive"
         : "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]"
-    }`}>
+      }`}>
       {isOverdue ? (
         <Bell className="h-3 w-3 animate-pulse" />
       ) : (
@@ -90,11 +89,10 @@ function EmployeeTaskCard({
   return (
     <button
       onClick={onSelect}
-      className={`w-full text-left rounded-lg border transition-colors ${
-        isSelected
+      className={`w-full text-left rounded-lg border transition-colors ${isSelected
           ? "border-primary bg-primary/5"
           : "border-border bg-card hover:bg-accent/50"
-      }`}
+        }`}
     >
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
@@ -145,14 +143,14 @@ export function EmployeeDashboard() {
   const [filterStatus, setFilterStatus] = useState<string>("all")
 
   const individualTasks = useMemo(() => {
-    return tasks.filter((t) => 
-      ((t.assignees?.length === 1 && t.assignees[0].id === currentUser?.id) || 
-       (t.assigneeId === currentUser?.id && (!t.assignees || t.assignees.length <= 1)))
+    return tasks.filter((t) =>
+    ((t.assignees?.length === 1 && t.assignees[0].id === currentUser?.id) ||
+      (t.assigneeId === currentUser?.id && (!t.assignees || t.assignees.length <= 1)))
     )
   }, [tasks, currentUser])
 
   const teamTasks = useMemo(() => {
-    return tasks.filter((t) => 
+    return tasks.filter((t) =>
       (t.assignees && t.assignees.length > 1 && t.assignees.some(a => a.id === currentUser?.id))
     )
   }, [tasks, currentUser])
@@ -181,7 +179,7 @@ export function EmployeeDashboard() {
   ).length
 
   const stats = [
-    { label: selectedCategory === "individual" ? "Individual Tasks" : "Team Tasks", value: currentCategoryTasks.length, icon: ClipboardList, iconBg: "bg-primary/10", iconColor: "text-primary" },
+    { label: selectedCategory === "individual" ? "My Tasks" : "Team Tasks", value: currentCategoryTasks.length, icon: ClipboardList, iconBg: "bg-primary/10", iconColor: "text-primary" },
     { label: "In Progress", value: inProgress, icon: Clock, iconBg: "bg-[hsl(var(--warning))]/10", iconColor: "text-[hsl(var(--warning))]" },
     { label: "Completed", value: completed, icon: CheckCircle2, iconBg: "bg-[hsl(var(--success))]/10", iconColor: "text-[hsl(var(--success))]" },
     { label: "Overdue", value: overdue, icon: AlertTriangle, iconBg: "bg-destructive/10", iconColor: "text-destructive" },
@@ -219,9 +217,9 @@ export function EmployeeDashboard() {
           </div>
 
           {/* Urgent Tasks Section */}
-          <UrgentTasksSection 
-            tasks={currentCategoryTasks} 
-            onSelectTask={(task) => setSelectedTask(task)} 
+          <UrgentTasksSection
+            tasks={currentCategoryTasks}
+            onSelectTask={(task) => setSelectedTask(task)}
           />
 
           {/* Task Filter Tabs */}
@@ -245,7 +243,7 @@ export function EmployeeDashboard() {
 
             <TabsContent value={filterStatus}>
               {selectedCategory === "profile" ? (
-                 <div className="py-12 text-center text-sm text-muted-foreground rounded-lg border border-border bg-card mt-4">
+                <div className="py-12 text-center text-sm text-muted-foreground rounded-lg border border-border bg-card mt-4">
                   Viewing Profile Settings in sidebar.
                 </div>
               ) : filteredTasks.length === 0 ? (
@@ -255,8 +253,8 @@ export function EmployeeDashboard() {
               ) : selectedCategory === "team" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                   {filteredTasks.map((task) => (
-                    <Card 
-                      key={task.id} 
+                    <Card
+                      key={task.id}
                       className={cn(
                         "cursor-pointer transition-all hover:shadow-md border-t-4",
                         selectedTask?.id === task.id ? "ring-2 ring-primary border-primary" : "border-t-[hsl(var(--chart-2))]",
