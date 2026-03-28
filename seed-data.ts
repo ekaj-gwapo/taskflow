@@ -47,7 +47,7 @@ async function seedData() {
     await dbRun(`
       INSERT INTO users (id, name, email, password, role, phone, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [adminId, 'Second Admin', 'admin@example.com', hashedPassword, 'ADMIN', '555-0002']);
+    `, [adminId, 'Linmark G. Benlot', 'mark@gmail.com', hashedPassword, 'ADMIN', '555-0002']);
 
     // Create Regular Employee (EMPLOYEE)
     const employeeId = uuidv4();
@@ -65,7 +65,7 @@ async function seedData() {
     console.log('  Email: headadmin@example.com | Password: Password123!');
     console.log('');
     console.log('2nd Admin (ADMIN):');
-    console.log('  Email: admin@example.com | Password: Password123!');
+    console.log('  Email: mark@gmail.com | Password: Password123!');
     console.log('');
     console.log('Regular Employee (EMPLOYEE):');
     console.log('  Email: employee@example.com | Password: Password123!');

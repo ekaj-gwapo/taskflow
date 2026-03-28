@@ -49,7 +49,14 @@ export function TaskDetailPanel({
   const { currentRole, currentUser, updateTaskStatus, addProgressNote, deleteTask, addActionStep, updateActionStepStatus, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees } = useTaskContext()
   const [noteContent, setNoteContent] = useState("")
 
-  const isStatusEditable = showStatusControl && currentRole !== "admin"
+  const isAssignee = task.assigneeId === currentUser?.id || task.assignees?.some(a => a.id === currentUser?.id)
+  const isStatusEditable = showStatusControl && (
+    currentRole === "employee" || 
+    currentRole === "superadmin" ||
+    ((currentRole === "admin" || currentRole === "head_admin") && isAssignee)
+  )
+
+  const isEmployeeLike = currentRole === "employee" || ((currentRole === "admin" || currentRole === "head_admin") && isAssignee)
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     if (newStatus === "completed") {
@@ -155,7 +162,7 @@ export function TaskDetailPanel({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border">
-                      {!(currentRole === "employee" && task.status !== "todo") && (
+                      {!(isEmployeeLike && task.status !== "todo") && (
                         <SelectItem value="todo">To Do</SelectItem>
                       )}
                       <SelectItem value="in-progress">In Progress</SelectItem>
@@ -318,7 +325,7 @@ export function TaskDetailPanel({
             onUpdateStepStatus={handleUpdateActionStepStatus}
             onDeleteStep={handleDeleteActionStep}
             onAddStepNote={handleAddStepNote}
-            userRole={currentRole || undefined}
+            userRole={isEmployeeLike ? "employee" : currentRole || undefined}
             taskStatus={task.status}
           />
         </div>

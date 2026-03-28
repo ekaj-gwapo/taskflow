@@ -72,7 +72,7 @@ export function AdminSidebar({
   selectedEmployeeId,
   onSelectEmployee,
 }: AdminSidebarProps) {
-  const { allEmployees, tasks, currentUser, login } = useTaskContext()
+  const { allEmployees, tasks, currentUser, login, seenTaskIds } = useTaskContext()
   const [activeTab, setActiveTab] = useState<"employees" | "profile">("employees")
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [profileData, setProfileData] = useState({
@@ -139,6 +139,12 @@ export function AdminSidebar({
     .map((n) => n[0])
     .join("")
     .toUpperCase() || "A"
+
+  const hasUnseenTasks = tasks.some(t => 
+    (t.assigneeId === currentUser?.id || t.assignees?.some(a => a.id === currentUser?.id)) && 
+    !seenTaskIds.has(t.id) &&
+    t.status !== 'completed'
+  )
 
   return (
     <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg">
@@ -247,6 +253,9 @@ export function AdminSidebar({
                   )}>
                     My Tasks
                   </span>
+                  {hasUnseenTasks && (
+                    <span className="h-2.5 w-2.5 rounded-full bg-destructive border-2 border-background animate-pulse shadow-sm" />
+                  )}
                   <ChevronRight className={cn(
                     "h-3.5 w-3.5 shrink-0",
                     selectedEmployeeId === 'my-tasks' ? "text-white/70" : "text-muted-foreground"

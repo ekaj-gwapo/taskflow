@@ -6,8 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CheckCircle2, Clock } from "lucide-react"
 
-export function RecentlyCompletedTasks() {
-  const { tasks } = useTaskContext()
+interface RecentlyCompletedTasksProps {
+  onSelectTask?: (task: any) => void
+}
+
+export function RecentlyCompletedTasks({ onSelectTask }: RecentlyCompletedTasksProps) {
+  const { tasks, seenCompletedTaskIds, markCompletedAsSeen } = useTaskContext()
   
   const recentTasks = useMemo(() => {
     return tasks
@@ -17,7 +21,7 @@ export function RecentlyCompletedTasks() {
   }, [tasks])
   
   return (
-    <Card className="border-border bg-card flex flex-col">
+    <Card className="border-border bg-card flex flex-col shadow-sm">
       <CardHeader className="pb-3 bg-secondary/30 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -31,8 +35,23 @@ export function RecentlyCompletedTasks() {
           <div className="flex flex-col gap-3">
             {recentTasks.map(task => {
               const displayAssignees = task.assignees && task.assignees.length > 0 ? task.assignees : []
+              const isUnseen = !seenCompletedTaskIds.has(task.id)
+              
               return (
-                <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 transition-colors">
+                <button 
+                  key={task.id} 
+                  onClick={() => {
+                    if (onSelectTask) {
+                      onSelectTask(task)
+                    }
+                    markCompletedAsSeen(task.id)
+                  }}
+                  className="w-full flex items-start gap-3 p-3 rounded-lg border border-border bg-secondary/30 hover:bg-emerald-50/50 hover:border-emerald-200/50 transition-all text-left relative group"
+                >
+                  {isUnseen && (
+                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)] z-10" />
+                  )}
+                  
                   {displayAssignees.length > 0 ? (
                     <div className="flex -space-x-3 overflow-hidden shrink-0 items-center">
                       {displayAssignees.slice(0, 3).map((a) => (
@@ -60,23 +79,28 @@ export function RecentlyCompletedTasks() {
                     </Avatar>
                   )}
                   
-                  <div className="flex-1 min-w-0 flex flex-col justify-center h-8">
-                    <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <p className={cn(
+                      "text-sm font-semibold truncate transition-colors",
+                      isUnseen ? "text-emerald-700" : "text-foreground"
+                    )}>
+                      {task.title}
+                    </p>
                     <p className="text-[11px] text-muted-foreground truncate font-medium">
                       {displayAssignees.length > 0 
                         ? displayAssignees.map(a => a.name).join(", ") 
                         : "Unassigned"}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end shrink-0 text-muted-foreground">
-                    <span className="text-[10px] font-medium bg-secondary px-1.5 py-0.5 rounded-sm">
+                  <div className="flex flex-col items-end shrink-0 text-muted-foreground ml-auto">
+                    <span className="text-[10px] font-bold bg-emerald-100/50 text-emerald-700 px-1.5 py-0.5 rounded-sm">
                       {new Date(task.completedAt!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <span className="text-[9px] mt-1 opacity-70">
+                    <span className="text-[9px] mt-1 opacity-70 font-medium">
                       {new Date(task.completedAt!).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
@@ -90,3 +114,5 @@ export function RecentlyCompletedTasks() {
     </Card>
   )
 }
+
+import { cn } from "@/lib/utils"

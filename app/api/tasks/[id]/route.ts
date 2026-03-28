@@ -121,13 +121,21 @@ export async function PUT(
       if (priority !== undefined && priority !== existingTask.priority) {
         return NextResponse.json({ error: "Employees cannot update priority" }, { status: 403 })
       }
-    } else if (role === "ADMIN") {
-        // ADMIN can update priority and assignee (implicitly via other logic if added later), 
-        // but user specifically requested to restrict status updates for "the admin".
+    } else if (role === "ADMIN" || role === "HEAD_ADMIN") {
+        // ADMIN and HEAD_ADMIN can update priority and assignee.
+        // They are allowed to update status ONLY if they are assigned to the task.
         if (status !== undefined) {
-            return NextResponse.json({ error: "Admins are restricted from updating task status" }, { status: 403 })
+            const assignment = await db.getOne(
+                "SELECT 1 FROM task_assignments WHERE taskId = ? AND userId = ?",
+                [taskId, auth.user!.id]
+            )
+            
+            if (!assignment && existingTask.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
+                return NextResponse.json({ error: "Admins are restricted from updating status of tasks not assigned to them" }, { status: 403 })
+            }
         }
     }
+
 
     const dbStatus = status ? status.toUpperCase().replace('-', '_') : null
     let completedAt = null

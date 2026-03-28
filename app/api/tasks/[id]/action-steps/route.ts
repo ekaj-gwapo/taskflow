@@ -30,13 +30,27 @@ export async function POST(
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
-    // Only ADMIN or SUPERADMIN can add steps
+    // Only ADMIN or SUPERADMIN can add steps.
+    // However, if an ADMIN or HEAD_ADMIN is assigned to the task, they act as a worker and cannot add steps.
     const role = auth.user!.role?.toUpperCase();
-    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    if (role !== "ADMIN" && role !== "SUPERADMIN" && role !== "HEAD_ADMIN") {
       return NextResponse.json(
         { error: "Only administrators can add action steps" },
         { status: 403 }
       )
+    }
+
+    if (role === "ADMIN" || role === "HEAD_ADMIN") {
+      const isAssignee = await db.getOne(
+        "SELECT 1 FROM task_assignments WHERE taskId = ? AND userId = ?",
+        [taskId, auth.user!.id]
+      )
+      if (isAssignee || task.assigneeId?.toLowerCase() === auth.user!.id.toLowerCase()) {
+        return NextResponse.json(
+          { error: "Assigned administrators cannot add new action steps" },
+          { status: 403 }
+        )
+      }
     }
 
     const stepId = uuidv4();

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { StatsCards } from "@/components/stats-cards"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
@@ -23,6 +23,7 @@ import { WeeklyReportPanel } from "@/components/weekly-report-panel"
 import { TopCompletersChart } from "@/components/top-completers-chart"
 import { WorkloadDistribution } from "@/components/workload-distribution"
 import { RecentlyCompletedTasks } from "@/components/recently-completed-tasks"
+import { UrgentTasksSection } from "@/components/urgent-tasks-section"
 import { formatDate, formatDateTime } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 import {
@@ -48,6 +49,7 @@ function TaskRow({
   currentUserRole,
   currentUserId,
   taskCreatorId,
+  isNew,
 }: {
   task: Task
   onSelect: () => void
@@ -57,6 +59,7 @@ function TaskRow({
   currentUserRole?: string
   currentUserId?: string
   taskCreatorId?: string
+  isNew?: boolean
 }) {
   const isOverdue =
     task.status !== "completed" && new Date(task.dueDate) < new Date()
@@ -79,6 +82,11 @@ function TaskRow({
             <span className="flex items-center gap-1 text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
               <Share2 className="h-2.5 w-2.5" />
               Delegated
+            </span>
+          )}
+          {isNew && (
+            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">
+              NEW
             </span>
           )}
           {isOverdue && (
@@ -247,7 +255,7 @@ function TeamProjectCard({ task, onSelect, isSelected }: { task: Task; onSelect:
 }
 
 export function AdminDashboard() {
-  const { tasks, allEmployees, deleteTask, currentUser } = useTaskContext()
+  const { tasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showReport, setShowReport] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -379,11 +387,22 @@ export function AdminDashboard() {
       <div className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
         <StatsCards tasks={tasks.filter(matchesHierarchy)} />
 
+        {selectedEmployeeId === "my-tasks" && myTaskTab === "assigned" && (
+          <UrgentTasksSection 
+            tasks={tasks.filter(t => t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)} 
+            onSelectTask={(task) => {
+              setSelectedTask(task);
+              markAsSeen(task.id);
+              markCompletedAsSeen(task.id);
+            }} 
+          />
+        )}
+
         {!selectedEmployeeId && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="flex flex-col gap-6 w-full">
               <WorkloadDistribution />
-              <RecentlyCompletedTasks />
+              <RecentlyCompletedTasks onSelectTask={(task) => setSelectedTask(task)} />
             </div>
             <div className="w-full">
               <TopCompletersChart />
@@ -473,7 +492,10 @@ export function AdminDashboard() {
                 <TeamProjectCard
                   key={task.id}
                   task={task}
-                  onSelect={() => setSelectedTask(task)}
+                  onSelect={() => {
+                    setSelectedTask(task);
+                    markAsSeen(task.id);
+                  }}
                   isSelected={selectedTask?.id === task.id}
                 />
               ))
@@ -515,12 +537,17 @@ export function AdminDashboard() {
                     <TaskRow
                       key={task.id}
                       task={task}
-                      onSelect={() => setSelectedTask(task)}
+                      onSelect={() => {
+                        setSelectedTask(task);
+                        markAsSeen(task.id);
+                        markCompletedAsSeen(task.id);
+                      }}
                       isSelected={selectedTask?.id === task.id}
                       isDelegatedView={selectedEmployeeId === 'my-tasks' && myTaskTab === 'delegated'}
                       currentUserRole={currentUser?.role?.toUpperCase()}
                       currentUserId={currentUser?.id}
                       taskCreatorId={task.createdBy?.id}
+                      isNew={selectedEmployeeId === 'my-tasks' && myTaskTab === 'assigned' && !seenTaskIds.has(task.id)}
                       onDelete={() => {
                         deleteTask(task.id);
                         if (selectedTask?.id === task.id) setSelectedTask(null);

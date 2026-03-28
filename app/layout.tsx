@@ -22,6 +22,7 @@ export const viewport: Viewport = {
 }
 
 import { TaskProvider } from "@/lib/task-context"
+import { Toaster } from "sonner"
 
 export default function RootLayout({
   children,
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body className="font-sans antialiased min-h-screen">
         <TaskProvider>
           {children}
+          <Toaster position="top-center" expand={true} richColors />
         </TaskProvider>
       </body>
     </html>

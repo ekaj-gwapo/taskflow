@@ -81,13 +81,27 @@ export async function DELETE(
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
-    // Only ADMIN or SUPERADMIN can delete steps
+    // Only administrators can delete action steps.
+    // However, if an ADMIN or HEAD_ADMIN is assigned to the task, they act as a worker and cannot delete steps.
     const role = auth.user!.role?.toUpperCase();
-    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    if (role !== "ADMIN" && role !== "SUPERADMIN" && role !== "HEAD_ADMIN") {
       return NextResponse.json(
         { error: "Only administrators can delete action steps" },
         { status: 403 }
       )
+    }
+
+    if (role === "ADMIN" || role === "HEAD_ADMIN") {
+      const isAssignee = await db.getOne(
+        "SELECT 1 FROM task_assignments WHERE taskId = ? AND userId = ?",
+        [taskId, auth.user!.id]
+      )
+      if (isAssignee || task.assigneeId?.toLowerCase() === auth.user!.id.toLowerCase()) {
+        return NextResponse.json(
+          { error: "Assigned administrators cannot delete action steps" },
+          { status: 403 }
+        )
+      }
     }
 
     await db.execute("DELETE FROM action_steps WHERE id = ?", [(await params).stepId]);

@@ -54,6 +54,12 @@ interface TaskContextType {
     completionPercentage: number
     taskBreakdown: Array<{ taskId: string; title: string; completedSteps: number; totalSteps: number }>
   }
+
+  // Task Visibility/New status
+  seenTaskIds: Set<string>
+  markAsSeen: (taskId: string) => void
+  seenCompletedTaskIds: Set<string>
+  markCompletedAsSeen: (taskId: string) => void
 }
 
 const TaskContext = createContext<TaskContextType | null>(null)
@@ -65,6 +71,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [reports, setReports] = useState<WeeklyReport[]>([])
   const [allEmployees, setAllEmployees] = useState<User[]>([])
+  const [seenTaskIds, setSeenTaskIds] = useState<Set<string>>(new Set())
+  const [seenCompletedTaskIds, setSeenCompletedTaskIds] = useState<Set<string>>(new Set())
   const { toast } = useToast()
 
   const login = useCallback((role: UserRole, userId?: string, userData?: any) => {
@@ -87,8 +95,65 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setCurrentUser(null)
     setCurrentRole(null)
+    setSeenTaskIds(new Set())
+    setSeenCompletedTaskIds(new Set())
     localStorage.removeItem("token")
   }, [])
+
+  // Seen tasks tracking
+  useEffect(() => {
+    if (!currentUser) return;
+    const key = `taskflow_seen_${currentUser.id}`;
+    const completedKey = `taskflow_seen_completed_${currentUser.id}`;
+    
+    // Load general seen tasks
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        setSeenTaskIds(new Set(JSON.parse(saved)));
+      } catch (e) {
+        console.error("Failed to parse seen tasks", e);
+      }
+    } else {
+      setSeenTaskIds(new Set());
+    }
+
+    // Load completed seen tasks
+    const savedCompleted = localStorage.getItem(completedKey);
+    if (savedCompleted) {
+      try {
+        setSeenCompletedTaskIds(new Set(JSON.parse(savedCompleted)));
+      } catch (e) {
+        console.error("Failed to parse completed seen tasks", e);
+      }
+    } else {
+      setSeenCompletedTaskIds(new Set());
+    }
+  }, [currentUser]);
+
+  const markAsSeen = useCallback((taskId: string) => {
+    if (!currentUser || seenTaskIds.has(taskId)) return;
+    
+    setSeenTaskIds(prev => {
+      const next = new Set(prev);
+      next.add(taskId);
+      const key = `taskflow_seen_${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(Array.from(next)));
+      return next;
+    });
+  }, [currentUser, seenTaskIds]);
+
+  const markCompletedAsSeen = useCallback((taskId: string) => {
+    if (!currentUser || seenCompletedTaskIds.has(taskId)) return;
+    
+    setSeenCompletedTaskIds(prev => {
+      const next = new Set(prev);
+      next.add(taskId);
+      const key = `taskflow_seen_completed_${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(Array.from(next)));
+      return next;
+    });
+  }, [currentUser, seenCompletedTaskIds]);
 
   const createTask = useCallback(
     async (taskData: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees"> & { assigneeIds: string[] }, actionSteps?: string[]) => {
@@ -635,6 +700,10 @@ const url = `/api/tasks/${taskId}/progress-notes`
         getEmployeeVisibleTasks,
         canAccessTask,
         getEmployeeActionSummary,
+        seenTaskIds,
+        markAsSeen,
+        seenCompletedTaskIds,
+        markCompletedAsSeen,
       }}
     >
       {children}

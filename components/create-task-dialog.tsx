@@ -27,6 +27,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { TaskPriority } from "@/lib/store"
+import { toast } from "sonner"
+
 
 export function CreateTaskDialog() {
   const { createTask, allEmployees, tasks } = useTaskContext()
@@ -61,6 +63,8 @@ export function CreateTaskDialog() {
       assigneeIds,
       dueDate,
     }, actionSteps)
+    toast.success("Task created successfully!")
+
 
     setTitle("")
     setDescription("")

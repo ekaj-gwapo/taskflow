@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { TaskDetailPanel } from "@/components/task-detail-panel"
 import { EmployeeSidebar } from "@/components/employee-sidebar"
@@ -73,11 +73,13 @@ function EmployeeTaskCard({
   onSelect,
   isSelected,
   currentUser,
+  isNew,
 }: {
   task: Task
   onSelect: () => void
   isSelected: boolean
   currentUser: User | null
+  isNew?: boolean
 }) {
   const isOverdue =
     task.status?.toLowerCase() !== "completed" && new Date(task.dueDate) < new Date()
@@ -101,6 +103,11 @@ function EmployeeTaskCard({
               <span className="text-sm font-medium text-foreground truncate">
                 {task.title}
               </span>
+              {isNew && (
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">
+                  NEW
+                </span>
+              )}
               {isOverdue && (
                 <span className="shrink-0 text-[10px] font-medium text-destructive bg-destructive/10 rounded px-1.5 py-0.5">
                   Overdue
@@ -132,7 +139,7 @@ function EmployeeTaskCard({
 }
 
 export function EmployeeDashboard() {
-  const { tasks, currentUser, canAccessTask } = useTaskContext()
+  const { tasks, currentUser, canAccessTask, seenTaskIds, markAsSeen } = useTaskContext()
   const [selectedCategory, setSelectedCategory] = useState<"individual" | "team" | "profile">("individual")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -290,13 +297,13 @@ export function EmployeeDashboard() {
                     <EmployeeTaskCard
                       key={task.id}
                       task={task}
-                      onSelect={() =>
-                        setSelectedTask(
-                          selectedTask?.id === task.id ? null : task
-                        )
-                      }
+                      onSelect={() => {
+                        setSelectedTask(selectedTask?.id === task.id ? null : task);
+                        markAsSeen(task.id);
+                      }}
                       isSelected={selectedTask?.id === task.id}
                       currentUser={currentUser}
+                      isNew={selectedCategory === "individual" && !seenTaskIds.has(task.id)}
                     />
                   ))}
                 </div>
