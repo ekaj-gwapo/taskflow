@@ -62,9 +62,9 @@ export function TopCompletersChart() {
           score += assignment.points;
         } else {
           // fallback for older tasks without an assignment record
-          if (t.priority === "high") score += 5;
-          else if (t.priority === "medium") score += 3;
-          else score += 2;
+          if (t.priority === "high") score += 10;
+          else if (t.priority === "medium") score += 7;
+          else score += 4;
         }
       });
 

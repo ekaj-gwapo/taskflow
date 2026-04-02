@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, LayoutDashboard } from "lucide-react"
+import { ProfileDialog } from "@/components/profile-dialog"
 import { cn } from "@/lib/utils"
 
 function Confetti() {
@@ -75,6 +76,7 @@ export function AdminSidebar({
   const { allEmployees, tasks, currentUser, login, seenTaskIds } = useTaskContext()
   const [activeTab, setActiveTab] = useState<"employees" | "profile">("employees")
   const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
   const [profileData, setProfileData] = useState({
     name: currentUser?.name || "",
     email: currentUser?.email || "",
@@ -396,17 +398,20 @@ export function AdminSidebar({
           {activeTab === "profile" && (
             <div className="p-4 space-y-6 animate-in fade-in duration-300">
               <div className="flex flex-col items-center text-center p-6 rounded-xl bg-secondary/30 border border-border/50 shadow-inner">
-                <Avatar className="h-20 w-20 border-4 border-background shadow-xl mb-4 transition-transform hover:scale-105">
-                  {currentUser?.avatar ? (
-                    <AvatarImage src={currentUser.avatar} />
-                  ) : (
-                    <AvatarFallback className="text-xl font-bold bg-primary/10 text-primary uppercase">
-                      {initials}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
+                <div className="relative group">
+                  <Avatar className="h-20 w-20 border-4 border-background shadow-xl mb-4 transition-transform hover:scale-105 cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
+                    {currentUser?.avatar ? (
+                      <AvatarImage src={currentUser.avatar} />
+                    ) : (
+                      <AvatarFallback className="text-xl font-bold bg-primary/10 text-primary uppercase">
+                        {initials}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <p className="text-[10px] text-muted-foreground -mt-2 mb-2 cursor-pointer hover:underline text-center" onClick={() => setIsProfileDialogOpen(true)}>Change photo</p>
+                </div>
                 <h3 className="text-lg font-bold text-foreground">{profileData.name}</h3>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">{currentUser?.role.replace('_', ' ')}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{currentUser?.role?.toUpperCase() === "SUPERADMIN" ? "Super Admin" : currentUser?.role?.toUpperCase() === "HEAD_ADMIN" ? "Provincial Treasurer" : currentUser?.role?.toUpperCase() === "ADMIN" ? "Acting Assistant Provincial Treasurer" : "Casual Employee"}</p>
               </div>
 
               <div className="space-y-4">
@@ -461,6 +466,7 @@ export function AdminSidebar({
           <span className="font-semibold">Logout</span>
         </Button>
       </div>
+      <ProfileDialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen} />
     </aside>
   )
 }

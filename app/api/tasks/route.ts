@@ -102,9 +102,9 @@ export async function POST(request: NextRequest) {
     const taskPriority = priority || "MEDIUM"
     
     // Calculate points per assignee
-    let points = 2; // EASY
-    if (taskPriority.toUpperCase() === 'MEDIUM') points = 3;
-    if (taskPriority.toUpperCase() === 'HIGH') points = 5;
+    let points = 4; // LOW
+    if (taskPriority.toUpperCase() === 'MEDIUM') points = 7;
+    if (taskPriority.toUpperCase() === 'HIGH') points = 10;
     
     // Insert task
     await db.execute(`

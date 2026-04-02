@@ -182,15 +182,52 @@ export async function PUT(
     if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
       await db.execute("DELETE FROM task_assignments WHERE LOWER(taskId) = ?", [(await params).id?.toLowerCase()]);
       
-      let points = 2;
-      const currentPriority = priority ? priority.toUpperCase() : existingTask.priority;
-      if (currentPriority === "MEDIUM") points = 3;
-      if (currentPriority === "HIGH") points = 5;
-
       for (const uId of assigneeIds) {
-        await db.execute("INSERT INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?)", [(await params).id?.toLowerCase(), uId, points]);
+        await db.execute("INSERT INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?)", [(await params).id?.toLowerCase(), uId, 0]);
       }
     }
+
+    // Dynamic points logic: recalculate points for all task assignees based on completion status
+    const currentPriorityForPoints = (priority || existingTask.priority || "MEDIUM").toUpperCase();
+    let finalPoints = 4;
+    if (currentPriorityForPoints === "MEDIUM") finalPoints = 7;
+    if (currentPriorityForPoints === "HIGH") finalPoints = 10;
+    
+    const currentStatusForPoints = dbStatus || existingTask.status;
+    const currentCompletedAtForPoints = completedAt || (currentStatusForPoints === "COMPLETED" ? existingTask.completedAt : null);
+    
+    if (currentStatusForPoints === "COMPLETED" && currentCompletedAtForPoints && existingTask.dueDate && existingTask.createdAt) {
+      const createdAtMs = new Date(existingTask.createdAt).getTime();
+      const dueDateMs = new Date(existingTask.dueDate).getTime();
+      const completedMs = new Date(currentCompletedAtForPoints).getTime();
+      const totalAllowed = dueDateMs - createdAtMs;
+      const timeTaken = completedMs - createdAtMs;
+      
+      // Early completion logic
+      if (totalAllowed > 0 && timeTaken > 0) {
+        if (timeTaken <= totalAllowed * 0.3) {
+          finalPoints += 3;
+        } else if (timeTaken <= totalAllowed * 0.5) {
+          finalPoints += 2;
+        }
+      }
+      
+      // Late penalty logic
+      if (completedMs > dueDateMs) {
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const lateDays = Math.ceil((completedMs - dueDateMs) / msPerDay);
+        if (lateDays === 1) finalPoints -= 1;
+        else if (lateDays >= 2 && lateDays <= 3) finalPoints -= 2;
+        else if (lateDays >= 4 && lateDays <= 7) finalPoints -= 3;
+        else if (lateDays > 7) finalPoints -= 5;
+      }
+      
+      if (finalPoints > 12) finalPoints = 12;
+      if (finalPoints < 0) finalPoints = 0;
+    }
+    
+    // Update all current assignees with final calculated points
+    await db.execute("UPDATE task_assignments SET points = ? WHERE LOWER(taskId) = ?", [finalPoints, (await params).id?.toLowerCase()]);
 
     // Fetch updated task
     const task: any = await db.getOne(`

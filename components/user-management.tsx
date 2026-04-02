@@ -28,7 +28,7 @@ export function UserManagement() {
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  
+
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
@@ -126,7 +126,7 @@ export function UserManagement() {
         body: JSON.stringify(newUser)
       })
       const data = await res.json()
-      
+
       if (res.ok) {
         toast.success("User created successfully")
         setNewUser({ name: "", email: "", password: "", role: "EMPLOYEE", phone: "", location: "" })
@@ -143,7 +143,7 @@ export function UserManagement() {
     }
   }
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter(u =>
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -160,8 +160,8 @@ export function UserManagement() {
         </div>
         <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search users..." 
+          <Input
+            placeholder="Search users..."
             className="pl-10 bg-secondary/50 border-border"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -183,60 +183,60 @@ export function UserManagement() {
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Full Name</label>
-                <Input 
+                <Input
                   required
                   placeholder="John Doe"
                   value={newUser.name}
-                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Email Address</label>
-                <Input 
+                <Input
                   required
                   type="email"
                   placeholder="john@example.com"
                   value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Initial Password</label>
-                <Input 
+                <Input
                   required
                   type="password"
                   placeholder="••••••••"
                   value={newUser.password}
-                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Role</label>
-                <select 
+                <select
                   className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={newUser.role}
-                  onChange={(e) => setNewUser({...newUser, role: e.target.value})}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                 >
-                  <option value="EMPLOYEE">Regular Employee</option>
-                  <option value="ADMIN">2nd Admin</option>
-                  <option value="HEAD_ADMIN">Head Admin</option>
+                  <option value="EMPLOYEE">Casual Employee</option>
+                  <option value="ADMIN">Acting Assistant Provincial Treasurer</option>
+                  <option value="HEAD_ADMIN">Provincial Treasurer</option>
                   <option value="SUPERADMIN">Super Admin</option>
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Phone (Optional)</label>
-                <Input 
+                <Input
                   placeholder="+1 (555) 000-0000"
                   value={newUser.phone}
-                  onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Location (Optional)</label>
-                <Input 
+                <Input
                   placeholder="New York, NY"
                   value={newUser.location}
-                  onChange={(e) => setNewUser({...newUser, location: e.target.value})}
+                  onChange={(e) => setNewUser({ ...newUser, location: e.target.value })}
                 />
               </div>
               <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isCreating}>
@@ -307,7 +307,7 @@ export function UserManagement() {
                         </td>
                         <td className="py-4 px-4">
                           <Badge variant={user.role === "SUPERADMIN" ? "destructive" : user.role === "HEAD_ADMIN" ? "default" : user.role === "ADMIN" ? "secondary" : "outline"}>
-                            {user.role === "SUPERADMIN" ? "Super Admin" : user.role === "HEAD_ADMIN" ? "Head Admin" : user.role === "ADMIN" ? "2nd Admin" : "Regular Employee"}
+                            {user.role === "SUPERADMIN" ? "Super Admin" : user.role === "HEAD_ADMIN" ? "Provincial Treasurer" : user.role === "ADMIN" ? "Acting Assistant Provincial Treasurer" : "Casual Employee"}
                           </Badge>
                         </td>
                         <td className="py-4 px-4 text-xs text-muted-foreground">
@@ -330,18 +330,18 @@ export function UserManagement() {
                         </td>
                         <td className="py-4 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => setResetPasswordId(user.id)}
                               className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                               title="Reset Password"
                             >
                               <KeyRound className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => toggleUserStatus(user.id, user.isActive ?? 1)}
                               className={`h-8 w-8 ${user.isActive === 0 ? 'text-green-600 bg-green-100 hover:bg-green-200' : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'}`}
                               title={user.isActive === 0 ? "Activate User" : "Deactivate User"}

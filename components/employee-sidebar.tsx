@@ -291,7 +291,7 @@ export function EmployeeSidebar({
                   <p className="text-[10px] text-muted-foreground -mt-2 mb-2 cursor-pointer hover:underline text-center" onClick={() => setIsProfileDialogOpen(true)}>Change photo</p>
                 </div>
                 <h3 className="text-lg font-bold text-foreground">{profileData.name}</h3>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">{currentUser?.role.replace('_', ' ')}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{currentUser?.role?.toUpperCase() === "SUPERADMIN" ? "Super Admin" : currentUser?.role?.toUpperCase() === "HEAD_ADMIN" ? "Provincial Treasurer" : currentUser?.role?.toUpperCase() === "ADMIN" ? "Acting Assistant Provincial Treasurer" : "Casual Employee"}</p>
               </div>
 
               <div className="space-y-4">

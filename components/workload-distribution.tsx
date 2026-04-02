@@ -17,8 +17,8 @@ export function WorkloadDistribution() {
       const medium = activeTasks.filter((t) => t.priority === "medium").length
       const low = activeTasks.filter((t) => t.priority === "low").length
       
-      // Calculate a workload score: High=3, Medium=2, Low=1
-      const score = (high * 3) + (medium * 2) + (low * 1)
+      // Calculate a workload score: High=10, Medium=7, Low=4
+      const score = (high * 10) + (medium * 7) + (low * 4)
       
       return {
         id: emp.id,

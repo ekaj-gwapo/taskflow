@@ -21,9 +21,7 @@ export function AppHeader() {
           {/* To add your logo: Replace the above div with: <img src="/logo.png" alt="Logo" className="h-10 w-10 rounded-lg object-contain" /> */}
           
           <span className="font-semibold text-foreground tracking-tight">TaskFlow</span>
-          <span className="hidden sm:inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground uppercase">
-            {currentRole === "superadmin" ? "Super Admin" : currentRole === "head_admin" ? "Head Admin" : currentRole === "admin" ? "2nd Admin" : "Employee"}
-          </span>
+
         </div>
 
         <div className="flex items-center gap-2">
