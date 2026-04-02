@@ -1,5 +1,6 @@
 "use client"
 
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -9,8 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowRight, Lock, Eye, FileText, CheckCircle2, UserCircle2, MonitorCheck } from 'lucide-react'
 import { cn } from "@/lib/utils"
 
-function Confetti() { 
-  const [particles] = useState(() => 
+function Confetti() {
+  const [particles] = useState(() =>
     Array.from({ length: 12 }).map((_, i) => ({
       id: i,
       dx: `${Math.random() * 120 - 60}px`,
@@ -23,11 +24,11 @@ function Confetti() {
   return (
     <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center overflow-visible">
       {particles.map(p => (
-        <div 
+        <div
           key={p.id}
-          className={cn("confetti-particle", p.color)} 
-          style={{ 
-            '--dx': p.dx, 
+          className={cn("confetti-particle", p.color)}
+          style={{
+            '--dx': p.dx,
             '--dy': p.dy,
             animationDelay: p.delay
           } as any}
@@ -39,9 +40,9 @@ function Confetti() {
 
 function FlippingLogo({ src, backSrc, alt }: { src: string; backSrc: string; alt: string }) {
   const [isHovered, setIsHovered] = useState(false)
-  
+
   return (
-    <div 
+    <div
       className="group w-16 h-16 [perspective:1000px] cursor-pointer relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -128,12 +129,12 @@ export default function Home() {
 
             <div className="flex items-center gap-4">
 
-            <div className="flex items-center gap-4">
-              <FlippingLogo src="/logos/logo4.png" backSrc="/logos/logo-back1.jpg" alt="Logo 4" />
-              <FlippingLogo src="/logos/logo3.jpg" backSrc="/logos/logo-back2.jpg" alt="Logo 3" />
-              <FlippingLogo src="/logos/logo1.jpg" backSrc="/logos/logo-back3.jpg" alt="Logo 1" />
-              <FlippingLogo src="/logos/logo2.png" backSrc="/logos/logo-back4.jpg" alt="Logo 2" />
-            </div>
+              <div className="flex items-center gap-4">
+                <FlippingLogo src="/logos/logo4.png" backSrc="/logos/logo-back1.jpg" alt="Logo 4" />
+                <FlippingLogo src="/logos/logo3.jpg" backSrc="/logos/logo-back2.jpg" alt="Logo 3" />
+                <FlippingLogo src="/logos/logo1.jpg" backSrc="/logos/logo-back3.jpg" alt="Logo 1" />
+                <FlippingLogo src="/logos/logo2.png" backSrc="/logos/logo-back4.jpg" alt="Logo 2" />
+              </div>
 
             </div>
 
