@@ -12,7 +12,7 @@ export function verifyJWT(token: string): JWTPayload | null {
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || "your-secret-key"
+      process.env.JWT_SECRET || "default_secret"
     ) as JWTPayload
     return decoded
   } catch (error) {

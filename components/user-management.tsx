@@ -105,8 +105,10 @@ export function UserManagement() {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
-      if (data.users) {
+      if (res.ok && data.users) {
         setUsers(data.users)
+      } else {
+        toast.error(data.error || "Failed to load users")
       }
     } catch (error) {
       console.error("Fetch users error:", error)
