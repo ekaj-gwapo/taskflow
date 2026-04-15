@@ -23,7 +23,7 @@ export function EmployeeActionTracking() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground text-center py-4">
-            No action steps assigned yet.
+            No actions required yet.
           </p>
         </CardContent>
       </Card>

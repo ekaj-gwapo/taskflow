@@ -89,7 +89,7 @@ export function CreateTaskDialog() {
         <DialogHeader>
           <DialogTitle className="text-foreground">Create New Task</DialogTitle>
           <DialogDescription>
-            Assign a task to a team member with a due date and optional action steps.
+            Assign a task to a team member with a due date and optional action required items.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-2">
@@ -146,17 +146,13 @@ export function CreateTaskDialog() {
                 <div className="flex flex-col gap-1 border border-border p-2 rounded-md h-[235px] overflow-y-auto bg-secondary/30 mt-1">
                   {allEmployees.map((emp) => {
                     const activeCount = tasks.filter(t => (t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id) && t.status !== "completed").length
-                    const isOverloaded = activeCount >= 5
                     return (
                       <label
                         key={emp.id}
-                        className={`flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm transition-colors ${
-                          isOverloaded ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-secondary/80"
-                        }`}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm transition-colors cursor-pointer hover:bg-secondary/80"
                       >
                         <Checkbox
                           checked={assigneeIds.includes(emp.id)}
-                          disabled={isOverloaded}
                           onCheckedChange={(checked) => {
                             if (checked) {
                               setAssigneeIds([...assigneeIds, emp.id])
@@ -166,9 +162,6 @@ export function CreateTaskDialog() {
                           }}
                         />
                         <span className="text-foreground font-medium">{emp.name}</span>
-                        <span className="text-muted-foreground text-[10px] ml-auto">
-                          {isOverloaded ? "(Overloaded)" : `(${activeCount}/5 active)`}
-                        </span>
                       </label>
                     )
                   })}
@@ -257,10 +250,9 @@ export function CreateTaskDialog() {
                     <SelectContent className="bg-popover border-border">
                       {allEmployees.map((emp) => {
                         const activeCount = tasks.filter(t => (t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id) && t.status !== "completed").length
-                        const isOverloaded = activeCount >= 5
                         return (
-                          <SelectItem key={emp.id} value={emp.id} disabled={isOverloaded}>
-                            {emp.name} {isOverloaded ? "(Overloaded)" : `(${activeCount}/5 active)`}
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {emp.name}
                           </SelectItem>
                         )
                       })}
@@ -310,11 +302,11 @@ export function CreateTaskDialog() {
             </>
           )}
 
-          {/* Action Steps Section */}
+          {/* Action Required Section */}
           <div className="border-t border-border pt-4 mt-2">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <Label className="text-foreground text-sm font-semibold block">Action Steps (Optional)</Label>
+                <Label className="text-foreground text-sm font-semibold block">Action Required (Optional)</Label>
                 <p className="text-xs text-muted-foreground mt-1">Example: "Create and send a letter" → "Create the letter" + "Send the letter"</p>
               </div>
             </div>
@@ -322,7 +314,7 @@ export function CreateTaskDialog() {
               <Input
                 value={stepInput}
                 onChange={(e) => setStepInput(e.target.value)}
-                placeholder="Add an action step (e.g., 'Create the letter')"
+                placeholder="Add an action required item (e.g., 'Create the letter')"
                 className="bg-secondary border-border text-foreground placeholder:text-muted-foreground text-sm"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {

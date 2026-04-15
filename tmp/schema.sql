@@ -28,6 +28,7 @@ CREATE TABLE action_steps (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       completed BOOLEAN DEFAULT 0,
+      isActed BOOLEAN DEFAULT 0,
       taskId TEXT NOT NULL,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,

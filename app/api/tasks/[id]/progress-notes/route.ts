@@ -13,11 +13,11 @@ export async function POST(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { content } = await request.json()
+    const { content, attachmentUrl, attachmentName, attachmentType } = await request.json()
 
-    if (!content) {
+    if (!content && !attachmentUrl) {
       return NextResponse.json(
-        { error: "Content is required" },
+        { error: "Content or attachment is required" },
         { status: 400 }
       )
     }
@@ -48,9 +48,20 @@ export async function POST(
 
     const noteId = uuidv4();
     await db.execute(`
-      INSERT INTO progress_notes (id, content, taskId, authorId, authorName, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [noteId, content, taskId, auth.user!.id, auth.user!.name, new Date().toISOString(), new Date().toISOString()]);
+      INSERT INTO progress_notes (id, content, taskId, authorId, authorName, createdAt, updatedAt, attachmentUrl, attachmentName, attachmentType)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      noteId, 
+      content, 
+      taskId, 
+      auth.user!.id, 
+      auth.user!.name, 
+      new Date().toISOString(), 
+      new Date().toISOString(),
+      attachmentUrl || null,
+      attachmentName || null,
+      attachmentType || null
+    ]);
 
     const progressNote = await db.getOne("SELECT * FROM progress_notes WHERE id = ?", [noteId]);
 

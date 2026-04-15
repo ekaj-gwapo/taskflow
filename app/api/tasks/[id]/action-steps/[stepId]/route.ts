@@ -12,7 +12,7 @@ export async function PUT(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { completed } = await request.json()
+    const { completed, isActed } = await request.json()
 
     const taskId = (await params).id?.toLowerCase()
     // Verify task exists
@@ -38,12 +38,22 @@ export async function PUT(
       }
     }
 
+    const currentStep: any = await db.getOne("SELECT completed, isActed FROM action_steps WHERE id = ?", [(await params).stepId]);
+    const newCompleted = completed !== undefined ? (completed ? 1 : 0) : currentStep.completed;
+    let newIsActed = isActed !== undefined ? (isActed ? 1 : 0) : currentStep.isActed;
+
+    // Automatically mark as acted if it's being marked completed
+    if (newCompleted === 1) {
+      newIsActed = 1;
+    }
+
     await db.execute(`
       UPDATE action_steps 
       SET completed = ?, 
+          isActed = ?,
           updatedAt = ?
       WHERE id = ?
-    `, [completed ? 1 : 0, new Date().toISOString(), (await params).stepId]);
+    `, [newCompleted, newIsActed, new Date().toISOString(), (await params).stepId]);
 
     const actionStep = {
       ...(await db.getOne("SELECT * FROM action_steps WHERE id = ?", [(await params).stepId]) as any),

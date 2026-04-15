@@ -19,7 +19,7 @@ export function AppHeader() {
             <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
           </div>
           {/* To add your logo: Replace the above div with: <img src="/logo.png" alt="Logo" className="h-10 w-10 rounded-lg object-contain" /> */}
-          
+
           <span className="font-semibold text-foreground tracking-tight">TaskFlow</span>
 
         </div>

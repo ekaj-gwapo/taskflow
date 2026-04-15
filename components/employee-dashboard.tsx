@@ -313,7 +313,7 @@ export function EmployeeDashboard() {
 
       {/* Detail Panel */}
       {selectedTask && (
-        <div className="hidden lg:block w-[380px] shrink-0 border-l border-border overflow-y-auto">
+        <div className="hidden lg:block w-[380px] shrink-0 filter drop-shadow-xl lg:drop-shadow-none">
           <TaskDetailPanel
             task={tasks.find((t) => t.id === selectedTask.id) || selectedTask}
             onClose={() => setSelectedTask(null)}

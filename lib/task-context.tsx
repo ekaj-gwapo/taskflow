@@ -13,7 +13,7 @@ import {
   initialReports,
 } from "./store"
 import { useEffect } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 interface TaskContextType {
   // Auth
@@ -28,14 +28,15 @@ interface TaskContextType {
   createTask: (task: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees"> & { assigneeIds: string[] }, actionSteps?: string[]) => void
   updateTaskStatus: (taskId: string, status: TaskStatus) => void
   updateTaskAssignees: (taskId: string, assigneeIds: string[]) => void
-  deleteTask: (taskId: string) => void
-  addProgressNote: (taskId: string, content: string) => void
+  deleteTask: (taskId: string) => Promise<boolean>
+  addProgressNote: (taskId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => Promise<void>
 
   // Action Steps
   addActionStep: (taskId: string, stepTitle: string) => void
   updateActionStepStatus: (taskId: string, stepId: string, completed: boolean) => void
+  updateActionStepActed: (taskId: string, stepId: string, isActed: boolean) => void
   deleteActionStep: (taskId: string, stepId: string) => void
-  addStepNote: (taskId: string, stepId: string, content: string) => void
+  addStepNote: (taskId: string, stepId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => Promise<void>
 
   // Reports
   reports: WeeklyReport[]
@@ -73,7 +74,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [allEmployees, setAllEmployees] = useState<User[]>([])
   const [seenTaskIds, setSeenTaskIds] = useState<Set<string>>(new Set())
   const [seenCompletedTaskIds, setSeenCompletedTaskIds] = useState<Set<string>>(new Set())
-  const { toast } = useToast()
 
   const login = useCallback((role: UserRole, userId?: string, userData?: any) => {
     if (userData) {
@@ -190,11 +190,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const token = localStorage.getItem("token")
         if (!token) {
            console.error("Update task status error: No token found")
-           toast({
-             title: "Authentication Error",
-             description: "Please log in again.",
-             variant: "destructive",
-           })
+           toast.error("Please log in again.")
            return
         }
         
@@ -212,11 +208,7 @@ const url = `/api/tasks/${taskId}`
         if (!response.ok) {
           const errorData = await response.json()
           console.error("Update task status error:", errorData.error || response.statusText)
-          toast({
-            title: "Update Failed",
-            description: errorData.error || "Failed to update task status.",
-            variant: "destructive",
-          })
+          toast.error(errorData.error || "Failed to update task status.")
           throw new Error(errorData.error || "Failed to update task status")
         }
 
@@ -224,10 +216,7 @@ const url = `/api/tasks/${taskId}`
         setTasks((prev) =>
           prev.map((t) => (t.id === taskId ? data.task : t))
         )
-        toast({
-          title: "Task Updated",
-          description: "Task status updated successfully.",
-        })
+        toast.success("Task status updated successfully.")
       } catch (error) {
         console.error("Update task status error:", error)
         if (!toast) return // already toasted
@@ -254,6 +243,7 @@ const url = `/api/tasks/${taskId}`
 
         if (!response.ok) {
            const errorData = await response.json()
+           console.error("Update task assignees error:", errorData.error, errorData.details)
            throw new Error(errorData.error || "Failed to update task assignees")
         }
 
@@ -261,20 +251,13 @@ const url = `/api/tasks/${taskId}`
         setTasks((prev) =>
           prev.map((t) => (t.id === taskId ? data.task : t))
         )
-        toast({
-          title: "Assignees Updated",
-          description: "Task assignees updated successfully.",
-        })
+        toast.success("Task assignees updated successfully.")
       } catch (error) {
         console.error("Update task assignees error:", error)
-        toast({
-          title: "Update Failed",
-          description: "Failed to update task assignees.",
-          variant: "destructive",
-        })
+        toast.error("Failed to update task assignees.")
       }
     },
-    [toast]
+    []
   )
 
   const deleteTask = useCallback(async (taskId: string) => {
@@ -288,21 +271,26 @@ const url = `/api/tasks/${taskId}`
       })
 
       if (!response.ok) {
-        throw new Error("Failed to delete task")
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || "Failed to delete task")
       }
 
       setTasks((prev) => prev.filter((t) => t.id !== taskId))
-    } catch (error) {
+      toast.success("Task deleted successfully.")
+      return true
+    } catch (error: any) {
       console.error("Delete task error:", error)
+      toast.error(error.message || "Failed to delete task.")
+      return false
     }
-  }, [])
+  }, [toast])
 
   const addProgressNote = useCallback(
-    async (taskId: string, content: string) => {
+    async (taskId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => {
       if (!currentUser) return
       try {
         const token = localStorage.getItem("token")
-const url = `/api/tasks/${taskId}/progress-notes`
+        const url = `/api/tasks/${taskId}/progress-notes`
       console.debug("Adding progress note", { taskId, url, content })
       const response = await fetch(url, {
         method: "POST",
@@ -310,17 +298,13 @@ const url = `/api/tasks/${taskId}/progress-notes`
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, attachmentUrl, attachmentName, attachmentType }),
       })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         console.error("Add progress note error:", errorData?.error || response.statusText)
-        toast({
-          title: "Failed to add note",
-          description: errorData?.error || "Unable to save progress note.",
-          variant: "destructive",
-        })
+        toast.error(errorData?.error || "Unable to save progress note.")
         throw new Error(errorData?.error || "Failed to add progress note")
         }
 
@@ -387,11 +371,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
         if (!response.ok) {
           const errorData = await response.json()
           console.error("Update action step status error:", errorData.error || response.statusText)
-          toast({
-            title: "Update Failed",
-            description: errorData.error || "Failed to update action step.",
-            variant: "destructive",
-          })
+          toast.error(errorData.error || "Failed to update action step.")
           throw new Error(errorData.error || "Failed to update action step")
         }
 
@@ -408,13 +388,50 @@ const url = `/api/tasks/${taskId}/progress-notes`
               : t
           )
         )
-        toast({
-          title: "Action Step Updated",
-          description: "Action step status updated successfully.",
-        })
+        toast.success("Action step status updated successfully.")
       } catch (error) {
         console.error("Update action step status error:", error)
         if (!toast) return // already toasted
+      }
+    },
+    [toast]
+  )
+
+  const updateActionStepActed = useCallback(
+    async (taskId: string, stepId: string, isActed: boolean) => {
+      try {
+        const token = localStorage.getItem("token")
+        const response = await fetch(`/api/tasks/${taskId}/action-steps/${stepId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ isActed }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("Update action step acted err:", errorData.error || response.statusText)
+          toast.error(errorData.error || "Failed to mark action step.")
+          throw new Error(errorData.error || "Failed to mark action step")
+        }
+
+        const data = await response.json()
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  actionSteps: (t.actionSteps || []).map((step) =>
+                    step.id === stepId ? data.actionStep : step
+                  ),
+                }
+              : t
+          )
+        )
+      } catch (error) {
+        console.error("Update action step acted status error:", error)
       }
     },
     [toast]
@@ -459,7 +476,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
   )
 
   const addStepNote = useCallback(
-    async (taskId: string, stepId: string, content: string) => {
+    async (taskId: string, stepId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => {
       if (!currentUser) return
       try {
         const token = localStorage.getItem("token")
@@ -469,7 +486,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({ content, attachmentUrl, attachmentName, attachmentType }),
         })
 
         if (!response.ok) {
@@ -691,6 +708,7 @@ const url = `/api/tasks/${taskId}/progress-notes`
         addProgressNote,
         addActionStep,
         updateActionStepStatus,
+        updateActionStepActed,
         deleteActionStep,
         addStepNote,
         reports,

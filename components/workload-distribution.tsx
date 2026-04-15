@@ -53,22 +53,9 @@ export function WorkloadDistribution() {
         {/* Ranked List */}
         <div className="flex flex-col gap-3">
           {workloadData.map((person) => {
-            const isOverloaded = person.activeCount >= 5
-            const isModerate = person.activeCount >= 3 && person.activeCount < 5
-            
-            let bgClass = "bg-emerald-500/10 border-emerald-500/20"
-            let textClass = "text-emerald-700"
+            let bgClass = "bg-primary/5 border-border shadow-sm group-hover:bg-primary/10"
+            let textClass = "text-foreground"
             let nameClass = "text-foreground"
-            
-            if (isOverloaded) {
-              bgClass = "bg-destructive/10 border-destructive/20"
-              textClass = "text-destructive font-semibold"
-              nameClass = "text-destructive font-semibold"
-            } else if (isModerate) {
-              bgClass = "bg-amber-500/10 border-amber-500/20"
-              textClass = "text-amber-700 font-medium"
-              nameClass = "text-foreground font-medium"
-            }
 
             return (
               <div
@@ -77,11 +64,11 @@ export function WorkloadDistribution() {
               >
                 
                 {/* Avatar + Name */}
-                <Avatar className={`h-9 w-9 shrink-0 shadow-sm border ${isOverloaded ? "border-destructive/30" : isModerate ? "border-amber-500/30" : "border-emerald-500/30"}`}>
+                <Avatar className="h-9 w-9 shrink-0 shadow-sm border border-border/50">
                   {person.avatar ? (
                     <AvatarImage src={person.avatar} />
                   ) : (
-                    <AvatarFallback className={`text-[11px] font-semibold ${isOverloaded ? "bg-destructive/10 text-destructive" : isModerate ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-900"}`}>
+                    <AvatarFallback className="text-[11px] font-bold bg-primary/10 text-primary">
                       {person.initials}
                     </AvatarFallback>
                   )}
@@ -89,14 +76,9 @@ export function WorkloadDistribution() {
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className={`text-sm truncate ${nameClass}`}>
+                    <p className={`text-sm truncate font-semibold ${nameClass}`}>
                       {person.name}
                     </p>
-                    {isOverloaded && (
-                      <span className="shrink-0 text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> Overloaded
-                      </span>
-                    )}
                   </div>
                   <div className="flex items-center gap-2.5 mt-1 text-[11px] text-muted-foreground font-medium">
                     <span className="flex items-center gap-1">
@@ -112,22 +94,14 @@ export function WorkloadDistribution() {
                 </div>
 
                 {/* Stats */}
-                <div className="flex flex-col items-end gap-1.5 shrink-0 pl-2">
+                <div className="flex flex-col items-end justify-center shrink-0 pl-2">
                   <div className="text-right">
-                    <p className={`text-[15px] leading-none ${textClass}`}>
-                      {person.activeCount}<span className="text-xs font-normal opacity-70">/5</span>
+                    <p className={`text-lg font-bold leading-none ${textClass}`}>
+                      {person.activeCount}
                     </p>
-                    <p className={`text-[10px] mt-0.5 font-medium ${isOverloaded ? "text-destructive/80" : isModerate ? "text-amber-700/80" : "text-emerald-700/80"}`}>
+                    <p className="text-[10px] mt-1 font-medium text-muted-foreground uppercase tracking-wider">
                       active tasks
                     </p>
-                  </div>
-                  
-                  {/* Workload Score Bar */}
-                  <div className="w-20 h-2 flex rounded-full overflow-hidden bg-secondary shadow-inner" title={`Active Tasks: ${person.activeCount}/5`}>
-                    <div 
-                      style={{ width: `${Math.min((person.activeCount / 5) * 100, 100)}%` }} 
-                      className={`h-full ${isOverloaded ? "bg-destructive" : isModerate ? "bg-amber-500" : "bg-emerald-500"}`} 
-                    />
                   </div>
                 </div>
               </div>

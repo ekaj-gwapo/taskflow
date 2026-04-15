@@ -20,6 +20,9 @@ export interface ProgressNote {
   authorName: string
   content: string
   createdAt: string
+  attachmentUrl?: string
+  attachmentName?: string
+  attachmentType?: string
 }
 
 export interface StepNote {
@@ -27,12 +30,16 @@ export interface StepNote {
   content: string
   createdAt: string
   authorName: string
+  attachmentUrl?: string
+  attachmentName?: string
+  attachmentType?: string
 }
 
 export interface ActionStep {
   id: string
   title: string
   completed: boolean
+  isActed: boolean
   notes: StepNote[]
 }
 

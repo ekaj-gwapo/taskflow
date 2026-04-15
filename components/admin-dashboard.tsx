@@ -162,7 +162,7 @@ function TaskRow({
       </div>
 
       <div className="flex items-center justify-end gap-2 ml-4 w-16">
-        {(currentUserRole === "SUPERADMIN" || currentUserRole === "HEAD_ADMIN" || taskCreatorId === currentUserId) && (
+        {(currentUserRole === "SUPERADMIN" || currentUserRole === "HEAD_ADMIN" || taskCreatorId === currentUserId) && task.status === "todo" && (
           <AlertDialog>
           <AlertDialogTrigger asChild>
             <button
@@ -177,7 +177,7 @@ function TaskRow({
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the task "{task.title}" and all its associated action steps and notes. This action cannot be undone.
+                This will permanently delete the task "{task.title}" and all its associated action required items and notes. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -571,7 +571,7 @@ export function AdminDashboard() {
       </div>
 
       {liveSelectedTask && (
-        <div className="w-[380px] shrink-0 border-l border-border overflow-y-auto bg-background shadow-xl lg:shadow-none absolute lg:relative right-0 h-full z-10">
+        <div className="w-[380px] shrink-0 absolute lg:relative right-0 h-full z-10 filter drop-shadow-xl lg:drop-shadow-none">
           <TaskDetailPanel
             task={liveSelectedTask}
             onClose={() => setSelectedTask(null)}
