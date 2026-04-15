@@ -365,7 +365,8 @@ export function ActionStepsSection({
                     </div>
                   )}
 
-                  {/* Add note input - Only for employees */}
+                  {/* Add note input - Only for assignees (mapped to "employee" role in panel) */}
+                  {userRole === "employee" && (
                     <div className="space-y-2 pt-2 border-t border-border">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Add Note
@@ -437,6 +438,7 @@ export function ActionStepsSection({
                         Press Ctrl+Enter to send
                       </p>
                     </div>
+                  )}
                 </div>
               )}
             </div>

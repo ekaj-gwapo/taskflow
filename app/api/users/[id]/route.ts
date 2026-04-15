@@ -56,25 +56,29 @@ export async function PUT(
       )
     }
 
-    const { name, phone, location } = await request.json()
-    console.log(`[API] Updating user ${id}:`, { name, phone, location })
+    const { name, email, phone, location } = await request.json()
+    console.log(`[API] Updating user ${id}:`, { name, email, phone, location })
 
     if (role === "EMPLOYEE") {
       await db.execute(`
         UPDATE users 
         SET name = COALESCE(?, name),
-            updatedAt = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `, [name, id]);
-    } else {
-      await db.execute(`
-        UPDATE users 
-        SET name = COALESCE(?, name), 
+            email = COALESCE(?, email),
             phone = COALESCE(?, phone),
             location = COALESCE(?, location),
             updatedAt = CURRENT_TIMESTAMP
         WHERE id = ?
-      `, [name, phone, location, id]);
+      `, [name, email, phone, location, id]);
+    } else {
+      await db.execute(`
+        UPDATE users 
+        SET name = COALESCE(?, name),
+            email = COALESCE(?, email),
+            phone = COALESCE(?, phone),
+            location = COALESCE(?, location),
+            updatedAt = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `, [name, email, phone, location, id]);
     }
 
     const user = await db.getOne(`

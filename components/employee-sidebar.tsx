@@ -323,9 +323,9 @@ export function EmployeeSidebar({
                 </div>
 
                 <div className="space-y-3">
-                  <ProfileItem icon={<Mail className="h-3.5 w-3.5" />} label="Email" value={profileData.email} isEditing={isEditingProfile} onChange={(v) => handleInputChange('email', v)} />
-                  <ProfileItem icon={<Phone className="h-3.5 w-3.5" />} label="Phone" value={profileData.phone} isEditing={false} onChange={() => {}} placeholder="Contact Admin to update" />
-                  <ProfileItem icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value={profileData.location} isEditing={false} onChange={() => {}} placeholder="Contact Admin to update" />
+                  <ProfileItem icon={<Mail className="h-3.5 w-3.5" />} label="Email" value={isEditingProfile ? tempProfileData.email : profileData.email} isEditing={isEditingProfile} onChange={(v) => handleInputChange('email', v)} />
+                  <ProfileItem icon={<Phone className="h-3.5 w-3.5" />} label="Phone" value={isEditingProfile ? tempProfileData.phone : profileData.phone} isEditing={isEditingProfile} onChange={(v) => handleInputChange('phone', v)} placeholder="Not set" />
+                  <ProfileItem icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value={isEditingProfile ? tempProfileData.location : profileData.location} isEditing={isEditingProfile} onChange={(v) => handleInputChange('location', v)} placeholder="Not set" />
                 </div>
               </div>
             </div>

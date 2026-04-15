@@ -1,13 +1,16 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Upload, X, Crop as CropIcon } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Upload, X, Crop as CropIcon, Save } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import Cropper, { Point, Area } from "react-easy-crop"
+import { toast } from "sonner"
 
 interface ProfileDialogProps {
   open: boolean
@@ -22,6 +25,19 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Text inputs
+  const [name, setName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [location, setLocation] = useState("")
+
+  useEffect(() => {
+    if (currentUser) {
+      setName(currentUser.name || "")
+      setPhone(currentUser.phone || "")
+      setLocation(currentUser.location || "")
+    }
+  }, [currentUser, open])
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels)
@@ -65,30 +81,48 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   }
 
   const handleSave = async () => {
-    if (!currentUser || !imageSrc || !croppedAreaPixels) return
+    if (!currentUser) return
 
     setLoading(true)
     try {
-      const croppedImageBase64 = await getCroppedImg(imageSrc, croppedAreaPixels)
       const token = localStorage.getItem("token")
-      
-      const response = await fetch(`/api/users/${currentUser.id}/avatar`, {
-        method: "POST",
+
+      // 1. Save Avatar if cropped
+      if (imageSrc && croppedAreaPixels) {
+        const croppedImageBase64 = await getCroppedImg(imageSrc, croppedAreaPixels)
+        await fetch(`/api/users/${currentUser.id}/avatar`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ avatarBase64: croppedImageBase64 })
+        })
+      }
+
+      // 2. Save Profile Details
+      const response = await fetch(`/api/users/${currentUser.id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ avatarBase64: croppedImageBase64 })
+        body: JSON.stringify({ name, phone, location })
       })
 
       if (response.ok) {
         const data = await response.json()
         login(data.user.role.toLowerCase() as any, data.user.id, data.user)
+        toast.success("Profile updated successfully")
         onOpenChange(false)
         setImageSrc(null)
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || "Failed to update profile")
       }
     } catch (err) {
-      console.error("Failed to save avatar", err)
+      console.error("Failed to save profile", err)
+      toast.error("An error occurred while saving.")
     } finally {
       setLoading(false)
     }
@@ -100,37 +134,79 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     .join("")
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={(val) => {
+      if (!val) {
+        setImageSrc(null)
+      }
+      onOpenChange(val)
+    }}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
           <DialogDescription>
-            Update your profile picture
+            Update your personal details and profile picture
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col items-center gap-6 py-4">
           {!imageSrc ? (
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-24 w-24">
-                {currentUser?.avatar ? (
-                  <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                ) : (
-                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                    {initials}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-              />
-              <Button onClick={() => fileInputRef.current?.click()} variant="outline">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload New Photo
+            <div className="w-full flex flex-col gap-6">
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="h-24 w-24">
+                  {currentUser?.avatar ? (
+                    <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                  ) : (
+                    <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                      {initials}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Change Photo
+                </Button>
+              </div>
+
+              <div className="space-y-4 w-full">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input 
+                    id="name" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    placeholder="John Doe" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input 
+                    id="phone" 
+                    value={phone} 
+                    onChange={(e) => setPhone(e.target.value)} 
+                    placeholder="+1 234 567 890" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location / Initial Assignment</Label>
+                  <Input 
+                    id="location" 
+                    value={location} 
+                    onChange={(e) => setLocation(e.target.value)} 
+                    placeholder="MOPH Office" 
+                  />
+                </div>
+              </div>
+
+              <Button onClick={handleSave} disabled={loading} className="w-full mt-2">
+                <Save className="h-4 w-4 mr-2" />
+                {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           ) : (
@@ -162,11 +238,15 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
               <div className="flex justify-end gap-2 mt-2">
                 <Button variant="ghost" onClick={() => setImageSrc(null)}>
                   <X className="h-4 w-4 mr-2" />
-                  Cancel
+                  Discard Photo
                 </Button>
-                <Button onClick={handleSave} disabled={loading}>
+                <Button onClick={() => {
+                  // Don't fully save yet, just accept crop and show form again. 
+                  // But for simplicity, let's keep the existing logic where Crop & Save performs the API call to save everything.
+                  handleSave();
+                }} disabled={loading}>
                   <CropIcon className="h-4 w-4 mr-2" />
-                  {loading ? "Saving..." : "Crop & Save"}
+                  {loading ? "Saving..." : "Crop & Save All"}
                 </Button>
               </div>
             </div>
