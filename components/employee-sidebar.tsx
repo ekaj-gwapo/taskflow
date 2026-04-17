@@ -136,6 +136,7 @@ export function EmployeeSidebar({
     .toUpperCase() || "U"
 
   const hasUnseenIndividualTasks = individualTasks.some(t => !seenTaskIds.has(t.id) && t.status !== 'completed')
+  const hasUnseenTeamTasks = teamTasks.some(t => !seenTaskIds.has(t.id) && t.status !== 'completed')
 
   return (
     <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg">
@@ -216,23 +217,19 @@ export function EmployeeSidebar({
                   )}>
                     My Tasks
                   </span>
+                    <span className={cn(
+                      "text-[10px] font-medium",
+                      selectedCategory === "individual" ? "text-white/70" : "text-muted-foreground"
+                    )}>
+                      Tasks assigned specifically to you
+                    </span>
+                  </div>
                   {hasUnseenIndividualTasks && (
-                    <span className="inline-block h-2 w-2 rounded-full bg-destructive border border-background animate-pulse ml-2" />
+                    <div className="text-[10px] font-bold px-2 py-1 rounded-full bg-destructive text-white animate-pulse shadow-sm min-w-[38px] text-center">
+                      NEW
+                    </div>
                   )}
-                  <span className={cn(
-                    "text-[10px] font-medium",
-                    selectedCategory === "individual" ? "text-white/70" : "text-muted-foreground"
-                  )}>
-                    Tasks assigned specifically to you
-                  </span>
-                </div>
-                <div className={cn(
-                  "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                  selectedCategory === "individual" ? "bg-white/20 text-white" : "bg-emerald-500/10 text-emerald-600"
-                )}>
-                  {individualTasks.length}
-                </div>
-              </button>
+                </button>
 
               <button
                 onClick={() => onSelectCategory("team")}
@@ -258,20 +255,19 @@ export function EmployeeSidebar({
                   )}>
                     Team Tasks
                   </span>
-                  <span className={cn(
-                    "text-[10px] font-medium",
-                    selectedCategory === "team" ? "text-white/70" : "text-muted-foreground"
-                  )}>
-                    Collaborative projects and tasks
-                  </span>
-                </div>
-                <div className={cn(
-                  "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                  selectedCategory === "team" ? "bg-white/20 text-white" : "bg-emerald-500/10 text-emerald-600"
-                )}>
-                  {teamTasks.length}
-                </div>
-              </button>
+                    <span className={cn(
+                      "text-[10px] font-medium",
+                      selectedCategory === "team" ? "text-white/70" : "text-muted-foreground"
+                    )}>
+                      Collaborative projects and tasks
+                    </span>
+                  </div>
+                  {hasUnseenTeamTasks && (
+                    <div className="text-[10px] font-bold px-2 py-1 rounded-full bg-destructive text-white animate-pulse shadow-sm min-w-[38px] text-center">
+                      NEW
+                    </div>
+                  )}
+                </button>
 
               <button
                 onClick={() => onSelectCategory("activity-log")}

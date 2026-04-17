@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityLog } from "@/lib/store";
 import { FileText, Users, MessageSquare, AlertCircle, Trash2, CheckCircle2, PlusCircle, Paperclip, UserCog, UserCircle, Key, ShieldCheck, UserCheck, Share2 } from "lucide-react";
@@ -75,7 +75,13 @@ export function ActivityLogView() {
     
     switch (log.action) {
       case "TASK_CREATED":
-        return <span>Created the task <strong>{taskName}</strong></span>;
+        const assignees = log.details?.assignees;
+        return (
+          <span>
+            Created the task <strong>{taskName}</strong>
+            {assignees && <span> and assigned it to <strong>{assignees}</strong></span>}
+          </span>
+        );
       case "STATUS_UPDATED":
         return <span>Updated status of <strong>{taskName}</strong> from <span className="uppercase text-[10px] tracking-wide bg-secondary px-1.5 py-0.5 rounded-md">{log.details?.from?.replace(/_/g, ' ')}</span> to <span className="uppercase text-[10px] tracking-wide bg-secondary px-1.5 py-0.5 rounded-md text-primary font-bold">{log.details?.to?.replace(/_/g, ' ')}</span></span>;
       case "ASSIGNEE_CHANGED":
@@ -165,7 +171,7 @@ export function ActivityLogView() {
                         <span className="text-sm font-semibold text-foreground">{log.userName}</span>
                       </div>
                       <span className="text-[11px] font-medium text-muted-foreground shrink-0 uppercase tracking-wide">
-                        {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                        {format(new Date(log.createdAt), 'MMM d, yyyy h:mm a')}
                       </span>
                     </div>
                     

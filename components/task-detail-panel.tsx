@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -69,7 +69,41 @@ export function TaskDetailPanel({
   const [isUpdatingAssignees, setIsUpdatingAssignees] = useState(false)
   const [isDiscussionExpanded, setIsDiscussionExpanded] = useState(false)
   const [isProgressNotesExpanded, setIsProgressNotesExpanded] = useState(false)
+  const [lastSeenComments, setLastSeenComments] = useState(0)
+  const [lastSeenNotes, setLastSeenNotes] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Initialize last seen counts from localStorage
+  useEffect(() => {
+    if (currentUser?.id && task.id) {
+      const savedComments = localStorage.getItem(`taskflow_comments_others_${task.id}_${currentUser.id}`)
+      const savedNotes = localStorage.getItem(`taskflow_notes_others_${task.id}_${currentUser.id}`)
+      if (savedComments) setLastSeenComments(parseInt(savedComments))
+      if (savedNotes) setLastSeenNotes(parseInt(savedNotes))
+    }
+  }, [task.id, currentUser?.id])
+
+  // Count only comments/notes from other users
+  const othersCommentsCount = task.comments?.filter(c => c.authorId !== currentUser?.id).length || 0
+  const othersNotesCount = task.progressNotes?.filter(n => n.authorId !== currentUser?.id).length || 0
+
+  // Update last seen when sections are expanded
+  useEffect(() => {
+    if (isDiscussionExpanded && currentUser?.id && task.id) {
+      setLastSeenComments(othersCommentsCount)
+      localStorage.setItem(`taskflow_comments_others_${task.id}_${currentUser.id}`, othersCommentsCount.toString())
+    }
+  }, [isDiscussionExpanded, othersCommentsCount, task.id, currentUser?.id])
+
+  useEffect(() => {
+    if (isProgressNotesExpanded && currentUser?.id && task.id) {
+      setLastSeenNotes(othersNotesCount)
+      localStorage.setItem(`taskflow_notes_others_${task.id}_${currentUser.id}`, othersNotesCount.toString())
+    }
+  }, [isProgressNotesExpanded, othersNotesCount, task.id, currentUser?.id])
+
+  const hasNewComments = !isDiscussionExpanded && othersCommentsCount > lastSeenComments
+  const hasNewNotes = !isProgressNotesExpanded && othersNotesCount > lastSeenNotes
 
   const isAssignee = task.assigneeId === currentUser?.id || task.assignees?.some(a => a.id === currentUser?.id)
   const isStatusEditable = showStatusControl && (
@@ -536,8 +570,11 @@ export function TaskDetailPanel({
               <div className="p-1.5 rounded-md bg-primary/10 border border-primary/20">
                 <MessageSquare className="h-4 w-4 text-primary" />
               </div>
-              <span className="text-[11px] font-bold text-foreground uppercase tracking-widest">
+              <span className="text-[11px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1.5">
                 Discussion <span className="text-muted-foreground ml-0.5">({task.comments?.length || 0})</span>
+                {hasNewComments && (
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                )}
               </span>
             </div>
             {isDiscussionExpanded ? (
@@ -622,8 +659,11 @@ export function TaskDetailPanel({
                 <div className="p-1.5 rounded-md bg-secondary/50 border border-border/50">
                   <MessageSquare className="h-4 w-4 text-primary/70" />
                 </div>
-                <span className="text-[11px] font-bold text-foreground/70 uppercase tracking-widest">
+                <span className="text-[11px] font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-1.5">
                   Progress Notes <span className="text-muted-foreground ml-0.5">({task.progressNotes.length})</span>
+                  {hasNewNotes && (
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                  )}
                 </span>
               </div>
               {isProgressNotesExpanded ? (

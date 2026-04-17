@@ -182,13 +182,17 @@ export async function POST(request: NextRequest) {
       comments: []
     }
 
+    const assigneeNames = assigneesData.map(a => a.name).join(", ");
     await logActivity({
       action: "TASK_CREATED",
       entityId: taskId,
       entityType: "TASK",
       userId: auth.user!.id,
       userName: auth.user!.name,
-      details: { title: task.title }
+      details: { 
+        title: task.title,
+        assignees: assigneeNames
+      }
     });
 
     return NextResponse.json(

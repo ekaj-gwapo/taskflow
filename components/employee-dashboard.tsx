@@ -225,7 +225,10 @@ export function EmployeeDashboard() {
           {/* Urgent Tasks Section */}
           <UrgentTasksSection
             tasks={currentCategoryTasks}
-            onSelectTask={(task) => setSelectedTask(task)}
+            onSelectTask={(task) => {
+              setSelectedTask(task);
+              markAsSeen(task.id);
+            }}
           />
 
           {/* Task Filter Tabs */}
@@ -266,7 +269,10 @@ export function EmployeeDashboard() {
                         selectedTask?.id === task.id ? "ring-2 ring-primary border-primary" : "border-t-[hsl(var(--chart-2))]",
                         task.status === "completed" ? "opacity-75" : ""
                       )}
-                      onClick={() => setSelectedTask(selectedTask?.id === task.id ? null : task)}
+                      onClick={() => {
+                        setSelectedTask(selectedTask?.id === task.id ? null : task);
+                        markAsSeen(task.id);
+                      }}
                     >
                       <CardContent className="p-4 flex flex-col h-full">
                         <div className="flex justify-between items-start mb-2">
