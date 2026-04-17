@@ -13,11 +13,22 @@ export interface User {
 export type TaskStatus = "todo" | "in-progress" | "completed"
 export type TaskPriority = "low" | "medium" | "high"
 
+export interface TaskComment {
+  id: string
+  taskId: string
+  authorId: string
+  authorName: string
+  authorAvatar?: string
+  content: string
+  createdAt: string
+}
+
 export interface ProgressNote {
   id: string
   taskId: string
   authorId: string
   authorName: string
+  authorAvatar?: string
   content: string
   createdAt: string
   attachmentUrl?: string
@@ -86,6 +97,7 @@ export interface Task {
   dueDate: string
   completedAt: string | null
   progressNotes: ProgressNote[]
+  comments?: TaskComment[]
   actionSteps?: ActionStep[]
 }
 
@@ -99,6 +111,18 @@ export interface WeeklyReport {
   inProgressCount: number
   overdueCount: number
   todoCount: number
+}
+
+export interface ActivityLog {
+  id: string
+  action: "TASK_CREATED" | "TASK_DELETED" | "STATUS_UPDATED" | "ASSIGNEE_CHANGED" | "NOTE_ADDED" | "COMMENT_ADDED" | "STEP_ADDED" | "STEP_UPDATED" | "STEP_DELETED" | "STEP_NOTE_ADDED" | "PROFILE_UPDATED" | "AVATAR_UPDATED" | "PASSWORD_RESET" | "USER_STATUS_UPDATED" | "TASK_REASSIGNED" | "TEAM_MEMBERS_EDITED" | "TASK_DELEGATED"
+  entityId: string
+  entityType: string
+  userId: string
+  userName: string
+  details?: any
+  createdAt: string
+  taskTitle?: string
 }
 
 // Mock data removed for pure SQLite implementation

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth-utils"
 import db from "@/lib/db"
+import { logActivity } from "@/lib/activity"
 
 export async function PUT(
   request: NextRequest,
@@ -26,6 +27,15 @@ export async function PUT(
       "UPDATE users SET isActive = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
       [isActive, id]
     )
+
+    await logActivity({
+      action: "USER_STATUS_UPDATED",
+      entityId: id,
+      entityType: "USER",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { updatedUserId: id, isActive: !!isActive }
+    });
 
     return NextResponse.json(
       { message: "User status updated successfully", isActive },

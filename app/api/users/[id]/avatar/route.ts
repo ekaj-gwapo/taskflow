@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-utils"
+import { logActivity } from "@/lib/activity"
 
 export async function POST(
   request: NextRequest,
@@ -28,6 +29,15 @@ export async function POST(
       avatarBase64,
       id,
     ])
+
+    await logActivity({
+      action: "AVATAR_UPDATED",
+      entityId: id,
+      entityType: "USER",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { updatedUserId: id }
+    });
 
     const updatedUser = await db.getOne("SELECT id, name, email, role, phone, location, avatarUrl as avatar, createdAt, updatedAt FROM users WHERE id = ?", [id])
 

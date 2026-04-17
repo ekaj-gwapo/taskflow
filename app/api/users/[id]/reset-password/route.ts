@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth-utils"
 import db from "@/lib/db"
+import { logActivity } from "@/lib/activity"
 import bcrypt from "bcryptjs"
 
 export async function PUT(
@@ -29,6 +30,15 @@ export async function PUT(
       "UPDATE users SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
       [hashedPassword, id]
     )
+
+    await logActivity({
+      action: "PASSWORD_RESET",
+      entityId: id,
+      entityType: "USER",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { resetUserId: id }
+    });
 
     return NextResponse.json(
       { message: "Password reset successfully" },

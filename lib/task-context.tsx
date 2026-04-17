@@ -29,6 +29,7 @@ interface TaskContextType {
   updateTaskStatus: (taskId: string, status: TaskStatus) => void
   updateTaskAssignees: (taskId: string, assigneeIds: string[]) => void
   deleteTask: (taskId: string) => Promise<boolean>
+  addTaskComment: (taskId: string, content: string) => Promise<void>
   addProgressNote: (taskId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => Promise<void>
 
   // Action Steps
@@ -284,6 +285,42 @@ const url = `/api/tasks/${taskId}`
       return false
     }
   }, [toast])
+
+  const addTaskComment = useCallback(
+    async (taskId: string, content: string) => {
+      if (!currentUser) return
+      try {
+        const token = localStorage.getItem("token")
+        const url = `/api/tasks/${taskId}/comments`
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ content }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null)
+          toast.error(errorData?.error || "Unable to save comment.")
+          throw new Error(errorData?.error || "Failed to add comment")
+        }
+
+        const data = await response.json()
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId
+              ? { ...t, comments: [...(t.comments || []), data.comment] }
+              : t
+          )
+        )
+      } catch (error) {
+        console.error("Add comment error:", error)
+      }
+    },
+    [currentUser]
+  )
 
   const addProgressNote = useCallback(
     async (taskId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => {
@@ -705,6 +742,7 @@ const url = `/api/tasks/${taskId}`
         updateTaskStatus,
         updateTaskAssignees,
         deleteTask,
+        addTaskComment,
         addProgressNote,
         addActionStep,
         updateActionStepStatus,

@@ -14,24 +14,27 @@ export async function POST(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { content, attachmentUrl, attachmentName, attachmentType } = await request.json()
+    const { content } = await request.json()
 
-    if (!content && !attachmentUrl) {
+    if (!content) {
       return NextResponse.json(
-        { error: "Content or attachment is required" },
+        { error: "Content is required" },
         { status: 400 }
       )
     }
 
     const taskId = (await params).id?.toLowerCase()
-    // Verify task exists and user has access
+    
+    // Verify task exists
     const task: any = await db.getOne("SELECT * FROM tasks WHERE LOWER(id) = ?", [taskId]);
 
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
-    // Permission check: admins/superadmins can add to any, employee only to their own
+    // Permission check: admins/superadmins can add to any, employee only if they are assigned. 
+    // If the task represents a broad discussion, we could let any employee comment, 
+    // but sticking to standard access: employees can only comment on tasks they have access to.
     const role = auth.user!.role?.toUpperCase()
     if (role === "EMPLOYEE") {
       const assignment = await db.getOne(
@@ -47,47 +50,44 @@ export async function POST(
       }
     }
 
-    const noteId = uuidv4();
+    const commentId = uuidv4();
     await db.execute(`
-      INSERT INTO progress_notes (id, content, taskId, authorId, authorName, createdAt, updatedAt, attachmentUrl, attachmentName, attachmentType)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO task_comments (id, content, taskId, authorId, authorName, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `, [
-      noteId, 
+      commentId, 
       content, 
       taskId, 
       auth.user!.id, 
       auth.user!.name, 
       new Date().toISOString(), 
-      new Date().toISOString(),
-      attachmentUrl || null,
-      attachmentName || null,
-      attachmentType || null
+      new Date().toISOString()
     ]);
 
-    const note: any = await db.getOne(`
-      SELECT pn.*, u.avatarUrl as authorAvatar
-      FROM progress_notes pn
-      LEFT JOIN users u ON pn.authorId = u.id
-      WHERE pn.id = ?
-    `, [noteId]);
+    const comment: any = await db.getOne(`
+      SELECT tc.*, u.avatarUrl as authorAvatar
+      FROM task_comments tc
+      LEFT JOIN users u ON tc.authorId = u.id
+      WHERE tc.id = ?
+    `, [commentId]);
 
     await logActivity({
-      action: "NOTE_ADDED",
+      action: "COMMENT_ADDED",
       entityId: taskId,
       entityType: "TASK",
       userId: auth.user!.id,
       userName: auth.user!.name,
-      details: { noteId, content: note.content }
+      details: { commentId, content: comment.content }
     });
 
     return NextResponse.json(
-      { message: "Progress note created successfully", note: note },
+      { message: "Comment added successfully", comment },
       { status: 201 }
     )
   } catch (error: any) {
-    console.error("Create progress note error:", error)
+    console.error("Create comment error:", error)
     return NextResponse.json(
-      { error: "Failed to create progress note", details: error.message },
+      { error: "Failed to add comment", details: error.message },
       { status: 500 }
     )
   }

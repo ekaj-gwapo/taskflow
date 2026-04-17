@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
+import { logActivity } from "@/lib/activity"
 
 export async function PUT(
   request: NextRequest,
@@ -54,6 +55,22 @@ export async function PUT(
           updatedAt = ?
       WHERE id = ?
     `, [newCompleted, newIsActed, new Date().toISOString(), (await params).stepId]);
+
+    const step = await db.getOne("SELECT title FROM action_steps WHERE id = ?", [(await params).stepId]) as any;
+    
+    await logActivity({
+      action: "STEP_UPDATED",
+      entityId: taskId,
+      entityType: "TASK",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { 
+        stepId: (await params).stepId, 
+        title: step?.title,
+        completed: !!newCompleted,
+        isActed: !!newIsActed
+      }
+    });
 
     const actionStep = {
       ...(await db.getOne("SELECT * FROM action_steps WHERE id = ?", [(await params).stepId]) as any),
@@ -114,7 +131,18 @@ export async function DELETE(
       }
     }
 
+    const step = await db.getOne("SELECT title FROM action_steps WHERE id = ?", [(await params).stepId]) as any;
+
     await db.execute("DELETE FROM action_steps WHERE id = ?", [(await params).stepId]);
+
+    await logActivity({
+      action: "STEP_DELETED",
+      entityId: taskId,
+      entityType: "TASK",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { stepId: (await params).stepId, title: step?.title }
+    });
 
     return NextResponse.json(
       { message: "Action step deleted successfully" },

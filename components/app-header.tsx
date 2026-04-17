@@ -2,10 +2,10 @@
 
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, LogOut, Shield } from "lucide-react"
+import { LayoutDashboard, Shield } from "lucide-react"
 
 export function AppHeader() {
-  const { currentUser, currentRole, logout } = useTaskContext()
+  const { currentUser, currentRole } = useTaskContext()
 
   if (!currentUser) return null
 
@@ -36,15 +36,6 @@ export function AppHeader() {
               Users
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={logout}
-            className="text-red-500 hover:text-red-600 hover:bg-red-50 font-medium transition-colors"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            <span>Logout</span>
-          </Button>
         </div>
       </div>
     </header>

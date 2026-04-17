@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, requireAdmin } from "@/lib/auth-utils"
 import db from "@/lib/db"
+import { logActivity, ActivityAction } from "@/lib/activity"
 
 export async function GET(
   request: NextRequest,
@@ -154,11 +155,12 @@ export async function PUT(
     let newAssigneeId = existingTask.assigneeId;
 
     if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
-      if (role === "ADMIN") {
+      if (role === "HEAD_ADMIN" || role === "SUPERADMIN") {
         newDelegatedById = auth.user!.id;
         newDelegatedAt = new Date().toISOString();
-      } else if (role === "SUPERADMIN" || role === "HEAD_ADMIN") {
-        // Maintain existing delegator if present, or keep null
+      } else if (role === "ADMIN") {
+        // Acting Assistant (ADMIN) does not set themselves as delegator by default
+        // Maintains existing delegator (Head Admin) if present
       }
       newAssigneeId = assigneeIds.length > 0 ? assigneeIds[0] : null;
     }
@@ -231,6 +233,48 @@ export async function PUT(
     
     await db.execute("UPDATE task_assignments SET points = ? WHERE LOWER(taskId) = LOWER(?)", [finalPoints, realTaskId]);
 
+    if (status && dbStatus !== existingTask.status) {
+      await logActivity({
+        action: "STATUS_UPDATED",
+        entityId: realTaskId,
+        entityType: "TASK",
+        userId: auth.user!.id,
+        userName: auth.user!.name,
+        details: { from: existingTask.status, to: dbStatus }
+      });
+    }
+
+    if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
+      const currentAssigneeIds = (await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [realTaskId]) as any[]).map(r => r.userId).sort();
+      const newAssigneeIds = [...assigneeIds].sort();
+      
+      const arraysEqual = currentAssigneeIds.length === newAssigneeIds.length && currentAssigneeIds.every((value, index) => value === newAssigneeIds[index]);
+      
+      if (!arraysEqual) {
+        let action: ActivityAction = "ASSIGNEE_CHANGED";
+        
+        if (role === "HEAD_ADMIN" || role === "SUPERADMIN") {
+          action = "TASK_DELEGATED";
+        } else if (newAssigneeIds.length === 1) {
+          action = "TASK_REASSIGNED";
+        } else if (newAssigneeIds.length > 1) {
+          action = "TEAM_MEMBERS_EDITED";
+        }
+
+        await logActivity({
+          action,
+          entityId: realTaskId,
+          entityType: "TASK",
+          userId: auth.user!.id,
+          userName: auth.user!.name,
+          details: { 
+            assignees: newAssigneeIds,
+            previousAssignees: currentAssigneeIds
+          }
+        });
+      }
+    }
+
     // Fetch updated task data
     const task: any = await db.getOne(`
       SELECT t.*, 
@@ -297,7 +341,7 @@ export async function DELETE(
     const taskId = (await params).id?.toLowerCase()
     
     // Explicitly check if task is completed
-    const existingTask: any = await db.getOne("SELECT status FROM tasks WHERE LOWER(id) = ?", [taskId])
+    const existingTask: any = await db.getOne("SELECT status, title FROM tasks WHERE LOWER(id) = ?", [taskId])
     if (existingTask && existingTask.status === "COMPLETED") {
       return NextResponse.json(
         { error: "Completed tasks cannot be deleted" },
@@ -311,6 +355,15 @@ export async function DELETE(
     await db.execute("DELETE FROM action_steps WHERE taskId = ?", [taskId])
     await db.execute("DELETE FROM progress_notes WHERE taskId = ?", [taskId])
     await db.execute("DELETE FROM tasks WHERE LOWER(id) = ?", [taskId])
+
+    await logActivity({
+      action: "TASK_DELETED",
+      entityId: taskId,
+      entityType: "TASK",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { title: existingTask.title || "Unknown Task" }
+    });
 
     return NextResponse.json(
       { message: "Task deleted successfully" },

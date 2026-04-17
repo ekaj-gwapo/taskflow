@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, LayoutDashboard } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard } from "lucide-react"
 import { ProfileDialog } from "@/components/profile-dialog"
 import { cn } from "@/lib/utils"
 
@@ -294,6 +294,35 @@ export function AdminSidebar({
                 <ChevronRight className={cn(
                   "h-3.5 w-3.5 shrink-0",
                   selectedEmployeeId === 'team-projects' ? "text-white/70" : "text-muted-foreground"
+                )} />
+              </button>
+
+              <button
+                onClick={() => onSelectEmployee('activity-log')}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-2",
+                  selectedEmployeeId === 'activity-log'
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]"
+                    : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border-border bg-background"
+                )}
+              >
+                <div className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-md border",
+                  selectedEmployeeId === 'activity-log'
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                )}>
+                  <Activity className="h-4 w-4" />
+                </div>
+                <span className={cn(
+                  "flex-1 text-sm font-semibold",
+                  selectedEmployeeId === 'activity-log' ? "text-white" : "text-foreground"
+                )}>
+                  Activity Log
+                </span>
+                <ChevronRight className={cn(
+                  "h-3.5 w-3.5 shrink-0",
+                  selectedEmployeeId === 'activity-log' ? "text-white/70" : "text-muted-foreground"
                 )} />
               </button>
 

@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ClipboardList, User, Mail, Phone, MapPin, Save, X, LayoutDashboard, Search, ChevronRight, Shield, Clipboard, Users } from "lucide-react"
+import { ClipboardList, User, Mail, Phone, MapPin, Save, X, LayoutDashboard, Search, ChevronRight, Shield, Clipboard, Users, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ProfileDialog } from "@/components/profile-dialog"
 
@@ -65,8 +65,8 @@ function FlippingLogo({ front, back, alt }: { front: string; back: string; alt: 
 }
 
 interface EmployeeSidebarProps {
-  selectedCategory: "individual" | "team" | "profile"
-  onSelectCategory: (category: "individual" | "team" | "profile") => void
+  selectedCategory: "individual" | "team" | "profile" | "activity-log"
+  onSelectCategory: (category: "individual" | "team" | "profile" | "activity-log") => void
 }
 
 export function EmployeeSidebar({
@@ -270,6 +270,39 @@ export function EmployeeSidebar({
                   selectedCategory === "team" ? "bg-white/20 text-white" : "bg-emerald-500/10 text-emerald-600"
                 )}>
                   {teamTasks.length}
+                </div>
+              </button>
+
+              <button
+                onClick={() => onSelectCategory("activity-log")}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm",
+                  selectedCategory === "activity-log"
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20 scale-[1.02]"
+                    : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border-border bg-background"
+                )}
+              >
+                <div className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-md border",
+                  selectedCategory === "activity-log"
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                )}>
+                  <Activity className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={cn(
+                    "block text-sm font-semibold",
+                    selectedCategory === "activity-log" ? "text-white" : "text-foreground"
+                  )}>
+                    Activity Log
+                  </span>
+                  <span className={cn(
+                    "text-[10px] font-medium",
+                    selectedCategory === "activity-log" ? "text-white/70" : "text-muted-foreground"
+                  )}>
+                    Your history and updates
+                  </span>
                 </div>
               </button>
             </div>

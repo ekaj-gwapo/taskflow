@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, requireAdmin } from "@/lib/auth-utils"
 import db from "@/lib/db"
+import { logActivity } from "@/lib/activity"
 import { v4 as uuidv4 } from "uuid"
 
 export async function GET(request: NextRequest) {
@@ -45,7 +46,19 @@ export async function GET(request: NextRequest) {
         ...as,
         notes: await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[]
       })))
-      const progressNotes = await db.getAll("SELECT * FROM progress_notes WHERE taskId = ?", [t.id]) as any[]
+      const progressNotes = await db.getAll(`
+        SELECT pn.*, u.avatarUrl as authorAvatar 
+        FROM progress_notes pn 
+        LEFT JOIN users u ON pn.authorId = u.id 
+        WHERE pn.taskId = ?
+      `, [t.id]) as any[]
+      const comments = await db.getAll(`
+        SELECT tc.*, u.avatarUrl as authorAvatar 
+        FROM task_comments tc 
+        LEFT JOIN users u ON tc.authorId = u.id 
+        WHERE tc.taskId = ? 
+        ORDER BY tc.createdAt ASC
+      `, [t.id]) as any[]
       
       const assigneesData = await db.getAll(`
         SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
@@ -66,7 +79,8 @@ export async function GET(request: NextRequest) {
         delegatedBy: t.delegatedById ? { id: t.delegatedById, name: t.delegatorName, email: t.delegatorEmail, role: t.delegatorRole, avatar: t.delegatorAvatar } : null,
         delegatedAt: t.delegatedAt || null,
         actionSteps: actionStepsWithNotes,
-        progressNotes
+        progressNotes,
+        comments
       }
     }))
 
@@ -164,8 +178,18 @@ export async function POST(request: NextRequest) {
       createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole, avatar: task.creatorAvatar } : null,
       delegatedBy: task.delegatedById ? { id: task.delegatedById, name: task.delegatorName, email: task.delegatorEmail, role: task.delegatorRole, avatar: task.delegatorAvatar } : null,
       actionSteps: actionStepsWithNotes,
-      progressNotes: []
+      progressNotes: [],
+      comments: []
     }
+
+    await logActivity({
+      action: "TASK_CREATED",
+      entityId: taskId,
+      entityType: "TASK",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { title: task.title }
+    });
 
     return NextResponse.json(
       { message: "Task created successfully", task: formattedTask },

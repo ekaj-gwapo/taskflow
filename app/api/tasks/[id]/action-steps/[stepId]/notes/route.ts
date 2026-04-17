@@ -62,6 +62,15 @@ export async function POST(
       attachmentType || null
     ]);
 
+    await logActivity({
+      action: "STEP_NOTE_ADDED",
+      entityId: (await params).id,
+      entityType: "TASK",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { stepId: (await params).stepId, noteId, content }
+    });
+
     const stepNote = await db.getOne("SELECT * FROM step_notes WHERE id = ?", [noteId]);
 
     return NextResponse.json(

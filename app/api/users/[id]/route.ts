@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
+import { logActivity } from "@/lib/activity"
 
 export async function GET(
   request: NextRequest,
@@ -80,6 +81,15 @@ export async function PUT(
         WHERE id = ?
       `, [name, email, phone, location, id]);
     }
+
+    await logActivity({
+      action: "PROFILE_UPDATED",
+      entityId: id,
+      entityType: "USER",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { updatedUserId: id, name, email }
+    });
 
     const user = await db.getOne(`
       SELECT id, name, email, phone, location, role 

@@ -35,16 +35,28 @@ CREATE TABLE action_steps (
       FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE
     );
 
-CREATE TABLE step_notes (
-      id TEXT PRIMARY KEY,
-      content TEXT NOT NULL,
-      stepId TEXT NOT NULL,
-      authorId TEXT,
-      authorName TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (stepId) REFERENCES action_steps(id) ON DELETE CASCADE
-    );
+CREATE TABLE IF NOT EXISTS step_notes (
+  id TEXT PRIMARY KEY,
+  stepId TEXT NOT NULL,
+  content TEXT NOT NULL,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  authorName TEXT NOT NULL,
+  attachmentUrl TEXT,
+  attachmentName TEXT,
+  attachmentType TEXT,
+  FOREIGN KEY (stepId) REFERENCES action_steps(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id TEXT PRIMARY KEY,
+  action TEXT NOT NULL,
+  entityId TEXT NOT NULL,
+  entityType TEXT NOT NULL,
+  userId TEXT NOT NULL,
+  userName TEXT NOT NULL,
+  details TEXT,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE progress_notes (
       id TEXT PRIMARY KEY,

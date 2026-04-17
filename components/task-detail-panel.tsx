@@ -5,7 +5,7 @@ import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { ActionStepsSection } from "@/components/action-steps-section"
 import {
@@ -29,7 +29,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { X, Calendar, Clock, User, Send, MessageSquare, Trash2, Share2, Paperclip, FileIcon, FileText, Loader2, ExternalLink, Users, Check } from "lucide-react"
+import { X, Calendar, Clock, User, UserPlus, Send, MessageSquare, Trash2, Share2, Paperclip, FileIcon, FileText, Loader2, ExternalLink, Users, Check, ChevronDown, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 import type { Task, TaskStatus } from "@/lib/store"
 import { formatDistanceToNow } from "date-fns"
@@ -60,11 +60,15 @@ export function TaskDetailPanel({
   showNoteInput = false,
   showDeleteButton = false,
 }: TaskDetailPanelProps) {
-  const { currentRole, currentUser, updateTaskStatus, addProgressNote, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees } = useTaskContext()
+  const { currentRole, currentUser, updateTaskStatus, addProgressNote, addTaskComment, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees } = useTaskContext()
   const [noteContent, setNoteContent] = useState("")
+  const [commentContent, setCommentContent] = useState("")
+  const [isAddingComment, setIsAddingComment] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isUpdatingAssignees, setIsUpdatingAssignees] = useState(false)
+  const [isDiscussionExpanded, setIsDiscussionExpanded] = useState(false)
+  const [isProgressNotesExpanded, setIsProgressNotesExpanded] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const isAssignee = task.assigneeId === currentUser?.id || task.assignees?.some(a => a.id === currentUser?.id)
@@ -142,6 +146,20 @@ export function TaskDetailPanel({
       toast.error("Failed to upload file or add note.")
     } finally {
       setIsUploading(false)
+    }
+  }
+
+  const handleAddComment = async () => {
+    if (!commentContent.trim()) return
+    setIsAddingComment(true)
+    try {
+      await addTaskComment(task.id, commentContent.trim())
+      setCommentContent("")
+    } catch (error) {
+      console.error("Failed to add comment:", error)
+      toast.error("Failed to post comment.")
+    } finally {
+      setIsAddingComment(false)
     }
   }
 
@@ -308,10 +326,14 @@ export function TaskDetailPanel({
                         {isUpdatingAssignees ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <Users className="h-3 w-3" />
+                          (task.assignees && task.assignees.length > 1) ? <Users className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />
                         )}
                         <span className="truncate uppercase tracking-wider">
-                          {isUpdatingAssignees ? "Updating..." : "Edit Team Members"}
+                          {isUpdatingAssignees ? "Updating..." : (
+                            (task.assignees && task.assignees.length > 1) 
+                              ? "Edit Team Members" 
+                              : "Reassign"
+                          )}
                         </span>
                       </Button>
                     </PopoverTrigger>
@@ -504,18 +526,115 @@ export function TaskDetailPanel({
             </div>
           ) : null}
 
-          {/* Progress Notes */}
-          <div className="flex flex-col bg-background/20 rounded-b-xl">
-            <div className="flex items-center gap-2.5 px-6 pt-6 pb-3">
-              <div className="p-1.5 rounded-md bg-secondary/50 border border-border/50">
-                <MessageSquare className="h-4 w-4 text-primary/70" />
+          {/* Discussion Thread */}
+          <div className="flex flex-col bg-background/30 rounded-xl mb-6 border border-border/40 shadow-sm mx-6 overflow-hidden">
+          <button 
+            onClick={() => setIsDiscussionExpanded(!isDiscussionExpanded)}
+            className="flex items-center justify-between w-full px-5 pt-4 pb-3 border-b border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors group/header"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-md bg-primary/10 border border-primary/20">
+                <MessageSquare className="h-4 w-4 text-primary" />
               </div>
-              <span className="text-[11px] font-bold text-foreground/70 uppercase tracking-widest">
-                Progress Notes <span className="text-muted-foreground ml-0.5">({task.progressNotes.length})</span>
+              <span className="text-[11px] font-bold text-foreground uppercase tracking-widest">
+                Discussion <span className="text-muted-foreground ml-0.5">({task.comments?.length || 0})</span>
               </span>
             </div>
+            {isDiscussionExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground group-hover/header:text-foreground transition-colors" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/header:text-foreground transition-colors" />
+            )}
+          </button>
 
-            <div className="px-6">
+          {isDiscussionExpanded && (
+            <div className="p-5 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex gap-3 relative mb-5">
+                <Textarea
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  placeholder="Discuss this task with your team..."
+                  rows={2}
+                  className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-[60px]"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                      handleAddComment()
+                    }
+                  }}
+                />
+                <Button
+                  size="icon"
+                  onClick={handleAddComment}
+                  disabled={!commentContent.trim() || isAddingComment}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm self-end h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
+                  title="Post Comment (Ctrl+Enter)"
+                >
+                  {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
+                  <span className="sr-only">Post comment</span>
+                </Button>
+              </div>
+
+              {!task.comments || task.comments.length === 0 ? (
+                <div className="py-2 text-center bg-secondary/10 rounded-lg border border-dashed border-border/50">
+                  <p className="text-xs text-muted-foreground/70 font-medium p-4">No comments yet. Start the discussion!</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {task.comments.map((comment) => {
+                    const initials = comment.authorName.split(" ").map((n) => n[0]).join("")
+                    return (
+                      <div key={comment.id} className="flex gap-3 group">
+                        <Avatar className="h-8 w-8 shrink-0 border border-border/50 shadow-sm">
+                          {comment.authorAvatar && <AvatarImage src={comment.authorAvatar} alt={comment.authorName} />}
+                          <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-xs font-bold text-foreground">
+                              {comment.authorName}
+                            </span>
+                            <span className="text-[10px] font-medium text-muted-foreground">
+                              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                            </span>
+                          </div>
+                          <div className="text-sm text-foreground/90 leading-relaxed bg-secondary/30 p-3 rounded-2xl rounded-tl-sm border border-border/30">
+                            {comment.content}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+          {/* Progress Notes */}
+          <div className="flex flex-col bg-background/20 rounded-b-xl border-t border-border/30">
+            <button 
+              onClick={() => setIsProgressNotesExpanded(!isProgressNotesExpanded)}
+              className="flex items-center justify-between w-full px-6 pt-6 pb-3 hover:bg-muted/20 transition-colors group/pheader"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-md bg-secondary/50 border border-border/50">
+                  <MessageSquare className="h-4 w-4 text-primary/70" />
+                </div>
+                <span className="text-[11px] font-bold text-foreground/70 uppercase tracking-widest">
+                  Progress Notes <span className="text-muted-foreground ml-0.5">({task.progressNotes.length})</span>
+                </span>
+              </div>
+              {isProgressNotesExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground group-hover/pheader:text-foreground transition-colors" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/pheader:text-foreground transition-colors" />
+              )}
+            </button>
+
+            {isProgressNotesExpanded && (
+              <div className="px-6 animate-in fade-in slide-in-from-top-2 duration-200">
               {task.progressNotes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 px-4 mt-2 bg-secondary/20 rounded-xl border border-dashed border-border/60">
                   <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-3" />
@@ -536,6 +655,7 @@ export function TaskDetailPanel({
                     return (
                       <div key={note.id} className="flex gap-3.5 group">
                         <Avatar className="h-8 w-8 shrink-0 mt-0.5 border border-border/50 shadow-sm group-hover:border-primary/30 transition-colors">
+                          {note.authorAvatar && <AvatarImage src={note.authorAvatar} alt={note.authorName} />}
                           <AvatarFallback className="bg-primary/5 text-primary text-[11px] font-bold">
                             {initials}
                           </AvatarFallback>
@@ -599,7 +719,8 @@ export function TaskDetailPanel({
                   })}
                 </div>
               )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </ScrollArea>

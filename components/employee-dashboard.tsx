@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { ClipboardList, Clock, CheckCircle2, AlertTriangle, Bell, ChevronRight } from "lucide-react"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
+import { ActivityLogView } from "@/components/activity-log-view"
 import { cn, formatDate, formatDateTime } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import type { Task, User } from "@/lib/store"
@@ -138,7 +139,7 @@ function EmployeeTaskCard({
 
 export function EmployeeDashboard() {
   const { tasks, currentUser, canAccessTask, seenTaskIds, markAsSeen } = useTaskContext()
-  const [selectedCategory, setSelectedCategory] = useState<"individual" | "team" | "profile">("individual")
+  const [selectedCategory, setSelectedCategory] = useState<"individual" | "team" | "profile" | "activity-log">("individual")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>("all")
 
@@ -196,8 +197,13 @@ export function EmployeeDashboard() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="p-4 lg:p-6 flex flex-col gap-6">
-          {/* Stats */}
+        {selectedCategory === "activity-log" ? (
+          <div className="p-4 lg:p-6 w-full h-full">
+            <ActivityLogView />
+          </div>
+        ) : (
+          <div className="p-4 lg:p-6 flex flex-col gap-6">
+            {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((stat) => (
               <Card key={stat.label} className="border-border bg-card">
@@ -309,6 +315,7 @@ export function EmployeeDashboard() {
             </TabsContent>
           </Tabs>
         </div>
+        )}
       </div>
 
       {/* Detail Panel */}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
+import { logActivity } from "@/lib/activity"
 import { v4 as uuidv4 } from "uuid"
 
 export async function POST(
@@ -58,6 +59,15 @@ export async function POST(
       INSERT INTO action_steps (id, title, taskId, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?)
     `, [stepId, title, taskId, new Date().toISOString(), new Date().toISOString()]);
+
+    await logActivity({
+      action: "STEP_ADDED",
+      entityId: taskId,
+      entityType: "TASK",
+      userId: auth.user!.id,
+      userName: auth.user!.name,
+      details: { stepId, title }
+    });
 
     const actionStep = {
       ...(await db.getOne("SELECT * FROM action_steps WHERE id = ?", [stepId]) as any),

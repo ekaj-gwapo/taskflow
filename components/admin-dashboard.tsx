@@ -24,6 +24,7 @@ import { TopCompletersChart } from "@/components/top-completers-chart"
 import { WorkloadDistribution } from "@/components/workload-distribution"
 import { RecentlyCompletedTasks } from "@/components/recently-completed-tasks"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
+import { ActivityLogView } from "@/components/activity-log-view"
 import { formatDate, formatDateTime } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 import {
@@ -323,7 +324,7 @@ export function AdminDashboard() {
   }, [tasks, selectedTask])
 
   const matchesHierarchy = useCallback((t: Task) => {
-    if (selectedEmployeeId === null) return true // Dashboard view
+    if (selectedEmployeeId === null || selectedEmployeeId === 'activity-log') return true // Dashboard view
     if (selectedEmployeeId === 'team-projects') return (t.assignees && t.assignees.length > 1)
     if (selectedEmployeeId === 'my-tasks') {
       if (myTaskTab === 'assigned') {
@@ -385,7 +386,7 @@ export function AdminDashboard() {
       </div>
 
       <div className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
-        <StatsCards tasks={tasks.filter(matchesHierarchy)} />
+        {selectedEmployeeId !== 'activity-log' && <StatsCards tasks={tasks.filter(matchesHierarchy)} />}
 
         {selectedEmployeeId === "my-tasks" && myTaskTab === "assigned" && (
           <UrgentTasksSection 
@@ -411,7 +412,8 @@ export function AdminDashboard() {
         )}
 
         {/* SEARCH & FILTER */}
-        <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
+        {selectedEmployeeId !== 'activity-log' && (
+          <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
           <div className="w-full flex flex-col sm:flex-row gap-3 items-center flex-1">
             <div className="relative w-full sm:w-80 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -470,6 +472,7 @@ export function AdminDashboard() {
             <CreateTaskDialog />
           </div>
         </div>
+        )}
 
         {selectedEmployeeId === 'my-tasks' && (
           <Tabs value={myTaskTab} onValueChange={(v) => setMyTaskTab(v as any)} className="w-full">
@@ -485,7 +488,9 @@ export function AdminDashboard() {
         )}
 
         {/* TABLE OR GRID */}
-        {selectedEmployeeId === 'team-projects' ? (
+        {selectedEmployeeId === 'activity-log' ? (
+          <ActivityLogView />
+        ) : selectedEmployeeId === 'team-projects' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
             {filteredTasks.length > 0 ? (
               filteredTasks.map(task => (
