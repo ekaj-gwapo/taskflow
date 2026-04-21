@@ -18,7 +18,12 @@ export type ActivityAction =
   | "USER_STATUS_UPDATED"
   | "TASK_REASSIGNED"
   | "TEAM_MEMBERS_EDITED"
-  | "TASK_DELEGATED";
+  | "TASK_DELEGATED"
+  | "EXTENSION_REQUESTED"
+  | "EXTENSION_APPROVED"
+  | "EXTENSION_REJECTED"
+  | "TASK_ARCHIVED"
+  | "TASK_RESTORED";
 
 export interface ActivityLogPayload {
   action: ActivityAction;

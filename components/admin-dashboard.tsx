@@ -256,7 +256,7 @@ function TeamProjectCard({ task, onSelect, isSelected }: { task: Task; onSelect:
 }
 
 export function AdminDashboard() {
-  const { tasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen } = useTaskContext()
+  const { tasks, archivedTasks, fetchArchivedTasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showReport, setShowReport] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -318,10 +318,17 @@ export function AdminDashboard() {
     }
   }, [tasks]);
 
+  useEffect(() => {
+    if (selectedEmployeeId === 'archived-tasks') {
+      fetchArchivedTasks();
+    }
+  }, [selectedEmployeeId, fetchArchivedTasks]);
+
   const liveSelectedTask = useMemo(() => {
     if (!selectedTask) return null;
-    return tasks.find(t => t.id === selectedTask.id) || null;
-  }, [tasks, selectedTask])
+    const allRelevantTasks = selectedEmployeeId === 'archived-tasks' ? archivedTasks : tasks;
+    return allRelevantTasks.find(t => t.id === selectedTask.id) || null;
+  }, [tasks, archivedTasks, selectedTask, selectedEmployeeId])
 
   const matchesHierarchy = useCallback((t: Task) => {
     if (selectedEmployeeId === null || selectedEmployeeId === 'activity-log') return true // Dashboard view
@@ -333,16 +340,19 @@ export function AdminDashboard() {
         return t.delegatedById === currentUser?.id
       }
     }
+    if (selectedEmployeeId === 'archived-tasks') return true // Show all archived tasks
     return (t.assignees?.some(a => a.id === selectedEmployeeId) || t.assigneeId === selectedEmployeeId)
   }, [selectedEmployeeId, myTaskTab, currentUser])
 
   const filteredTasks = useMemo(() => {
     const isTeamView = selectedEmployeeId === 'team-projects'
+    const isArchivedView = selectedEmployeeId === 'archived-tasks'
     const currentStatus = isTeamView ? teamFilterStatus : filterStatus
     const currentPriority = isTeamView ? teamFilterPriority : filterPriority
     const currentSearch = isTeamView ? teamSearchQuery : searchQuery
+    const currentTasksPool = isArchivedView ? archivedTasks : tasks
 
-    return tasks.filter((t) => {
+    return currentTasksPool.filter((t) => {
       const status = t.status?.toLowerCase()
       const priority = t.priority?.toLowerCase()
       

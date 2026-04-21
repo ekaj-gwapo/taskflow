@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { ActionStepsSection } from "@/components/action-steps-section"
+import { cn } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -29,7 +30,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { X, Calendar, Clock, User, UserPlus, Send, MessageSquare, Trash2, Share2, Paperclip, FileIcon, FileText, Loader2, ExternalLink, Users, Check, ChevronDown, ChevronRight } from "lucide-react"
+import { X, Calendar, Clock, User, UserPlus, Send, MessageSquare, Trash2, Share2, Paperclip, FileIcon, FileText, Loader2, ExternalLink, Users, Check, ChevronDown, ChevronRight, CalendarClock, CheckCircle2, XCircle, Archive, RefreshCcw } from "lucide-react"
 import { toast } from "sonner"
 import type { Task, TaskStatus } from "@/lib/store"
 import { formatDistanceToNow } from "date-fns"
@@ -60,7 +61,7 @@ export function TaskDetailPanel({
   showNoteInput = false,
   showDeleteButton = false,
 }: TaskDetailPanelProps) {
-  const { currentRole, currentUser, updateTaskStatus, addProgressNote, addTaskComment, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees } = useTaskContext()
+  const { currentRole, currentUser, updateTaskStatus, addProgressNote, addTaskComment, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees, requestExtension, reviewExtension, toggleArchiveTask } = useTaskContext()
   const [noteContent, setNoteContent] = useState("")
   const [commentContent, setCommentContent] = useState("")
   const [isAddingComment, setIsAddingComment] = useState(false)
@@ -72,6 +73,15 @@ export function TaskDetailPanel({
   const [lastSeenComments, setLastSeenComments] = useState(0)
   const [lastSeenNotes, setLastSeenNotes] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Extension request state
+  const [showExtensionForm, setShowExtensionForm] = useState(false)
+  const [extensionDate, setExtensionDate] = useState("")
+  const [extensionReason, setExtensionReason] = useState("")
+  const [isSubmittingExtension, setIsSubmittingExtension] = useState(false)
+  const [extensionReviewRemark, setExtensionReviewRemark] = useState("")
+  const [isReviewingExtension, setIsReviewingExtension] = useState(false)
+  const [isArchiving, setIsArchiving] = useState(false)
 
   // Initialize last seen counts from localStorage
   useEffect(() => {
@@ -511,6 +521,197 @@ export function TaskDetailPanel({
               )}
             </div>
 
+            {/* Deadline Extension Section */}
+            {task.status !== "completed" && (() => {
+              const extensionRequests = task.extensionRequests || []
+              const pendingRequest = extensionRequests.find(r => r.status === "PENDING")
+              const totalRequests = extensionRequests.length
+              
+              // New Restrictions logic:
+              // 1. Only Employee and Admin can request (Head Admin is excluded)
+              const canRequestRole = currentRole === "employee" || currentRole === "admin"
+              // 2. You cannot request from yourself (if you are the creator or delegator)
+              const isAssigner = currentUser?.id === task.createdById || currentUser?.id === task.delegatedById
+              
+              const canRequest = !pendingRequest && totalRequests < 2 && canRequestRole && !isAssigner
+              
+              // 3. Only the assigner (creator or delegator) OR superadmin can review
+              const canReview = isAssigner || currentRole === "superadmin"
+
+              return (
+                <div className="mt-4 space-y-3">
+                  {/* Pending Request Banner */}
+                  {pendingRequest && (
+                    <div className="rounded-xl border border-amber-200/70 bg-amber-50/50 p-3.5 shadow-sm animate-in fade-in duration-300">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1 rounded-md bg-amber-100 border border-amber-200">
+                          <CalendarClock className="h-3.5 w-3.5 text-amber-600" />
+                        </div>
+                        <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">Extension Pending</span>
+                      </div>
+                      <div className="space-y-1.5 ml-8">
+                        <p className="text-xs text-amber-900">
+                          <span className="font-semibold">{pendingRequest.requestedByName}</span> requested to extend to{" "}
+                          <span className="font-bold">
+                            {new Date(pendingRequest.proposedDueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                        </p>
+                        <p className="text-xs text-amber-800/80 italic">"{pendingRequest.reason}"</p>
+                      </div>
+
+                      {/* Admin: Approve/Reject (Restrict to Assigner/Superadmin) */}
+                      {canReview && (
+                        <div className="mt-3 ml-8 space-y-2">
+                          <textarea
+                            value={extensionReviewRemark}
+                            onChange={(e) => setExtensionReviewRemark(e.target.value)}
+                            placeholder="Remark (optional)..."
+                            rows={2}
+                            className="w-full text-xs rounded-lg border border-amber-200 bg-white/80 p-2 placeholder:text-amber-400 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 resize-none"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              disabled={isReviewingExtension}
+                              onClick={async () => {
+                                setIsReviewingExtension(true)
+                                try {
+                                  await reviewExtension(task.id, pendingRequest.id, "APPROVE", extensionReviewRemark)
+                                  setExtensionReviewRemark("")
+                                } finally {
+                                  setIsReviewingExtension(false)
+                                }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                            >
+                              {isReviewingExtension ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                              Approve
+                            </button>
+                            <button
+                              disabled={isReviewingExtension}
+                              onClick={async () => {
+                                setIsReviewingExtension(true)
+                                try {
+                                  await reviewExtension(task.id, pendingRequest.id, "REJECT", extensionReviewRemark)
+                                  setExtensionReviewRemark("")
+                                } finally {
+                                  setIsReviewingExtension(false)
+                                }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                            >
+                              {isReviewingExtension ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Request Extension Button / Form */}
+                  {canRequest && !showExtensionForm && (
+                    <button
+                      onClick={() => setShowExtensionForm(true)}
+                      className="w-full flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-xl border border-dashed border-amber-300 text-amber-700 bg-amber-50/30 hover:bg-amber-50 hover:border-amber-400 transition-all"
+                    >
+                      <CalendarClock className="h-3.5 w-3.5" />
+                      Request Deadline Extension {totalRequests > 0 && `(${2 - totalRequests} left)`}
+                    </button>
+                  )}
+
+                  {totalRequests >= 2 && !pendingRequest && (
+                    <p className="text-[10px] text-center text-muted-foreground/60 italic">Maximum extension requests reached (2/2)</p>
+                  )}
+
+                  {showExtensionForm && (
+                    <div className="rounded-xl border border-amber-200/70 bg-amber-50/30 p-3.5 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-2">
+                          <CalendarClock className="h-3.5 w-3.5" />
+                          Request Extension
+                        </span>
+                        <button onClick={() => { setShowExtensionForm(false); setExtensionDate(""); setExtensionReason("") }} className="text-muted-foreground hover:text-foreground">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">New Proposed Date</label>
+                        <input
+                          type="date"
+                          value={extensionDate}
+                          min={new Date(new Date(task.dueDate).getTime() + 86400000).toISOString().split("T")[0]}
+                          onChange={(e) => setExtensionDate(e.target.value)}
+                          className="w-full text-xs rounded-lg border border-border bg-background p-2 focus:border-primary focus:ring-1 focus:ring-primary/30"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">Reason for Extension</label>
+                        <textarea
+                          value={extensionReason}
+                          onChange={(e) => setExtensionReason(e.target.value)}
+                          placeholder="Explain why you need more time..."
+                          rows={3}
+                          className="w-full text-xs rounded-lg border border-border bg-background p-2 placeholder:text-muted-foreground/50 focus:border-primary focus:ring-1 focus:ring-primary/30 resize-none"
+                        />
+                      </div>
+                      <button
+                        disabled={!extensionDate || !extensionReason.trim() || isSubmittingExtension}
+                        onClick={async () => {
+                          setIsSubmittingExtension(true)
+                          try {
+                            await requestExtension(task.id, extensionDate, extensionReason)
+                            setShowExtensionForm(false)
+                            setExtensionDate("")
+                            setExtensionReason("")
+                          } finally {
+                            setIsSubmittingExtension(false)
+                          }
+                        }}
+                        className="w-full flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors disabled:opacity-50"
+                      >
+                        {isSubmittingExtension ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                        Submit Request
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Extension History */}
+                  {extensionRequests.filter(r => r.status !== "PENDING").length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Extension History</span>
+                      {extensionRequests.filter(r => r.status !== "PENDING").map((r) => (
+                        <div key={r.id} className={`rounded-lg border p-3 text-xs space-y-1 ${
+                          r.status === "APPROVED"
+                            ? "border-emerald-200/70 bg-emerald-50/30"
+                            : "border-red-200/70 bg-red-50/30"
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1.5 font-bold">
+                              {r.status === "APPROVED" ? (
+                                <><CheckCircle2 className="h-3 w-3 text-emerald-600" /><span className="text-emerald-700">Approved</span></>
+                              ) : (
+                                <><XCircle className="h-3 w-3 text-red-500" /><span className="text-red-600">Rejected</span></>
+                              )}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {r.reviewedAt ? new Date(r.reviewedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground">
+                            <span className="font-semibold text-foreground">{r.requestedByName}</span> → {new Date(r.proposedDueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                          </p>
+                          <p className="italic text-muted-foreground/80">"{r.reason}"</p>
+                          {r.reviewedByName && (
+                            <p className="text-muted-foreground">Reviewed by <span className="font-semibold text-foreground">{r.reviewedByName}</span>{r.reviewerRemark ? `: "${r.reviewerRemark}"` : ""}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
             {showDeleteButton && task.status === "todo" && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -541,6 +742,38 @@ export function TaskDetailPanel({
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            )}
+
+            {/* Archive / Unarchive Button (Visible to admins and superadmins) */}
+            {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isArchiving}
+                onClick={async () => {
+                  setIsArchiving(true)
+                  try {
+                    await toggleArchiveTask(task.id, task.archived === 0)
+                  } finally {
+                    setIsArchiving(false)
+                  }
+                }}
+                className={cn(
+                  "w-full mt-2 transition-all duration-300 flex items-center justify-center py-5 rounded-xl shadow-sm hover:shadow-md",
+                  task.archived === 0 
+                    ? "text-amber-600 border-amber-200/50 bg-amber-50/30 hover:bg-amber-600 hover:text-white"
+                    : "text-emerald-600 border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-600 hover:text-white"
+                )}
+              >
+                {isArchiving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : task.archived === 0 ? (
+                  <Archive className="h-4 w-4 mr-2" />
+                ) : (
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                )}
+                {task.archived === 0 ? "Archive Task" : "Restore Task"}
+              </Button>
             )}
           </div>
 

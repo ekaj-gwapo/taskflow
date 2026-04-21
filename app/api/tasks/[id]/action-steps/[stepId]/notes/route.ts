@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
 import { v4 as uuidv4 } from "uuid"
+import { logActivity } from "@/lib/activity"
 
 export async function POST(
   request: NextRequest,

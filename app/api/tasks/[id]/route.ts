@@ -95,8 +95,8 @@ export async function PUT(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { status, priority, assigneeIds } = await request.json()
-    console.debug("PUT /api/tasks/:id", { id: taskId, body: { status, priority, assigneeIds }, user: auth.user })
+    const { status, priority, assigneeIds, archived } = await request.json()
+    console.debug("PUT /api/tasks/:id", { id: taskId, body: { status, priority, assigneeIds, archived }, user: auth.user })
 
     // Fetch task using case-insensitive search but keep track of the REAL ID from the database
     const existingTask: any = await db.getOne("SELECT * FROM tasks WHERE LOWER(id) = LOWER(?)", [taskId])
@@ -122,6 +122,10 @@ export async function PUT(
       // Employees can only update status
       if (priority !== undefined && priority !== existingTask.priority) {
         return NextResponse.json({ error: "Employees cannot update priority" }, { status: 403 })
+      }
+
+      if (archived !== undefined) {
+        return NextResponse.json({ error: "Employees cannot archive tasks" }, { status: 403 })
       }
     } else if (role === "ADMIN" || role === "HEAD_ADMIN") {
       // ADMIN and HEAD_ADMIN can update priority and assignee.
@@ -173,6 +177,7 @@ export async function PUT(
           delegatedById = ?,
           delegatedAt = ?,
           assigneeId = ?,
+          archived = COALESCE(?, archived),
           updatedAt = ?
       WHERE id = ?
     `, [
@@ -182,6 +187,7 @@ export async function PUT(
       newDelegatedById, 
       newDelegatedAt, 
       newAssigneeId, 
+      archived !== undefined ? archived : null,
       new Date().toISOString(), 
       realTaskId
     ])
@@ -241,6 +247,17 @@ export async function PUT(
         userId: auth.user!.id,
         userName: auth.user!.name,
         details: { from: existingTask.status, to: dbStatus }
+      });
+    }
+
+    if (archived !== undefined && archived !== existingTask.archived) {
+      await logActivity({
+        action: archived === 1 ? "TASK_ARCHIVED" : "TASK_RESTORED",
+        entityId: realTaskId,
+        entityType: "TASK",
+        userId: auth.user!.id,
+        userName: auth.user!.name,
+        details: { title: existingTask.title }
       });
     }
 

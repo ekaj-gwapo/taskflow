@@ -9,6 +9,7 @@ import {
   type TaskPriority,
   type ProgressNote,
   type ActionStep,
+  type ExtensionRequest,
   type WeeklyReport,
   initialReports,
 } from "./store"
@@ -25,12 +26,15 @@ interface TaskContextType {
 
   // Tasks
   tasks: Task[]
+  archivedTasks: Task[]
+  fetchArchivedTasks: () => Promise<void>
   createTask: (task: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees"> & { assigneeIds: string[] }, actionSteps?: string[]) => void
   updateTaskStatus: (taskId: string, status: TaskStatus) => void
   updateTaskAssignees: (taskId: string, assigneeIds: string[]) => void
   deleteTask: (taskId: string) => Promise<boolean>
   addTaskComment: (taskId: string, content: string) => Promise<void>
   addProgressNote: (taskId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => Promise<void>
+  toggleArchiveTask: (taskId: string, archived: boolean) => Promise<void>
 
   // Action Steps
   addActionStep: (taskId: string, stepTitle: string) => void
@@ -38,6 +42,10 @@ interface TaskContextType {
   updateActionStepActed: (taskId: string, stepId: string, isActed: boolean) => void
   deleteActionStep: (taskId: string, stepId: string) => void
   addStepNote: (taskId: string, stepId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => Promise<void>
+
+  // Extension Requests
+  requestExtension: (taskId: string, proposedDueDate: string, reason: string) => Promise<void>
+  reviewExtension: (taskId: string, requestId: string, action: "APPROVE" | "REJECT", remark?: string) => Promise<void>
 
   // Reports
   reports: WeeklyReport[]
@@ -71,6 +79,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null)
   const [isLoadingSession, setIsLoadingSession] = useState(true)
   const [tasks, setTasks] = useState<Task[]>([])
+  const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
   const [reports, setReports] = useState<WeeklyReport[]>([])
   const [allEmployees, setAllEmployees] = useState<User[]>([])
   const [seenTaskIds, setSeenTaskIds] = useState<Set<string>>(new Set())
@@ -555,6 +564,139 @@ const url = `/api/tasks/${taskId}`
     [currentUser]
   )
 
+  const toggleArchiveTask = useCallback(
+    async (taskId: string, archived: boolean) => {
+      try {
+        const token = localStorage.getItem("token")
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ archived: archived ? 1 : 0 }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null)
+          throw new Error(errorData?.error || "Failed to update task archival status")
+        }
+
+        // Optimization: Rather than refetching, update local state
+        if (archived) {
+          // Moving from active to archived
+          const taskToArchive = tasks.find(t => t.id === taskId);
+          if (taskToArchive) {
+            setTasks(prev => prev.filter(t => t.id !== taskId));
+            setArchivedTasks(prev => [{ ...taskToArchive, archived: 1 }, ...prev]);
+          }
+        } else {
+          // Restoring from archived to active
+          const taskToRestore = archivedTasks.find(t => t.id === taskId);
+          if (taskToRestore) {
+            setArchivedTasks(prev => prev.filter(t => t.id !== taskId));
+            setTasks(prev => [{ ...taskToRestore, archived: 0 }, ...prev]);
+          }
+        }
+        
+        toast.success(archived ? "Task archived successfully" : "Task restored successfully")
+      } catch (error: any) {
+        console.error("Archive task error:", error)
+        toast.error(error.message)
+      }
+    },
+    [tasks, archivedTasks]
+  )
+
+  const fetchArchivedTasks = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/tasks?showArchived=true', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setArchivedTasks(data.tasks || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch archived tasks:", error);
+    }
+  }, []);
+
+  const requestExtension = useCallback(
+    async (taskId: string, proposedDueDate: string, reason: string) => {
+      try {
+        const token = localStorage.getItem("token")
+        const response = await fetch(`/api/tasks/${taskId}/extension-requests`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ proposedDueDate, reason }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null)
+          toast.error(errorData?.error || "Failed to submit extension request.")
+          throw new Error(errorData?.error || "Failed to submit extension request")
+        }
+
+        const data = await response.json()
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId
+              ? { ...t, extensionRequests: [data.extensionRequest, ...(t.extensionRequests || [])] }
+              : t
+          )
+        )
+        toast.success("Extension request submitted successfully.")
+      } catch (error) {
+        console.error("Request extension error:", error)
+      }
+    },
+    []
+  )
+
+  const reviewExtension = useCallback(
+    async (taskId: string, requestId: string, action: "APPROVE" | "REJECT", remark?: string) => {
+      try {
+        const token = localStorage.getItem("token")
+        const response = await fetch(`/api/tasks/${taskId}/extension-requests/${requestId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ action, remark }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null)
+          toast.error(errorData?.error || "Failed to review extension request.")
+          throw new Error(errorData?.error || "Failed to review extension request")
+        }
+
+        const data = await response.json()
+        setTasks((prev) =>
+          prev.map((t) => {
+            if (t.id !== taskId) return t
+            const updatedRequests = (t.extensionRequests || []).map((r) =>
+              r.id === requestId ? data.extensionRequest : r
+            )
+            // If approved, also update the task's dueDate
+            const newDueDate = action === "APPROVE" ? data.extensionRequest.proposedDueDate : t.dueDate
+            return { ...t, extensionRequests: updatedRequests, dueDate: newDueDate }
+          })
+        )
+        toast.success(action === "APPROVE" ? "Extension approved! Due date updated." : "Extension request rejected.")
+      } catch (error) {
+        console.error("Review extension error:", error)
+      }
+    },
+    []
+  )
+
   const createReport = useCallback(
     (summary: string) => {
       const now = new Date()
@@ -738,12 +880,15 @@ const url = `/api/tasks/${taskId}`
         login,
         logout,
         tasks,
+        archivedTasks,
+        fetchArchivedTasks,
         createTask,
         updateTaskStatus,
         updateTaskAssignees,
         deleteTask,
         addTaskComment,
         addProgressNote,
+        toggleArchiveTask,
         addActionStep,
         updateActionStepStatus,
         updateActionStepActed,
@@ -753,6 +898,8 @@ const url = `/api/tasks/${taskId}`
         createReport,
         allEmployees,
         refreshUsers,
+        requestExtension,
+        reviewExtension,
         getEmployeeVisibleTasks,
         canAccessTask,
         getEmployeeActionSummary,

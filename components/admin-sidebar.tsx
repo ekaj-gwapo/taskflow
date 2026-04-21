@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive } from "lucide-react"
 import { ProfileDialog } from "@/components/profile-dialog"
 import { cn } from "@/lib/utils"
 
@@ -148,6 +148,17 @@ export function AdminSidebar({
     t.status !== 'completed'
   )
 
+  const pendingExtensionsCount = tasks.reduce((count, t) => {
+    // Only count if current user is the assigner (creator or delegator) OR is a SuperAdmin
+    const isAssigner = currentUser?.id === t.createdById || currentUser?.id === t.delegatedById
+    const isSuperAdmin = currentUser?.role?.toUpperCase() === "SUPERADMIN"
+    
+    if (isAssigner || isSuperAdmin) {
+      return count + (t.extensionRequests?.filter(r => r.status === "PENDING").length || 0)
+    }
+    return count
+  }, 0)
+
   return (
     <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg">
       {/* Sidebar Header - Logos Row */}
@@ -235,7 +246,7 @@ export function AdminSidebar({
                 <button
                   onClick={() => onSelectEmployee('my-tasks')}
                   className={cn(
-                    "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-4",
+                    "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
                     selectedEmployeeId === 'my-tasks'
                       ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20 scale-[1.02]"
                       : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border-border bg-background"
@@ -263,6 +274,52 @@ export function AdminSidebar({
                     selectedEmployeeId === 'my-tasks' ? "text-white/70" : "text-muted-foreground"
                   )} />
                 </button>
+              )}
+
+              {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN") && (
+                <button
+                  onClick={() => onSelectEmployee('archived-tasks')}
+                  className={cn(
+                    "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-4",
+                    selectedEmployeeId === 'archived-tasks'
+                      ? "bg-amber-600 text-white border-amber-600 shadow-amber-500/20 scale-[1.02]"
+                      : "text-muted-foreground hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200 border-border bg-background"
+                  )}
+                >
+                  <div className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-md border",
+                    selectedEmployeeId === 'archived-tasks'
+                      ? "bg-white/20 border-white/30 text-white"
+                      : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                  )}>
+                    <Archive className="h-4 w-4" />
+                  </div>
+                  <span className={cn(
+                    "flex-1 text-sm font-semibold",
+                    selectedEmployeeId === 'archived-tasks' ? "text-white" : "text-foreground"
+                  )}>
+                    Archived Tasks
+                  </span>
+                  <ChevronRight className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    selectedEmployeeId === 'archived-tasks' ? "text-white/70" : "text-muted-foreground"
+                  )} />
+                </button>
+              )}
+
+              {/* Pending Extension Requests Badge */}
+              {pendingExtensionsCount > 0 && (
+                <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-amber-200 bg-amber-50/50 mb-1 animate-in fade-in duration-300">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-100 border border-amber-200 text-amber-600">
+                    <CalendarClock className="h-4 w-4" />
+                  </div>
+                  <span className="flex-1 text-xs font-semibold text-amber-800">
+                    Pending Extensions
+                  </span>
+                  <span className="flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-bold animate-pulse shadow-sm">
+                    {pendingExtensionsCount}
+                  </span>
+                </div>
               )}
 
               <div className="h-px bg-border/50 my-2" />

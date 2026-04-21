@@ -14,6 +14,10 @@ export async function GET(request: NextRequest) {
     const user = auth.user!
     const role = user.role.toUpperCase()
 
+    const { searchParams } = new URL(request.url)
+    const showArchived = searchParams.get("showArchived") === "true"
+    const archivedValue = showArchived ? 1 : 0
+
     let tasks: any[]
     if (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN") {
       tasks = await db.getAll(`
@@ -23,8 +27,9 @@ export async function GET(request: NextRequest) {
         FROM tasks t
         LEFT JOIN users u2 ON t.createdById = u2.id
         LEFT JOIN users u3 ON t.delegatedById = u3.id
+        WHERE t.archived = ?
         ORDER BY t.createdAt DESC
-      `) as any[]
+      `, [archivedValue]) as any[]
     } else {
       tasks = await db.getAll(`
         SELECT t.*, 
@@ -34,9 +39,9 @@ export async function GET(request: NextRequest) {
         JOIN task_assignments ta ON t.id = ta.taskId
         LEFT JOIN users u2 ON t.createdById = u2.id
         LEFT JOIN users u3 ON t.delegatedById = u3.id
-        WHERE ta.userId = ?
+        WHERE ta.userId = ? AND t.archived = ?
         ORDER BY t.createdAt DESC
-      `, [user.id]) as any[]
+      `, [user.id, archivedValue]) as any[]
     }
 
     // Format tasks to match expected structure
@@ -67,6 +72,11 @@ export async function GET(request: NextRequest) {
         WHERE ta.taskId = ?
       `, [t.id]) as any[]
 
+      const extensionRequests = await db.getAll(
+        "SELECT * FROM extension_requests WHERE taskId = ? ORDER BY createdAt DESC",
+        [t.id]
+      ) as any[]
+
       return {
         ...t,
         status: t.status ? t.status.toLowerCase().replace('_', '-') : 'todo',
@@ -80,7 +90,8 @@ export async function GET(request: NextRequest) {
         delegatedAt: t.delegatedAt || null,
         actionSteps: actionStepsWithNotes,
         progressNotes,
-        comments
+        comments,
+        extensionRequests,
       }
     }))
 

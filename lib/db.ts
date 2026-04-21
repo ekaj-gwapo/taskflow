@@ -5,10 +5,32 @@ import { promisify } from 'util';
 const dbPath = path.resolve(process.cwd(), process.env.DATABASE_URL || 'local.db');
 const sqlite = new sqlite3.Database(dbPath);
 
-// Promisify sqlite3 methods
-const dbRun = promisify(sqlite.run.bind(sqlite));
-const dbGet = promisify(sqlite.get.bind(sqlite));
-const dbAll = promisify(sqlite.all.bind(sqlite));
+const dbRun = (sql: string, params: any[] = []): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    sqlite.run(sql, params, function (err) {
+      if (err) reject(err);
+      else resolve({ lastID: this.lastID, changes: this.changes });
+    });
+  });
+};
+
+const dbGet = (sql: string, params: any[] = []): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    sqlite.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
+
+const dbAll = (sql: string, params: any[] = []): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    sqlite.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+};
 
 export const db = {
   async query(text: string, params?: any[]) {

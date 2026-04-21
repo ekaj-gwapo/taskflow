@@ -54,6 +54,22 @@ export interface ActionStep {
   notes: StepNote[]
 }
 
+export interface ExtensionRequest {
+  id: string
+  taskId: string
+  requestedById: string
+  requestedByName: string
+  currentDueDate: string
+  proposedDueDate: string
+  reason: string
+  status: "PENDING" | "APPROVED" | "REJECTED"
+  reviewedById?: string
+  reviewedByName?: string
+  reviewerRemark?: string
+  reviewedAt?: string
+  createdAt: string
+}
+
 export interface Task {
   id: string
   title: string
@@ -77,6 +93,7 @@ export interface Task {
     avatar?: string
     points: number
   }[]
+  createdById?: string | null
   createdBy?: {
     id: string
     name: string
@@ -93,12 +110,14 @@ export interface Task {
     avatar?: string
   } | null
   delegatedAt?: string | null
+  archived: number
   createdAt: string
   dueDate: string
   completedAt: string | null
   progressNotes: ProgressNote[]
   comments?: TaskComment[]
   actionSteps?: ActionStep[]
+  extensionRequests?: ExtensionRequest[]
 }
 
 export interface WeeklyReport {
@@ -115,7 +134,7 @@ export interface WeeklyReport {
 
 export interface ActivityLog {
   id: string
-  action: "TASK_CREATED" | "TASK_DELETED" | "STATUS_UPDATED" | "ASSIGNEE_CHANGED" | "NOTE_ADDED" | "COMMENT_ADDED" | "STEP_ADDED" | "STEP_UPDATED" | "STEP_DELETED" | "STEP_NOTE_ADDED" | "PROFILE_UPDATED" | "AVATAR_UPDATED" | "PASSWORD_RESET" | "USER_STATUS_UPDATED" | "TASK_REASSIGNED" | "TEAM_MEMBERS_EDITED" | "TASK_DELEGATED"
+  action: "TASK_CREATED" | "TASK_DELETED" | "STATUS_UPDATED" | "ASSIGNEE_CHANGED" | "NOTE_ADDED" | "COMMENT_ADDED" | "STEP_ADDED" | "STEP_UPDATED" | "STEP_DELETED" | "STEP_NOTE_ADDED" | "PROFILE_UPDATED" | "AVATAR_UPDATED" | "PASSWORD_RESET" | "USER_STATUS_UPDATED" | "TASK_REASSIGNED" | "TEAM_MEMBERS_EDITED" | "TASK_DELEGATED" | "EXTENSION_REQUESTED" | "EXTENSION_APPROVED" | "EXTENSION_REJECTED"
   entityId: string
   entityType: string
   userId: string
