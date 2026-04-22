@@ -1,25 +1,42 @@
-import { Pool } from 'pg';
+import sqlite3 from 'sqlite3';
+import path from 'path';
+import { promisify } from 'util';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+const dbPath = path.resolve(process.cwd(), process.env.DATABASE_URL || 'local.db');
+const sqlite = new sqlite3.Database(dbPath);
 
-/**
- * Translates SQLite style '?' placeholders to PostgreSQL '$1, $2' placeholders
- */
-function translateQuery(text: string, params: any[]): { text: string; params: any[] } {
-  let index = 1;
-  const translatedText = text.replace(/\?/g, () => `$${index++}`);
-  return { text: translatedText, params };
-}
+const dbRun = (sql: string, params: any[] = []): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    sqlite.run(sql, params, function (err) {
+      if (err) reject(err);
+      else resolve({ lastID: this.lastID, changes: this.changes });
+    });
+  });
+};
+
+const dbGet = (sql: string, params: any[] = []): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    sqlite.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
+
+const dbAll = (sql: string, params: any[] = []): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    sqlite.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+};
 
 export const db = {
   async query(text: string, params?: any[]) {
     try {
-      const { text: translatedText, params: translatedParams } = translateQuery(text, params || []);
-      const result = await pool.query(translatedText, translatedParams);
-      return { rows: result.rows };
+      const rows = await dbAll(text, params || []);
+      return { rows };
     } catch (error) {
       console.error('Database query error:', error);
       throw error;
@@ -28,9 +45,8 @@ export const db = {
 
   async execute(text: string, params?: any[]) {
     try {
-      const { text: translatedText, params: translatedParams } = translateQuery(text, params || []);
-      const result = await pool.query(translatedText, translatedParams);
-      return { lastID: null, changes: result.rowCount };
+      const result = await dbRun(text, params || []);
+      return result;
     } catch (error) {
       console.error('Database execute error:', error);
       throw error;
@@ -39,9 +55,8 @@ export const db = {
 
   async getOne(text: string, params?: any[]) {
     try {
-      const { text: translatedText, params: translatedParams } = translateQuery(text, params || []);
-      const result = await pool.query(translatedText, translatedParams);
-      return result.rows[0] || null;
+      const row = await dbGet(text, params || []);
+      return row || null;
     } catch (error) {
       console.error('Database getOne error:', error);
       throw error;
@@ -50,9 +65,8 @@ export const db = {
 
   async getAll(text: string, params?: any[]) {
     try {
-      const { text: translatedText, params: translatedParams } = translateQuery(text, params || []);
-      const result = await pool.query(translatedText, translatedParams);
-      return result.rows;
+      const rows = await dbAll(text, params || []);
+      return rows;
     } catch (error) {
       console.error('Database getAll error:', error);
       throw error;
