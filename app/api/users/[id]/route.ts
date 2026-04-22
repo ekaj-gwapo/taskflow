@@ -15,7 +15,7 @@ export async function GET(
     }
 
     const user = await db.getOne(`
-      SELECT id, name, email, phone, location, role, createdAt 
+      SELECT id, name, email, phone, location, role, theme, mode, createdAt 
       FROM users 
       WHERE id = ?
     `, [id]);
@@ -57,8 +57,8 @@ export async function PUT(
       )
     }
 
-    const { name, email, phone, location } = await request.json()
-    console.log(`[API] Updating user ${id}:`, { name, email, phone, location })
+    const { name, email, phone, location, theme, mode } = await request.json()
+    console.log(`[API] Updating user ${id}:`, { name, email, phone, location, theme, mode })
 
     if (role === "EMPLOYEE") {
       await db.execute(`
@@ -67,9 +67,11 @@ export async function PUT(
             email = COALESCE(?, email),
             phone = COALESCE(?, phone),
             location = COALESCE(?, location),
+            theme = COALESCE(?, theme),
+            mode = COALESCE(?, mode),
             updatedAt = CURRENT_TIMESTAMP
         WHERE id = ?
-      `, [name, email, phone, location, id]);
+      `, [name, email, phone, location, theme, mode, id]);
     } else {
       await db.execute(`
         UPDATE users 
@@ -77,9 +79,11 @@ export async function PUT(
             email = COALESCE(?, email),
             phone = COALESCE(?, phone),
             location = COALESCE(?, location),
+            theme = COALESCE(?, theme),
+            mode = COALESCE(?, mode),
             updatedAt = CURRENT_TIMESTAMP
         WHERE id = ?
-      `, [name, email, phone, location, id]);
+      `, [name, email, phone, location, theme, mode, id]);
     }
 
     await logActivity({
@@ -92,7 +96,7 @@ export async function PUT(
     });
 
     const user = await db.getOne(`
-      SELECT id, name, email, phone, location, role 
+      SELECT id, name, email, phone, location, role, theme, mode 
       FROM users 
       WHERE id = ?
     `, [id]);

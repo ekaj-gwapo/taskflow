@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
+import { usePathname } from "next/navigation"
 import {
   type User,
   type UserRole,
@@ -92,9 +93,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         name: userData.name,
         email: userData.email,
         role: userData.role.toLowerCase() as UserRole,
-        phone: userData.phone || userData.phone_number, // Handle different field names if any
+        phone: userData.phone || userData.phone_number,
         location: userData.location,
         avatar: userData.avatar || userData.avatarUrl,
+        theme: userData.theme || "emerald",
+        mode: userData.mode || "light",
       }
       setCurrentUser(user)
       setCurrentRole(userData.role.toLowerCase() as UserRole)
@@ -140,6 +143,32 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setSeenCompletedTaskIds(new Set());
     }
   }, [currentUser]);
+
+  const pathname = usePathname();
+
+  // Handle Theme and Dark Mode
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    
+    const html = document.documentElement;
+    
+    // Check if we are on a guest page (Login or Landing)
+    const isGuestPage = pathname === "/" || pathname === "/auth/login";
+    
+    // Force default theme on guest pages to prevent glitches
+    const theme = isGuestPage ? "emerald" : (currentUser?.theme || "emerald");
+    const mode = isGuestPage ? "light" : (currentUser?.mode || "light");
+
+    // Apply theme attribute
+    html.setAttribute("data-theme", theme);
+
+    // Apply mode (dark/light) class
+    if (mode === "dark") {
+      html.classList.add("dark");
+    } else {
+      html.classList.remove("dark");
+    }
+  }, [currentUser?.theme, currentUser?.mode, pathname]);
 
   const markAsSeen = useCallback((taskId: string) => {
     if (!currentUser || seenTaskIds.has(taskId)) return;

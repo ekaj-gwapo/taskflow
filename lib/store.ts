@@ -8,6 +8,8 @@ export interface User {
   avatar?: string
   phone?: string
   location?: string
+  theme?: string
+  mode?: "light" | "dark"
 }
 
 export type TaskStatus = "todo" | "in-progress" | "completed"

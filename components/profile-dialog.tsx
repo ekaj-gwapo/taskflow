@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, X, Crop as CropIcon, Save } from "lucide-react"
+import { Upload, X, Crop as CropIcon, Save, Sun, Moon, Palette, Check } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
+import { cn } from "@/lib/utils"
 import Cropper, { Point, Area } from "react-easy-crop"
 import { toast } from "sonner"
 
@@ -202,7 +203,8 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                     placeholder="MOPH Office" 
                   />
                 </div>
-              </div>
+
+                </div>
 
               <Button onClick={handleSave} disabled={loading} className="w-full mt-2">
                 <Save className="h-4 w-4 mr-2" />

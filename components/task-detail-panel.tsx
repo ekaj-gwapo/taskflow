@@ -117,7 +117,7 @@ export function TaskDetailPanel({
 
   const isAssignee = task.assigneeId === currentUser?.id || task.assignees?.some(a => a.id === currentUser?.id)
   const isStatusEditable = showStatusControl && (
-    currentRole === "employee" || 
+    currentRole === "employee" ||
     currentRole === "superadmin" ||
     ((currentRole === "admin" || currentRole === "head_admin") && isAssignee)
   )
@@ -137,7 +137,7 @@ export function TaskDetailPanel({
 
   // Security check: employees can only view their assigned tasks
   const hasAccess = canAccessTask(task.id)
-  
+
   if (!hasAccess && currentRole === "employee") {
     return (
       <div className="flex flex-col h-full bg-card border-l border-border items-center justify-center">
@@ -154,7 +154,7 @@ export function TaskDetailPanel({
 
   const handleAddNote = async () => {
     if (!noteContent.trim() && !selectedFile) return
-    
+
     setIsUploading(true)
     try {
       let attachmentUrl = undefined
@@ -164,7 +164,7 @@ export function TaskDetailPanel({
       if (selectedFile) {
         const formData = new FormData()
         formData.append("file", selectedFile)
-        
+
         const token = localStorage.getItem("token")
         const uploadRes = await fetch("/api/upload", {
           method: "POST",
@@ -175,7 +175,7 @@ export function TaskDetailPanel({
         })
 
         if (!uploadRes.ok) throw new Error("Upload failed")
-        
+
         const uploadData = await uploadRes.json()
         attachmentUrl = uploadData.url
         attachmentName = uploadData.name
@@ -240,19 +240,19 @@ export function TaskDetailPanel({
 
   const handleToggleAssignee = async (employeeId: string) => {
     if (isUpdatingAssignees) return
-    
+
     setIsUpdatingAssignees(true)
     try {
       const currentAssigneeIds = task.assignees?.map(a => a.id) || []
       const isCurrentlyAssigned = currentAssigneeIds.includes(employeeId)
-      
+
       let newAssigneeIds: string[]
       if (isCurrentlyAssigned) {
         newAssigneeIds = currentAssigneeIds.filter(id => id !== employeeId)
       } else {
         newAssigneeIds = [...currentAssigneeIds, employeeId]
       }
-      
+
       await updateTaskAssignees(task.id, newAssigneeIds)
     } catch (error) {
       console.error("Assignee update failed:", error)
@@ -266,7 +266,7 @@ export function TaskDetailPanel({
     <div className="relative flex flex-col h-full rounded-l-3xl bg-card/95 backdrop-blur-xl border-l border-border/40 shadow-[0_0_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden">
       {/* Decorative top gradient */}
       <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent pointer-events-none z-0" />
-      
+
       {/* Header */}
       <div className="relative z-10 border-b border-border/50 bg-background/40 backdrop-blur-md">
         <div className="flex items-start justify-between p-6">
@@ -288,13 +288,13 @@ export function TaskDetailPanel({
             <span className="sr-only">Close</span>
           </Button>
         </div>
-        
+
         {task.createdBy && (
           <div className="px-6 pb-6">
             <div className="text-xs text-muted-foreground flex flex-col gap-1.5 p-3 rounded-xl bg-secondary/30 border border-border/50 shadow-sm backdrop-blur-sm">
               <span className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-muted-foreground/70">Created by</span> 
-                <span className="font-semibold text-foreground">{task.createdBy.name}</span> 
+                <span className="text-muted-foreground/70">Created by</span>
+                <span className="font-semibold text-foreground">{task.createdBy.name}</span>
                 <span className="uppercase text-[9px] font-bold tracking-wider bg-primary/10 text-primary px-1.5 py-0.5 rounded-md border border-primary/20 shrink-0">{task.createdBy.role}</span>
               </span>
               {task.delegatedBy && (
@@ -310,7 +310,7 @@ export function TaskDetailPanel({
       <ScrollArea className="flex-1 relative z-10">
         <div className="flex flex-col pb-4">
           {/* Meta */}
-          <div className="p-6 border-b border-border/50 flex flex-col gap-7 bg-background/20 relative">
+          <div className="p-6 border-b border-border/50 flex flex-col gap-4 bg-background/20 relative">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2.5 p-3.5 rounded-xl bg-secondary/30 border border-border/50 shadow-sm hover:shadow-md hover:bg-secondary/40 transition-all duration-300">
                 <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest flex items-center gap-1.5">
@@ -361,8 +361,8 @@ export function TaskDetailPanel({
                 {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && task.status === "todo" && (
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         className="h-7 text-[10px] bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary font-bold shadow-none w-max px-3 gap-1.5 rounded-full transition-colors"
                         disabled={isUpdatingAssignees}
@@ -374,8 +374,8 @@ export function TaskDetailPanel({
                         )}
                         <span className="truncate uppercase tracking-wider">
                           {isUpdatingAssignees ? "Updating..." : (
-                            (task.assignees && task.assignees.length > 1) 
-                              ? "Edit Team Members" 
+                            (task.assignees && task.assignees.length > 1)
+                              ? "Edit Team Members"
                               : "Reassign"
                           )}
                         </span>
@@ -395,7 +395,7 @@ export function TaskDetailPanel({
                                   onSelect={() => !isUpdatingAssignees && handleToggleAssignee(emp.id)}
                                   className={`flex items-center gap-3 px-2 py-2 rounded-lg cursor-pointer transition-colors ${isUpdatingAssignees ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/5 data-[selected=true]:bg-primary/5"}`}
                                 >
-                                  <Checkbox 
+                                  <Checkbox
                                     checked={isAssigned}
                                     onCheckedChange={() => !isUpdatingAssignees && handleToggleAssignee(emp.id)}
                                     disabled={isUpdatingAssignees}
@@ -474,11 +474,11 @@ export function TaskDetailPanel({
                 >
                   {task.dueDate.includes("T")
                     ? new Date(task.dueDate).toLocaleString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })
                     : task.dueDate}
                   {isOverdue && " (Overdue)"}
                 </span>
@@ -526,15 +526,15 @@ export function TaskDetailPanel({
               const extensionRequests = task.extensionRequests || []
               const pendingRequest = extensionRequests.find(r => r.status === "PENDING")
               const totalRequests = extensionRequests.length
-              
+
               // New Restrictions logic:
               // 1. Only Employee and Admin can request (Head Admin is excluded)
               const canRequestRole = currentRole === "employee" || currentRole === "admin"
               // 2. You cannot request from yourself (if you are the creator or delegator)
               const isAssigner = currentUser?.id === task.createdById || currentUser?.id === task.delegatedById
-              
+
               const canRequest = !pendingRequest && totalRequests < 2 && canRequestRole && !isAssigner
-              
+
               // 3. Only the assigner (creator or delegator) OR superadmin can review
               const canReview = isAssigner || currentRole === "superadmin"
 
@@ -680,11 +680,10 @@ export function TaskDetailPanel({
                     <div className="space-y-2">
                       <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Extension History</span>
                       {extensionRequests.filter(r => r.status !== "PENDING").map((r) => (
-                        <div key={r.id} className={`rounded-lg border p-3 text-xs space-y-1 ${
-                          r.status === "APPROVED"
+                        <div key={r.id} className={`rounded-lg border p-3 text-xs space-y-1 ${r.status === "APPROVED"
                             ? "border-emerald-200/70 bg-emerald-50/30"
                             : "border-red-200/70 bg-red-50/30"
-                        }`}>
+                          }`}>
                           <div className="flex items-center justify-between">
                             <span className="flex items-center gap-1.5 font-bold">
                               {r.status === "APPROVED" ? (
@@ -718,7 +717,7 @@ export function TaskDetailPanel({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full mt-4 text-destructive border-destructive/20 bg-destructive/5 hover:bg-destructive hover:text-white hover:border-destructive transition-all duration-300 flex items-center justify-center py-5 rounded-xl shadow-sm hover:shadow-md"
+                    className="w-full text-destructive border-destructive/20 bg-destructive/5 hover:bg-destructive hover:text-white hover:border-destructive transition-all duration-300 flex items-center justify-center py-5 rounded-xl shadow-sm hover:shadow-md"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Task
@@ -733,7 +732,7 @@ export function TaskDetailPanel({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       onClick={handleDelete}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
                     >
@@ -759,8 +758,8 @@ export function TaskDetailPanel({
                   }
                 }}
                 className={cn(
-                  "w-full mt-2 transition-all duration-300 flex items-center justify-center py-5 rounded-xl shadow-sm hover:shadow-md",
-                  task.archived === 0 
+                  "w-full transition-all duration-300 flex items-center justify-center py-5 rounded-xl shadow-sm hover:shadow-md",
+                  task.archived === 0
                     ? "text-amber-600 border-amber-200/50 bg-amber-50/30 hover:bg-amber-600 hover:text-white"
                     : "text-emerald-600 border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-600 hover:text-white"
                 )}
@@ -794,106 +793,106 @@ export function TaskDetailPanel({
           ) : null}
 
           {/* Discussion Thread */}
-          <div className="flex flex-col bg-background/30 rounded-xl mb-6 border border-border/40 shadow-sm mx-6 overflow-hidden">
-          <button 
-            onClick={() => setIsDiscussionExpanded(!isDiscussionExpanded)}
-            className="flex items-center justify-between w-full px-5 pt-4 pb-3 border-b border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors group/header"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-md bg-primary/10 border border-primary/20">
-                <MessageSquare className="h-4 w-4 text-primary" />
-              </div>
-              <span className="text-[11px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1.5">
-                Discussion <span className="text-muted-foreground ml-0.5">({task.comments?.length || 0})</span>
-                {hasNewComments && (
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
-                )}
-              </span>
-            </div>
-            {isDiscussionExpanded ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground group-hover/header:text-foreground transition-colors" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/header:text-foreground transition-colors" />
-            )}
-          </button>
-
-          {isDiscussionExpanded && (
-            <div className="p-5 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="flex gap-3 relative mb-5">
-                <Textarea
-                  value={commentContent}
-                  onChange={(e) => setCommentContent(e.target.value)}
-                  placeholder="Discuss this task with your team..."
-                  rows={2}
-                  className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-[60px]"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                      handleAddComment()
-                    }
-                  }}
-                />
-                <Button
-                  size="icon"
-                  onClick={handleAddComment}
-                  disabled={!commentContent.trim() || isAddingComment}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm self-end h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
-                  title="Post Comment (Ctrl+Enter)"
-                >
-                  {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
-                  <span className="sr-only">Post comment</span>
-                </Button>
-              </div>
-
-              {!task.comments || task.comments.length === 0 ? (
-                <div className="py-2 text-center bg-secondary/10 rounded-lg border border-dashed border-border/50">
-                  <p className="text-xs text-muted-foreground/70 font-medium p-4">No comments yet. Start the discussion!</p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {task.comments.map((comment) => {
-                    const initials = comment.authorName.split(" ").map((n) => n[0]).join("")
-                    return (
-                      <div key={comment.id} className="flex gap-3 group">
-                        <Avatar className="h-8 w-8 shrink-0 border border-border/50 shadow-sm">
-                          {comment.authorAvatar && <AvatarImage src={comment.authorAvatar} alt={comment.authorName} />}
-                          <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className="text-xs font-bold text-foreground">
-                              {comment.authorName}
-                            </span>
-                            <span className="text-[10px] font-medium text-muted-foreground">
-                              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                            </span>
-                          </div>
-                          <div className="text-sm text-foreground/90 leading-relaxed bg-secondary/30 p-3 rounded-2xl rounded-tl-sm border border-border/30">
-                            {comment.content}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-          {/* Progress Notes */}
-          <div className="flex flex-col bg-background/20 rounded-b-xl border-t border-border/30">
-            <button 
-              onClick={() => setIsProgressNotesExpanded(!isProgressNotesExpanded)}
-              className="flex items-center justify-between w-full px-6 pt-6 pb-3 hover:bg-muted/20 transition-colors group/pheader"
+          <div className="flex flex-col bg-background/30 rounded-xl mt-6 mb-6 border border-border/40 shadow-sm mx-6 overflow-hidden">
+            <button
+              onClick={() => setIsDiscussionExpanded(!isDiscussionExpanded)}
+              className="flex items-center justify-between w-full px-5 pt-4 pb-3 border-b border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors group/header"
             >
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-md bg-secondary/50 border border-border/50">
-                  <MessageSquare className="h-4 w-4 text-primary/70" />
+                <div className="p-1.5 rounded-md bg-primary/10 border border-primary/20">
+                  <MessageSquare className="h-4 w-4 text-primary" />
                 </div>
-                <span className="text-[11px] font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-1.5">
-                  Progress Notes <span className="text-muted-foreground ml-0.5">({task.progressNotes.length})</span>
+                <span className="text-[11px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1.5">
+                  Discussion <span className="text-muted-foreground ml-0.5">({task.comments?.length || 0})</span>
+                  {hasNewComments && (
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                  )}
+                </span>
+              </div>
+              {isDiscussionExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground group-hover/header:text-foreground transition-colors" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/header:text-foreground transition-colors" />
+              )}
+            </button>
+
+            {isDiscussionExpanded && (
+              <div className="p-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex gap-3 relative mb-5">
+                  <Textarea
+                    value={commentContent}
+                    onChange={(e) => setCommentContent(e.target.value)}
+                    placeholder="Discuss this task with your team..."
+                    rows={2}
+                    className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-[60px]"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                        handleAddComment()
+                      }
+                    }}
+                  />
+                  <Button
+                    size="icon"
+                    onClick={handleAddComment}
+                    disabled={!commentContent.trim() || isAddingComment}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm self-end h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
+                    title="Post Comment (Ctrl+Enter)"
+                  >
+                    {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
+                    <span className="sr-only">Post comment</span>
+                  </Button>
+                </div>
+
+                {!task.comments || task.comments.length === 0 ? (
+                  <div className="py-2 text-center bg-secondary/10 rounded-lg border border-dashed border-border/50">
+                    <p className="text-xs text-muted-foreground/70 font-medium p-4">No comments yet. Start the discussion!</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {task.comments.map((comment) => {
+                      const initials = comment.authorName.split(" ").map((n) => n[0]).join("")
+                      return (
+                        <div key={comment.id} className="flex gap-3 group">
+                          <Avatar className="h-8 w-8 shrink-0 border border-border/50 shadow-sm">
+                            {comment.authorAvatar && <AvatarImage src={comment.authorAvatar} alt={comment.authorName} />}
+                            <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-xs font-bold text-foreground">
+                                {comment.authorName}
+                              </span>
+                              <span className="text-[10px] font-medium text-muted-foreground">
+                                {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                              </span>
+                            </div>
+                            <div className="text-sm text-foreground/90 leading-relaxed bg-secondary/30 p-3 rounded-2xl rounded-tl-sm border border-border/30">
+                              {comment.content}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Progress Notes */}
+          <div className="flex flex-col bg-background/30 rounded-xl mt-2 mb-6 border border-border/40 shadow-sm mx-6 overflow-hidden">
+            <button
+              onClick={() => setIsProgressNotesExpanded(!isProgressNotesExpanded)}
+              className="flex items-center justify-between w-full px-5 pt-4 pb-3 border-b border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors group/pheader"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-md bg-primary/10 border border-primary/20">
+                  <MessageSquare className="h-4 w-4 text-primary" />
+                </div>
+                <span className="text-[11px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1.5">
+                  Progress Notes <span className="text-muted-foreground ml-0.5">({task.progressNotes?.length || 0})</span>
                   {hasNewNotes && (
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
                   )}
@@ -908,90 +907,90 @@ export function TaskDetailPanel({
 
             {isProgressNotesExpanded && (
               <div className="px-6 animate-in fade-in slide-in-from-top-2 duration-200">
-              {task.progressNotes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 px-4 mt-2 bg-secondary/20 rounded-xl border border-dashed border-border/60">
-                  <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground text-center font-medium">
-                    No progress notes yet.
-                  </p>
-                  <p className="text-xs text-muted-foreground/70 text-center mt-1">
-                    Notes added will appear here.
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4 pb-6 mt-2">
-                  {task.progressNotes.map((note) => {
-                    const initials = note.authorName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                    return (
-                      <div key={note.id} className="flex gap-3.5 group">
-                        <Avatar className="h-8 w-8 shrink-0 mt-0.5 border border-border/50 shadow-sm group-hover:border-primary/30 transition-colors">
-                          {note.authorAvatar && <AvatarImage src={note.authorAvatar} alt={note.authorName} />}
-                          <AvatarFallback className="bg-primary/5 text-primary text-[11px] font-bold">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0 bg-secondary/20 p-3.5 rounded-2xl rounded-tl-sm border border-border/40 shadow-sm group-hover:shadow-md transition-all duration-300">
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <span className="text-xs font-bold text-foreground">
-                              {note.authorName}
-                            </span>
-                            <span className="text-[10px] font-medium text-muted-foreground bg-background px-2 py-0.5 rounded-full border border-border/50">
-                              {formatDistanceToNow(new Date(note.createdAt), {
-                                addSuffix: true,
-                              })}
-                            </span>
-                          </div>
-                          <p className="text-sm text-foreground/80 leading-relaxed">
-                            {note.content}
-                          </p>
-                          {note.attachmentUrl && (
-                            <div className="mt-3 pt-3 border-t border-border/40">
-                              {note.attachmentType?.startsWith("image/") ? (
-                                <a 
-                                  href={note.attachmentUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="relative inline-block group/img overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 transition-all"
-                                >
-                                  <img 
-                                    src={note.attachmentUrl} 
-                                    alt={note.attachmentName} 
-                                    className="max-w-[200px] max-h-[150px] object-cover"
-                                  />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
-                                    <ExternalLink className="h-5 w-5 text-white" />
-                                  </div>
-                                </a>
-                              ) : (
-                                <a 
-                                  href={note.attachmentUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-3 p-2.5 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-background/80 transition-all group/file"
-                                >
-                                  <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover/file:bg-primary group-hover/file:text-white transition-colors">
-                                    <FileText className="h-4 w-4" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-foreground truncate">{note.attachmentName}</p>
-                                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">
-                                      {note.attachmentType?.split("/")[1] || "FILE"}
-                                    </p>
-                                  </div>
-                                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover/file:text-primary transition-colors mr-1" />
-                                </a>
-                              )}
+                {task.progressNotes.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 px-4 mt-2 bg-secondary/20 rounded-xl border border-dashed border-border/60">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-3" />
+                    <p className="text-sm text-muted-foreground text-center font-medium">
+                      No progress notes yet.
+                    </p>
+                    <p className="text-xs text-muted-foreground/70 text-center mt-1">
+                      Notes added will appear here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4 pb-6 mt-2">
+                    {task.progressNotes.map((note) => {
+                      const initials = note.authorName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                      return (
+                        <div key={note.id} className="flex gap-3.5 group">
+                          <Avatar className="h-8 w-8 shrink-0 mt-0.5 border border-border/50 shadow-sm group-hover:border-primary/30 transition-colors">
+                            {note.authorAvatar && <AvatarImage src={note.authorAvatar} alt={note.authorName} />}
+                            <AvatarFallback className="bg-primary/5 text-primary text-[11px] font-bold">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0 bg-secondary/20 p-3.5 rounded-2xl rounded-tl-sm border border-border/40 shadow-sm group-hover:shadow-md transition-all duration-300">
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="text-xs font-bold text-foreground">
+                                {note.authorName}
+                              </span>
+                              <span className="text-[10px] font-medium text-muted-foreground bg-background px-2 py-0.5 rounded-full border border-border/50">
+                                {formatDistanceToNow(new Date(note.createdAt), {
+                                  addSuffix: true,
+                                })}
+                              </span>
                             </div>
-                          )}
+                            <p className="text-sm text-foreground/80 leading-relaxed">
+                              {note.content}
+                            </p>
+                            {note.attachmentUrl && (
+                              <div className="mt-3 pt-3 border-t border-border/40">
+                                {note.attachmentType?.startsWith("image/") ? (
+                                  <a
+                                    href={note.attachmentUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="relative inline-block group/img overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 transition-all"
+                                  >
+                                    <img
+                                      src={note.attachmentUrl}
+                                      alt={note.attachmentName}
+                                      className="max-w-[200px] max-h-[150px] object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                                      <ExternalLink className="h-5 w-5 text-white" />
+                                    </div>
+                                  </a>
+                                ) : (
+                                  <a
+                                    href={note.attachmentUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-background/80 transition-all group/file"
+                                  >
+                                    <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover/file:bg-primary group-hover/file:text-white transition-colors">
+                                      <FileText className="h-4 w-4" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-bold text-foreground truncate">{note.attachmentName}</p>
+                                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">
+                                        {note.attachmentType?.split("/")[1] || "FILE"}
+                                      </p>
+                                    </div>
+                                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover/file:text-primary transition-colors mr-1" />
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1023,7 +1022,7 @@ export function TaskDetailPanel({
             </div>
           )}
           <div className="flex gap-3 relative">
-            <input 
+            <input
               type="file"
               ref={fileInputRef}
               className="hidden"

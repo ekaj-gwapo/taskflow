@@ -7,8 +7,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive, Palette, Check, Sun, Moon, LogOut } from "lucide-react"
 import { ProfileDialog } from "@/components/profile-dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 
 function Confetti() {
@@ -83,6 +94,8 @@ export function AdminSidebar({
     phone: currentUser?.phone || "",
     location: currentUser?.location || "",
   })
+  const [theme, setTheme] = useState(currentUser?.theme || "emerald")
+  const [mode, setMode] = useState<"light" | "dark">(currentUser?.mode || "light")
   const [tempProfileData, setTempProfileData] = useState(profileData)
   const [isEmployeesExpanded, setIsEmployeesExpanded] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -102,7 +115,7 @@ export function AdminSidebar({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(tempProfileData),
+        body: JSON.stringify({ ...tempProfileData, theme, mode }),
       })
 
       if (response.ok) {
@@ -162,7 +175,7 @@ export function AdminSidebar({
   return (
     <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg">
       {/* Sidebar Header - Logos Row */}
-      <div className="p-4 border-b border-border bg-emerald-50/30">
+      <div className="p-4 border-b border-border bg-primary/5">
         <div className="flex justify-between items-center px-1">
           <FlippingLogo front="/logos/logo4.png" back="/logos/logo-back1.jpg" alt="Logo 4" />
           <FlippingLogo front="/logos/logo3.jpg" back="/logos/logo-back2.jpg" alt="Logo 3" />
@@ -217,27 +230,27 @@ export function AdminSidebar({
                   className={cn(
                     "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
                     selectedEmployeeId === null
-                      ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border-border bg-background"
+                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
                   )}
                 >
                   <div className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-md border",
                     selectedEmployeeId === null
-                      ? "bg-white/20 border-white/30 text-white"
-                      : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      ? "bg-white/20 border-white/30 text-primary-foreground"
+                      : "bg-primary/10 text-primary border-primary/20"
                   )}>
                     <LayoutDashboard className="h-4 w-4" />
                   </div>
                   <span className={cn(
                     "flex-1 text-sm font-semibold",
-                    selectedEmployeeId === null ? "text-white" : "text-foreground"
+                    selectedEmployeeId === null ? "text-primary-foreground" : "text-foreground"
                   )}>
                     Dashboard
                   </span>
                   <ChevronRight className={cn(
                     "h-3.5 w-3.5 shrink-0",
-                    selectedEmployeeId === null ? "text-white/70" : "text-muted-foreground"
+                    selectedEmployeeId === null ? "text-primary-foreground/70" : "text-muted-foreground"
                   )} />
                 </button>
               )}
@@ -248,21 +261,21 @@ export function AdminSidebar({
                   className={cn(
                     "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
                     selectedEmployeeId === 'my-tasks'
-                      ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border-border bg-background"
+                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
                   )}
                 >
                   <div className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-md border",
                     selectedEmployeeId === 'my-tasks'
-                      ? "bg-white/20 border-white/30 text-white"
-                      : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      ? "bg-white/20 border-white/30 text-primary-foreground"
+                      : "bg-primary/10 text-primary border-primary/20"
                   )}>
                     <Clipboard className="h-4 w-4" />
                   </div>
                   <span className={cn(
                     "flex-1 text-sm font-semibold",
-                    selectedEmployeeId === 'my-tasks' ? "text-white" : "text-foreground"
+                    selectedEmployeeId === 'my-tasks' ? "text-primary-foreground" : "text-foreground"
                   )}>
                     My Tasks
                   </span>
@@ -271,7 +284,7 @@ export function AdminSidebar({
                   )}
                   <ChevronRight className={cn(
                     "h-3.5 w-3.5 shrink-0",
-                    selectedEmployeeId === 'my-tasks' ? "text-white/70" : "text-muted-foreground"
+                    selectedEmployeeId === 'my-tasks' ? "text-primary-foreground/70" : "text-muted-foreground"
                   )} />
                 </button>
               )}
@@ -282,15 +295,15 @@ export function AdminSidebar({
                   className={cn(
                     "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-4",
                     selectedEmployeeId === 'archived-tasks'
-                      ? "bg-amber-600 text-white border-amber-600 shadow-amber-500/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200 border-border bg-background"
+                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
                   )}
                 >
                   <div className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-md border",
                     selectedEmployeeId === 'archived-tasks'
-                      ? "bg-white/20 border-white/30 text-white"
-                      : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                      ? "bg-white/20 border-white/30 text-primary-foreground"
+                      : "bg-primary/10 text-primary border-primary/20"
                   )}>
                     <Archive className="h-4 w-4" />
                   </div>
@@ -330,15 +343,15 @@ export function AdminSidebar({
                 className={cn(
                   "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-2",
                   selectedEmployeeId === 'team-projects'
-                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]"
-                    : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border-border bg-background"
+                    ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
                 )}
               >
                 <div className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md border",
                   selectedEmployeeId === 'team-projects'
-                    ? "bg-white/20 border-white/30 text-white"
-                    : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                    ? "bg-white/20 border-white/30 text-primary-foreground"
+                    : "bg-primary/10 text-primary border-primary/20"
                 )}>
                   <Users className="h-4 w-4" />
                 </div>
@@ -359,15 +372,15 @@ export function AdminSidebar({
                 className={cn(
                   "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-2",
                   selectedEmployeeId === 'activity-log'
-                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]"
-                    : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border-border bg-background"
+                    ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
                 )}
               >
                 <div className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md border",
                   selectedEmployeeId === 'activity-log'
-                    ? "bg-white/20 border-white/30 text-white"
-                    : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                    ? "bg-white/20 border-white/30 text-primary-foreground"
+                    : "bg-primary/10 text-primary border-primary/20"
                 )}>
                   <Activity className="h-4 w-4" />
                 </div>
@@ -426,8 +439,8 @@ export function AdminSidebar({
                         className={cn(
                           "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all border group",
                           isActive
-                            ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20 scale-[1.01]"
-                            : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border-transparent"
+                            ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.01]"
+                            : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 border-transparent"
                         )}
                       >
                         <Avatar className={cn(
@@ -439,7 +452,7 @@ export function AdminSidebar({
                           ) : (
                             <AvatarFallback className={cn(
                               "text-[10px] font-bold",
-                              isActive ? "bg-white/20 text-white" : "bg-emerald-500/10 text-emerald-600"
+                              isActive ? "bg-white/20 text-primary-foreground" : "bg-primary/10 text-primary"
                             )}>
                               {empInitials}
                             </AvatarFallback>
@@ -455,8 +468,8 @@ export function AdminSidebar({
                           {!isActive && (
                             <div className="flex items-center gap-2 mt-0.5">
                               {stats.inProgress > 0 && (
-                                <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium">
-                                  <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                                <span className="flex items-center gap-1 text-[10px] text-primary font-medium">
+                                  <span className="h-1 w-1 rounded-full bg-primary" />
                                   {stats.inProgress}
                                 </span>
                               )}
@@ -520,7 +533,7 @@ export function AdminSidebar({
                       </button>
                       <button 
                         onClick={handleSaveProfile}
-                        className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700"
+                        className="text-[11px] font-bold text-primary hover:text-primary/80 transition-colors"
                       >
                         SAVE
                       </button>
@@ -534,23 +547,144 @@ export function AdminSidebar({
                   <ProfileItem icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value={profileData.location} isEditing={isEditingProfile} onChange={(v) => handleInputChange('location', v)} placeholder="Add location..." />
                 </div>
               </div>
+
+              {/* Appearance Section */}
+              <div className="space-y-4 pt-4 border-t border-border/50">
+                <div className="flex items-center gap-2 px-1">
+                  <Palette className="h-4 w-4 text-primary" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Appearance</span>
+                </div>
+
+                <div className="space-y-3 px-1">
+                  <p className="text-[10px] text-muted-foreground font-medium">Accent Color</p>
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      { id: "emerald", color: "bg-[#10b981]", label: "Emerald" },
+                      { id: "blue", color: "bg-[#3b82f6]", label: "Ocean" },
+                      { id: "violet", color: "bg-[#8b5cf6]", label: "Royal" },
+                      { id: "amber", color: "bg-[#f59e0b]", label: "Sunset" },
+                      { id: "rose", color: "bg-[#f43f5e]", label: "Velvet" },
+                    ].map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          setTheme(t.id)
+                          if (!isEditingProfile) {
+                            // Instant save if not in edit mode
+                            const token = localStorage.getItem("token")
+                            fetch(`/api/users/${currentUser?.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ ...profileData, theme: t.id, mode })
+                            }).then(res => res.json()).then(data => data.user && login(currentUser?.role!, currentUser?.id!, data.user))
+                          }
+                        }}
+                        className={cn(
+                          "group relative flex h-7 w-7 items-center justify-center rounded-full transition-all ring-offset-background",
+                          theme === t.id ? "ring-2 ring-primary ring-offset-2" : "hover:scale-110"
+                        )}
+                        title={t.label}
+                      >
+                        <div className={cn("h-full w-full rounded-full border border-black/10 shadow-sm", t.color)} />
+                        {theme === t.id && (
+                          <Check className="absolute h-3 w-3 text-white drop-shadow-md" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3 px-1">
+                  <p className="text-[10px] text-muted-foreground font-medium">Color Mode</p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={mode === "light" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setMode("light")
+                        if (!isEditingProfile) {
+                          const token = localStorage.getItem("token")
+                          fetch(`/api/users/${currentUser?.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ ...profileData, theme, mode: "light" })
+                          }).then(res => res.json()).then(data => data.user && login(currentUser?.role!, currentUser?.id!, data.user))
+                        }
+                      }}
+                      className="flex-1 rounded-lg h-9 text-[11px]"
+                    >
+                      <Sun className="h-3.5 w-3.5 mr-1.5" />
+                      Light
+                    </Button>
+                    <Button
+                      variant={mode === "dark" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setMode("dark")
+                        if (!isEditingProfile) {
+                          const token = localStorage.getItem("token")
+                          fetch(`/api/users/${currentUser?.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ ...profileData, theme, mode: "dark" })
+                          }).then(res => res.json()).then(data => data.user && login(currentUser?.role!, currentUser?.id!, data.user))
+                        }
+                      }}
+                      className="flex-1 rounded-lg h-9 text-[11px]"
+                    >
+                      <Moon className="h-3.5 w-3.5 mr-1.5" />
+                      Dark
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </ScrollArea>
 
       <div className="p-4 border-t border-border bg-background/50">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all group"
-          onClick={() => {
-            localStorage.removeItem("token")
-            window.location.href = "/"
-          }}
-        >
-          <X className="h-4 w-4 group-hover:rotate-90 transition-transform" />
-          <span className="font-semibold">Logout</span>
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-4 h-12 px-4 rounded-xl text-muted-foreground hover:text-white hover:bg-destructive shadow-sm transition-all duration-300 group overflow-hidden relative border border-transparent hover:border-destructive/30"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-destructive/0 to-destructive/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative flex items-center gap-4 w-full">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background border border-border group-hover:bg-destructive group-hover:border-destructive/50 transition-colors">
+                  <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                </div>
+                <span className="font-bold text-sm tracking-wide">Logout</span>
+              </div>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-card border-border sm:max-w-[400px]">
+            <AlertDialogHeader>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-2">
+                <LogOut className="h-6 w-6" />
+              </div>
+              <AlertDialogTitle className="text-xl font-bold">End Session?</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                Are you sure you want to log out? Any unsaved changes might be lost.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-4 gap-2">
+              <AlertDialogCancel className="rounded-xl border-border hover:bg-accent flex-1">
+                Stay
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  localStorage.removeItem("token")
+                  window.location.href = "/"
+                }}
+                className="rounded-xl bg-destructive text-white hover:bg-destructive/90 flex-1"
+              >
+                Sign Out
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       <ProfileDialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen} />
     </aside>

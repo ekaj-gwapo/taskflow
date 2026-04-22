@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityLog } from "@/lib/store";
-import { FileText, Users, MessageSquare, AlertCircle, Trash2, CheckCircle2, PlusCircle, Paperclip, UserCog, UserCircle, Key, ShieldCheck, UserCheck, Share2 } from "lucide-react";
+import { FileText, Users, MessageSquare, AlertCircle, Trash2, CheckCircle2, PlusCircle, Paperclip, UserCog, UserCircle, Key, ShieldCheck, UserCheck, Share2, Archive, RotateCcw } from "lucide-react";
 import { useTaskContext } from "@/lib/task-context";
 
 export function ActivityLogView() {
@@ -65,6 +65,10 @@ export function ActivityLogView() {
         return { icon: <Key className="h-4 w-4 text-yellow-600" />, bg: "bg-yellow-50 border-yellow-200" };
       case "USER_STATUS_UPDATED":
         return { icon: <ShieldCheck className="h-4 w-4 text-cyan-600" />, bg: "bg-cyan-50 border-cyan-200" };
+      case "TASK_ARCHIVED":
+        return { icon: <Archive className="h-4 w-4 text-amber-600" />, bg: "bg-amber-50 border-amber-200" };
+      case "TASK_RESTORED":
+        return { icon: <RotateCcw className="h-4 w-4 text-emerald-600" />, bg: "bg-emerald-50 border-emerald-200" };
       default:
         return { icon: <AlertCircle className="h-4 w-4 text-muted-foreground" />, bg: "bg-secondary/50 border-border" };
     }
@@ -114,6 +118,10 @@ export function ActivityLogView() {
         return <span>Reset the password for user ID <strong>{log.details?.resetUserId}</strong></span>;
       case "USER_STATUS_UPDATED":
         return <span>{log.details?.isActive ? "Activated" : "Deactivated"} user account <strong>{log.details?.updatedUserId}</strong></span>;
+      case "TASK_ARCHIVED":
+        return <span>Archived the task <strong>{taskName}</strong></span>;
+      case "TASK_RESTORED":
+        return <span>Restored the task <strong>{taskName}</strong> from archive</span>;
       default:
         return <span>Performed an unknown action on <strong>{taskName}</strong></span>;
     }
