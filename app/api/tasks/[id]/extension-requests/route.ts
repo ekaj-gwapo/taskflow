@@ -130,6 +130,23 @@ export async function POST(
 
     const created: any = await db.getOne("SELECT * FROM extension_requests WHERE id = ?", [id])
 
+    // Create Notifications only for the original Creator
+    if (task.createdById && task.createdById !== user.id) {
+      const notificationId = uuidv4();
+      await db.execute(
+        "INSERT INTO notifications (id, userId, type, title, message, link, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          notificationId,
+          task.createdById,
+          "EXTENSION_REQUESTED",
+          "Extension Requested",
+          `${user.name} requested an extension for "${task.title}".`,
+          `/tasks/${taskId}`,
+          now
+        ]
+      );
+    }
+
     return NextResponse.json({ extensionRequest: created }, { status: 201 })
   } catch (error) {
     console.error("Create extension request error:", error)

@@ -137,8 +137,8 @@ export function TaskDetailPanel({
     } else if (targetSection === "extensions") {
       // The extension section is part of the main meta area, but we can scroll to it
       setTimeout(() => {
-        extensionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
-      }, 300)
+        extensionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 400)
     }
 
     // Clear target section after handling
@@ -333,7 +333,7 @@ export function TaskDetailPanel({
                 <span className="font-semibold text-foreground">{task.createdBy.name}</span>
                 <span className="uppercase text-[9px] font-bold tracking-wider bg-primary/10 text-primary px-1.5 py-0.5 rounded-md border border-primary/20 shrink-0">{task.createdBy.role}</span>
               </span>
-              {task.delegatedBy && (
+              {task.delegatedBy && task.delegatedBy.id !== task.createdBy.id && (
                 <span className="flex items-center gap-1.5 text-muted-foreground/80 flex-wrap">
                   <span className="text-primary/60 font-bold">↳</span> Delegated by <span className="font-semibold text-foreground">{task.delegatedBy.name}</span>
                 </span>
@@ -394,7 +394,7 @@ export function TaskDetailPanel({
                   </div>
                   Assignees
                 </div>
-                {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && task.status === "todo" && (
+                {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && task.status !== "completed" && (
                   <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -411,8 +411,8 @@ export function TaskDetailPanel({
                         <span className="truncate uppercase tracking-wider">
                           {isUpdatingAssignees ? "Updating..." : (
                             (task.assignees && task.assignees.length > 1)
-                              ? "Edit Team Members"
-                              : "Reassign"
+                              ? "Manage Team"
+                              : "Reassign / Add Team"
                           )}
                         </span>
                       </Button>
@@ -592,11 +592,12 @@ export function TaskDetailPanel({
 
               const canRequest = !pendingRequest && totalRequests < 2 && canRequestRole && !isAssigner
 
-              // 3. Only the assigner (creator or delegator) OR superadmin can review
-              const canReview = isAssigner || currentRole === "superadmin"
+              // 3. Only the original creator (createdById) OR superadmin can review
+              // 4. BUT, you cannot review your own request
+              const canReview = (currentUser?.id === task.createdById || currentRole === "superadmin") && currentUser?.id !== pendingRequest?.requestedById
 
               return (
-                <div className="mt-4 space-y-3">
+                <div ref={extensionRef} className="mt-4 space-y-3 scroll-mt-10">
                   {/* Pending Request Banner */}
                   {pendingRequest && (
                     <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 shadow-sm animate-in fade-in duration-300 backdrop-blur-sm">

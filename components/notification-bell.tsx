@@ -77,35 +77,38 @@ export function NotificationBell() {
                     if (taskId) {
                       selectTask(taskId)
                       
-                      // Set target section based on notification type
-                      if (n.type === "COMMENT_ADDED") {
-                        setTargetSection("discussion")
-                      } else if (n.type === "EXTENSION_APPROVED" || n.type === "EXTENSION_REJECTED") {
-                        setTargetSection("extensions")
-                      } else {
-                        setTargetSection(null)
-                      }
+                    // Set target section based on notification type
+                    if (n.type === "COMMENT_ADDED") {
+                      setTargetSection("discussion")
+                    } else if (n.type === "EXTENSION_APPROVED" || n.type === "EXTENSION_REJECTED" || n.type === "EXTENSION_REQUESTED") {
+                      setTargetSection("extensions")
+                    } else {
+                      setTargetSection(null)
                     }
-                  }}
-                >
-                  <div className="flex justify-between items-start gap-2 mb-1">
-                    <span className="font-bold text-xs leading-tight">{n.title}</span>
-                    {n.isRead === 0 && (
-                      <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1" />
-                    )}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground line-clamp-2 leading-normal mb-2">
-                    {n.message}
-                  </p>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] text-muted-foreground/60 font-medium">
-                      {new Date(n.createdAt).toLocaleDateString()} at {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    {n.link && (
-                      <ExternalLink className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                    )}
-                  </div>
+                  }
+                }}
+              >
+                <div className="flex justify-between items-start gap-2 mb-1.5">
+                  <span className="font-bold text-sm leading-tight">{n.title}</span>
+                  {n.isRead === 0 && (
+                    <div className={cn(
+                      "h-3 w-3 rounded-full shrink-0 mt-1 shadow-sm",
+                      n.type === "EXTENSION_REQUESTED" ? "bg-orange-500 animate-pulse" : "bg-primary"
+                    )} />
+                  )}
                 </div>
+                <p className="text-[13px] text-muted-foreground line-clamp-3 leading-snug mb-2 font-medium">
+                  {n.message}
+                </p>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[11px] text-muted-foreground/60 font-semibold">
+                    {new Date(n.createdAt).toLocaleDateString()} at {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {n.link && (
+                    <ExternalLink className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </div>
               ))}
             </div>
           ) : (

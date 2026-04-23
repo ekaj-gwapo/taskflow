@@ -14,11 +14,36 @@ import {
   Target, 
   Zap, 
   Calendar,
-  AlertCircle
+  AlertCircle,
+  PlusCircle,
+  RefreshCw
 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ActivityLog } from "@/lib/store"
 
 export function EmployeeProfileReport() {
   const { tasks, currentUser } = useTaskContext()
+  const [logs, setLogs] = useState<ActivityLog[]>([])
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      if (currentUser?.role !== 'employee') {
+        try {
+          const token = localStorage.getItem("token");
+          const res = await fetch("/api/activity-logs", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setLogs(data.logs || []);
+          }
+        } catch (err) {
+          console.error("Failed to fetch logs for profile", err);
+        }
+      }
+    };
+    fetchLogs();
+  }, [currentUser]);
 
   const stats = useMemo(() => {
     if (!currentUser) return null
@@ -58,6 +83,11 @@ export function EmployeeProfileReport() {
     // Weekly Accomplishment
     const completedThisWeek = completed.filter(t => isDateInCurrentWeek(t.completedAt))
 
+    // Admin Specific Stats
+    const isAdmin = currentUser.role !== 'employee'
+    const createdTasksCount = tasks.filter(t => t.createdById === currentUser.id).length
+    const reassignedTasksCount = logs.filter(l => l.userId === currentUser.id && l.action === 'TASK_REASSIGNED').length
+
     return {
       total: myTasks.length,
       completed: completed.length,
@@ -66,9 +96,12 @@ export function EmployeeProfileReport() {
       onTimeRate,
       completionRate,
       totalPoints,
-      completedThisWeek: completedThisWeek.length
+      completedThisWeek: completedThisWeek.length,
+      isAdmin,
+      createdTasksCount,
+      reassignedTasksCount
     }
-  }, [tasks, currentUser])
+  }, [tasks, currentUser, logs])
 
   if (!stats) return null
 
@@ -85,7 +118,11 @@ export function EmployeeProfileReport() {
           { icon: <Target className="h-4 w-4 text-blue-500" />, label: "Total Assigned", value: stats.total, description: "Lifetime tasks", color: "blue" },
           { icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />, label: "Accomplished", value: stats.completed, description: "Completed tasks", color: "emerald" },
           { icon: <Zap className="h-4 w-4 text-amber-500" />, label: "Points Earned", value: stats.totalPoints, description: "Performance score", color: "amber" },
-          { icon: <TrendingUp className="h-4 w-4 text-purple-500" />, label: "This Week", value: stats.completedThisWeek, description: "Recent success", color: "purple" }
+          { icon: <TrendingUp className="h-4 w-4 text-purple-500" />, label: "This Week", value: stats.completedThisWeek, description: "Recent success", color: "purple" },
+          ...(stats.isAdmin ? [
+            { icon: <PlusCircle className="h-4 w-4 text-sky-500" />, label: "Tasks Created", value: stats.createdTasksCount, description: "Total initialized", color: "blue" },
+            { icon: <RefreshCw className="h-4 w-4 text-orange-500" />, label: "Reassigned", value: stats.reassignedTasksCount, description: "Tasks delegated", color: "amber" }
+          ] : [])
         ].map((m, i) => (
           <motion.div
             key={m.label}

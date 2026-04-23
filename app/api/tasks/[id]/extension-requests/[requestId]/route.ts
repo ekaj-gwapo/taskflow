@@ -49,13 +49,15 @@ export async function PUT(
       )
     }
 
-    // AUTH CHECK: Only the person who assigned the task (creator/delegator) OR a SuperAdmin can review
-    const isAssigner = user.id === extRequest.createdById || user.id === extRequest.delegatedById;
+    // AUTH CHECK: Only the original creator (createdById) OR a SuperAdmin can review
+    // A user CANNOT review their own extension request
+    const isCreator = user.id === extRequest.createdById;
     const isSuperAdmin = role === "SUPERADMIN";
+    const isRequester = user.id === extRequest.requestedById;
 
-    if (!isAssigner && !isSuperAdmin) {
+    if ((!isCreator && !isSuperAdmin) || isRequester) {
       return NextResponse.json(
-        { error: "Only the user who assigned this task can review the extension request" },
+        { error: isRequester ? "You cannot review your own extension request" : "Only the original task creator can review the extension request" },
         { status: 403 }
       )
     }

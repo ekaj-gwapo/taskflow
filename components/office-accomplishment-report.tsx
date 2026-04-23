@@ -67,7 +67,7 @@ export function OfficeAccomplishmentReport() {
 
   const employeeStats = useMemo(() => {
     return allEmployees.map(emp => {
-      const empTasks = tasks.filter(t => t.assigneeIds?.includes(emp.id) || t.assigneeId === emp.id);
+      const empTasks = weeklyTasks.filter(t => t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id);
       const completed = empTasks.filter(t => t.status === "completed").length;
       const inProgress = empTasks.filter(t => t.status === "in-progress").length;
       const overdue = empTasks.filter(t => t.status !== "completed" && new Date(t.dueDate) < new Date()).length;
@@ -83,7 +83,7 @@ export function OfficeAccomplishmentReport() {
         rate
       };
     }).sort((a, b) => b.rate - a.rate);
-  }, [allEmployees, tasks])
+  }, [allEmployees, weeklyTasks])
 
   return (
     <Dialog>
@@ -126,7 +126,7 @@ export function OfficeAccomplishmentReport() {
               )}
             >
               <UserIcon className="h-3.5 w-3.5" />
-              Individual Perfrmance Report
+              Individual Performance Report
             </button>
           </div>
         </div>
@@ -170,7 +170,7 @@ export function OfficeAccomplishmentReport() {
                             <div className="p-3 border-l border-r border-slate-300 text-center">No.</div>
                             <div className="p-3 border-r border-slate-300">Programs & Activities</div>
                             <div className="p-3 border-r border-slate-300">Indicators / Target</div>
-                            <div className="p-3 border-r border-slate-300">Status / Accomplishment</div>
+                            <div className="p-3 border-r border-slate-300 text-center">Status / Accomplishment</div>
                           </div>
 
                           {weeklyTasks.length > 0 ? (
@@ -234,18 +234,18 @@ export function OfficeAccomplishmentReport() {
                         </>
                       ) : (
                         <>
-                          <div className="grid grid-cols-[50px_1fr_80px_100px_80px_80px_100px] text-[10px] uppercase tracking-wider font-bold bg-slate-100 border-b border-slate-300 text-slate-600 print-header">
+                          <div className="grid grid-cols-[40px_1fr_70px_100px_90px_80px_80px] text-[10px] uppercase tracking-wider font-bold bg-slate-100 border-b border-slate-300 text-slate-600 print-header">
                             <div className="p-3 border-l border-r border-slate-300 text-center">No.</div>
-                            <div className="p-3 border-r border-slate-300">Employee Name / Designation</div>
+                            <div className="p-3 border-r border-slate-300">Employee Name & Position</div>
                             <div className="p-3 border-r border-slate-300 text-center">Targets</div>
                             <div className="p-3 border-r border-slate-300 text-center">Accomplished</div>
-                            <div className="p-3 border-r border-slate-300 text-center">On-Going</div>
+                            <div className="p-3 border-r border-slate-300 text-center">Ongoing</div>
                             <div className="p-3 border-r border-slate-300 text-center">Overdue</div>
                             <div className="p-3 border-r border-slate-300 text-center">Rating</div>
                           </div>
 
                           {employeeStats.map((emp, index) => (
-                            <div key={emp.id} className="grid grid-cols-[50px_1fr_80px_100px_80px_80px_100px] text-xs border-b border-slate-200 last:border-0 bg-white print-row items-center">
+                            <div key={emp.id} className="grid grid-cols-[40px_1fr_70px_100px_90px_80px_80px] text-xs border-b border-slate-200 last:border-0 bg-white print-row items-center">
                               <div className="p-4 border-l border-r border-slate-200 text-center font-medium text-slate-500">{index + 1}</div>
                               <div className="p-4 border-r border-slate-200">
                                 <p className="font-bold text-slate-900">{emp.name}</p>

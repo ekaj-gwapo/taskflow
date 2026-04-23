@@ -159,13 +159,8 @@ export async function PUT(
     let newAssigneeId = existingTask.assigneeId;
 
     if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
-      if (role === "HEAD_ADMIN" || role === "SUPERADMIN") {
-        newDelegatedById = auth.user!.id;
-        newDelegatedAt = new Date().toISOString();
-      } else if (role === "ADMIN") {
-        // Acting Assistant (ADMIN) does not set themselves as delegator by default
-        // Maintains existing delegator (Head Admin) if present
-      }
+      newDelegatedById = auth.user!.id;
+      newDelegatedAt = new Date().toISOString();
       newAssigneeId = assigneeIds.length > 0 ? assigneeIds[0] : null;
     }
 

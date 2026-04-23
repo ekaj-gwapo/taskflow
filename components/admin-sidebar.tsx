@@ -200,8 +200,8 @@ export function AdminSidebar({
       {/* Tab Navigation */}
       <div className="flex gap-1 p-3 border-b border-border bg-background/50">
         <button
-          onClick={() => setActiveTab("employees")}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "employees"
+          onClick={() => onSelectEmployee(null)}
+          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedEmployeeId !== "profile"
               ? "bg-primary text-primary-foreground shadow-md"
               : "text-muted-foreground hover:bg-accent hover:text-foreground"
             }`}
@@ -210,8 +210,8 @@ export function AdminSidebar({
           <span>Employees</span>
         </button>
         <button
-          onClick={() => setActiveTab("profile")}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "profile"
+          onClick={() => onSelectEmployee("profile")}
+          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedEmployeeId === "profile"
               ? "bg-primary text-primary-foreground shadow-md"
               : "text-muted-foreground hover:bg-accent hover:text-foreground"
             }`}
@@ -223,7 +223,7 @@ export function AdminSidebar({
 
       <div className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
-          {activeTab === "employees" ? (
+          {selectedEmployeeId !== "profile" ? (
             <motion.div
               key="employees"
               initial={{ opacity: 0, x: -20 }}
@@ -338,56 +338,6 @@ export function AdminSidebar({
                     selectedEmployeeId === 'archived-tasks' ? "text-white/70" : "text-muted-foreground"
                   )} />
                 </button>
-              )}
-
-              {pendingExtensionsCount > 0 && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 border border-amber-200 bg-amber-50/50 mb-1 hover:bg-amber-100/50 transition-all cursor-pointer group/ext animate-in fade-in duration-300">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-100 border border-amber-200 text-amber-600 group-hover/ext:scale-110 transition-transform">
-                        <CalendarClock className="h-4 w-4" />
-                      </div>
-                      <span className="flex-1 text-xs font-semibold text-amber-800">
-                        Pending Extensions
-                      </span>
-                      <span className="flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-bold animate-pulse shadow-sm">
-                        {pendingExtensionsCount}
-                      </span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[280px] p-2 bg-card border-amber-200 shadow-xl" side="right" align="start">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest p-2 border-b border-amber-100 mb-2 flex items-center gap-2">
-                        <CalendarClock className="h-3 w-3" /> Select Task to Review
-                      </p>
-                      <div className="overflow-y-auto max-h-[300px] pr-1">
-                        {tasksWithPendingExtensions.map((task) => (
-                          <button
-                            key={task.id}
-                            onClick={() => onSelectTask(task)}
-                            className="w-full flex flex-col gap-1 p-2 rounded-md hover:bg-amber-50 text-left transition-colors group/item"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="text-xs font-bold text-foreground line-clamp-1 flex-1 group-hover/item:text-amber-700">
-                                {task.title}
-                              </span>
-                              <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[9px] text-muted-foreground font-medium truncate">
-                                By {task.assigneeName || task.assignees?.[0]?.name || "Team"}
-                              </span>
-                              <span className="h-1 w-1 rounded-full bg-amber-300" />
-                              <span className="text-[9px] text-amber-600 font-bold">
-                                {task.extensionRequests?.filter(r => r.status === "PENDING").length} req
-                              </span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
               )}
 
               <div className="h-px bg-border/50 my-2" />

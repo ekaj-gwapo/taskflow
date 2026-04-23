@@ -957,7 +957,7 @@ const url = `/api/tasks/${taskId}`
         } else if (currentRole === 'head_admin') {
           setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee' || u.role.toLowerCase() === 'admin'));
         } else {
-          setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee'));
+          setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee' || u.role.toLowerCase() === 'admin'));
         }
       }
     } catch (error) {
