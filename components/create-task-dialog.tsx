@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
 import {
@@ -41,6 +41,13 @@ export function CreateTaskDialog() {
   const [dueDate, setDueDate] = useState("")
   const [actionSteps, setActionSteps] = useState<string[]>([])
   const [stepInput, setStepInput] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Fix hydration mismatch
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleAddStep = () => {
     if (!stepInput.trim()) return
@@ -52,10 +59,11 @@ export function CreateTaskDialog() {
     setActionSteps(actionSteps.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim() || assigneeIds.length === 0 || !dueDate) return
 
-    createTask({
+    setIsSubmitting(true)
+    const success = await createTask({
       title: title.trim(),
       description: description.trim(),
       status: "todo",
@@ -63,18 +71,20 @@ export function CreateTaskDialog() {
       assigneeIds,
       dueDate,
     }, actionSteps)
-    toast.success("Task created successfully!")
+    setIsSubmitting(false)
 
-
-    setTitle("")
-    setDescription("")
-    setAssignmentType("individual")
-    setAssigneeIds([])
-    setPriority("medium")
-    setDueDate("")
-    setActionSteps([])
-    setStepInput("")
-    setOpen(false)
+    if (success) {
+      toast.success("Task created successfully!")
+      setTitle("")
+      setDescription("")
+      setAssignmentType("individual")
+      setAssigneeIds([])
+      setPriority("medium")
+      setDueDate("")
+      setActionSteps([])
+      setStepInput("")
+      setOpen(false)
+    }
   }
 
   return (
@@ -126,9 +136,11 @@ export function CreateTaskDialog() {
                   <RadioGroup
                     value={assignmentType}
                     onValueChange={(val) => {
-                      setAssignmentType(val as "individual" | "team")
-                      if (val === "individual" && assigneeIds.length > 1) {
-                        setAssigneeIds([assigneeIds[0]])
+                      const newType = val as "individual" | "team"
+                      setAssignmentType(newType)
+                      if (newType === "individual") {
+                        // When switching to individual, keep only the first assignee if it exists, otherwise clear
+                        setAssigneeIds(assigneeIds[0] ? [assigneeIds[0]] : [])
                       }
                     }}
                     className="flex gap-3"
@@ -145,7 +157,6 @@ export function CreateTaskDialog() {
                 </div>
                 <div className="flex flex-col gap-1 border border-border p-2 rounded-md h-[235px] overflow-y-auto bg-secondary/30 mt-1">
                   {allEmployees.map((emp) => {
-                    const activeCount = tasks.filter(t => (t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id) && t.status !== "completed").length
                     return (
                       <label
                         key={emp.id}
@@ -192,9 +203,8 @@ export function CreateTaskDialog() {
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="bg-secondary border-border text-foreground pr-10 hover:border-primary/50 transition-colors cursor-pointer"
+                      className="bg-secondary border-border text-foreground hover:border-primary/50 transition-colors cursor-pointer"
                     />
-                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-hover:text-primary pointer-events-none transition-colors" />
                   </div>
                 </div>
 
@@ -203,11 +213,11 @@ export function CreateTaskDialog() {
                   <Input
                     type="text"
                     readOnly
-                    value={new Date().toLocaleDateString(undefined, {
+                    value={isMounted ? new Date().toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
-                    })}
+                    }) : ""}
                     className="bg-secondary border-border text-muted-foreground cursor-default"
                   />
                 </div>
@@ -225,9 +235,10 @@ export function CreateTaskDialog() {
                     <RadioGroup
                       value={assignmentType}
                       onValueChange={(val) => {
-                        setAssignmentType(val as "individual" | "team")
-                        if (val === "individual" && assigneeIds.length > 1) {
-                          setAssigneeIds([assigneeIds[0]])
+                        const newType = val as "individual" | "team"
+                        setAssignmentType(newType)
+                        if (newType === "individual") {
+                          setAssigneeIds(assigneeIds[0] ? [assigneeIds[0]] : [])
                         }
                       }}
                       className="flex gap-3"
@@ -251,14 +262,11 @@ export function CreateTaskDialog() {
                       <SelectValue placeholder="Select from employees..." />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border">
-                      {allEmployees.map((emp) => {
-                        const activeCount = tasks.filter(t => (t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id) && t.status !== "completed").length
-                        return (
-                          <SelectItem key={emp.id} value={emp.id}>
-                            {emp.name}
-                          </SelectItem>
-                        )
-                      })}
+                      {allEmployees.map((emp) => (
+                        <SelectItem key={emp.id} value={emp.id}>
+                          {emp.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -286,9 +294,8 @@ export function CreateTaskDialog() {
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="bg-secondary border-border text-foreground pr-10 hover:border-primary/50 transition-colors cursor-pointer"
+                      className="bg-secondary border-border text-foreground hover:border-primary/50 transition-colors cursor-pointer"
                     />
-                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-hover:text-primary pointer-events-none transition-colors" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -296,11 +303,11 @@ export function CreateTaskDialog() {
                   <Input
                     type="text"
                     readOnly
-                    value={new Date().toLocaleDateString(undefined, {
+                    value={isMounted ? new Date().toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
-                    })}
+                    }) : ""}
                     className="bg-secondary border-border text-muted-foreground cursor-default"
                   />
                 </div>
@@ -369,10 +376,10 @@ export function CreateTaskDialog() {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!title.trim() || assigneeIds.length === 0 || !dueDate}
+            disabled={!title.trim() || assigneeIds.length === 0 || !assigneeIds[0] || !dueDate || isSubmitting}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            Create Task
+            {isSubmitting ? "Creating..." : "Create Task"}
           </Button>
         </DialogFooter>
       </DialogContent>

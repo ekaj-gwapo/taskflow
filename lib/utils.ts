@@ -38,3 +38,22 @@ export function calculateTaskProgress(task: any) {
   const completedSteps = task.actionSteps.filter((s: any) => s.completed).length;
   return Math.round((completedSteps / totalSteps) * 100);
 }
+
+export function isDateInCurrentWeek(date: string | Date | null | undefined) {
+  if (!date) return false;
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return false;
+
+  const now = new Date();
+  const day = now.getDay();
+  // Monday is start of week
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+  const startOfWeek = new Date(now.setDate(diff));
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(endOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  return d >= startOfWeek && d <= endOfWeek;
+}

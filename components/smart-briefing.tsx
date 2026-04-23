@@ -211,13 +211,15 @@ function AnimatedMoon({ className, size = 24 }: { className?: string, size?: num
 }
 
 export function SmartBriefing() {
-  const { currentUser, tasks } = useTaskContext()
+  const { currentUser, tasks, allEmployees } = useTaskContext()
   
   if (!currentUser) return null
 
   const role = currentUser.role?.toLowerCase()
   const isHeadAdmin = role === "head_admin"
-  const isManagement = isHeadAdmin || role === "superadmin" || role === "admin"
+  const isSuperAdmin = role === "superadmin"
+  const isAdmin = role === "admin"
+  const isManagement = isHeadAdmin || isSuperAdmin || isAdmin
 
   const hour = new Date().getHours()
   let greeting = "Good morning"
@@ -233,6 +235,7 @@ export function SmartBriefing() {
 
   const today = new Date().toISOString().split('T')[0]
   
+  // General Stats
   const tasksDueToday = tasks.filter(t => {
     if (t.status === "completed" || t.archived) return false
     return t.dueDate && t.dueDate.startsWith(today)
@@ -252,6 +255,15 @@ export function SmartBriefing() {
     if (t.status !== "in-progress" || t.archived) return false
     return true
   }).length
+
+  // Management Specific Stats
+  const totalTasks = tasks.length
+  const pendingExtensions = tasks.filter(t => 
+    t.extensionRequests?.some(r => r.status === "PENDING")
+  ).length
+  const totalEmployees = allEmployees.length
+  const completedLifetime = tasks.filter(t => t.status === "completed").length
+
 
   return (
     <motion.div 
@@ -280,8 +292,20 @@ export function SmartBriefing() {
             Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-500">{currentUser.name.split(" ")[0]}</span>!
           </h1>
           <p className="text-muted-foreground mt-4 text-sm md:text-lg font-medium leading-relaxed max-w-lg">
-            {isHeadAdmin ? (
-              "Here is a comprehensive overview of the organization's progress and team activity today."
+            {isManagement ? (
+              <>
+                You are currently overseeing <span className="text-foreground font-bold">{totalTasks} tasks</span> across the organization. 
+                {pendingExtensions > 0 && (
+                  <span className="block mt-2 text-primary font-bold">
+                    🔔 There are {pendingExtensions} pending extension requests awaiting your review.
+                  </span>
+                )}
+                {overdueTasks > 0 && (
+                  <span className="block mt-1">
+                    <span className="text-destructive font-bold">{overdueTasks} critical items</span> require immediate attention.
+                  </span>
+                )}
+              </>
             ) : (
               <>
                 You have <span className="text-foreground font-bold">{tasksDueToday} tasks</span> due today. 
@@ -295,15 +319,15 @@ export function SmartBriefing() {
           <div className="contents">
             <StatBox 
               icon={<Calendar className="h-5 w-5" />} 
-              label="Due Today" 
-              value={tasksDueToday} 
+              label={isManagement ? "Total Tasks" : "Due Today"} 
+              value={isManagement ? totalTasks : tasksDueToday} 
               color="text-primary"
               bg="bg-primary/10"
               borderColor="border-primary/20"
             />
             <StatBox 
               icon={<AlertCircle className="h-5 w-5" />} 
-              label="Overdue" 
+              label={isManagement ? "Overdue Tasks" : "Overdue"} 
               value={overdueTasks} 
               color="text-destructive"
               bg="bg-destructive/10"
@@ -313,16 +337,16 @@ export function SmartBriefing() {
           <div className="contents">
             <StatBox 
               icon={<Clock className="h-5 w-5" />} 
-              label="In Progress" 
-              value={inProgressTasks} 
+              label={isManagement ? "In Progress" : "In Progress"} 
+              value={isManagement ? (totalTasks - completedLifetime) : inProgressTasks} 
               color="text-amber-600"
               bg="bg-amber-500/10"
               borderColor="border-amber-500/20"
             />
             <StatBox 
               icon={<CheckCircle2 className="h-5 w-5" />} 
-              label="Completed" 
-              value={completedToday} 
+              label={isManagement ? "Completed" : "Completed Today"} 
+              value={isManagement ? completedLifetime : completedToday} 
               color="text-emerald-600"
               bg="bg-emerald-500/10"
               borderColor="border-emerald-500/20"

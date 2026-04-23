@@ -35,6 +35,7 @@ function SuperAdminContent() {
           <AdminSidebar
             selectedEmployeeId={null}
             onSelectEmployee={() => {}}
+            onSelectTask={() => {}}
           />
         </div>
         <div className="flex-1 overflow-y-auto bg-secondary/10">

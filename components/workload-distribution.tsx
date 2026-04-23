@@ -4,9 +4,9 @@ import { useMemo } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Activity, AlertCircle } from "lucide-react"
+import { Activity, AlertCircle, ChevronDown } from "lucide-react"
 
-export function WorkloadDistribution() {
+export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
   const { tasks, allEmployees } = useTaskContext()
 
   const workloadData = useMemo(() => {
@@ -40,16 +40,36 @@ export function WorkloadDistribution() {
   const maxScore = Math.max(...workloadData.map((e) => e.score), 1)
 
   return (
-    <Card className="border-border bg-card overflow-hidden h-full flex flex-col max-h-[400px]">
-      <CardHeader className="pb-3 bg-secondary/30 border-b border-border shrink-0">
-        <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4 text-emerald-600" />
-          <CardTitle className="text-sm font-semibold text-foreground">
-            Current Workload Distribution
-          </CardTitle>
+    <Card className="border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-full flex flex-col max-h-[400px]">
+      <CardHeader className="pb-3 bg-muted/30 border-b border-border shrink-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
+              <Activity className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-sm font-semibold text-foreground">
+                Workload Distribution
+              </CardTitle>
+              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">Active task load per employee</p>
+            </div>
+          </div>
+          {onHide && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onHide();
+              }}
+              className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground group"
+              title="Hide Chart"
+            >
+              <ChevronDown className="h-4 w-4 transform transition-transform group-hover:rotate-180" />
+            </button>
+          )}
         </div>
       </CardHeader>
-      <CardContent className="p-4 flex-1 overflow-y-auto">
+      <CardContent className="p-0 flex-1 overflow-y-auto">
+        <div className="p-4">
         {/* Ranked List */}
         <div className="flex flex-col gap-3">
           {workloadData.map((person) => {
@@ -115,6 +135,7 @@ export function WorkloadDistribution() {
               </p>
             </div>
           )}
+          </div>
         </div>
       </CardContent>
     </Card>

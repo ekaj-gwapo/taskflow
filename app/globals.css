@@ -268,6 +268,32 @@
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--border)) transparent;
   }
+  
+  /* Fix native date picker icon visibility in dark mode */
+  input[type="date"] {
+    position: relative;
+    display: block;
+    -webkit-appearance: none;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    filter: var(--date-icon-filter);
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+  }
+  
+  :root {
+    --date-icon-filter: none;
+  }
+  
+  .dark {
+    --date-icon-filter: invert(1);
+  }
 
   /* Custom Scrollbar for Webkit browsers */
   ::-webkit-scrollbar {

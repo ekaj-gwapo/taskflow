@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Select,
   SelectContent,
@@ -18,14 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity } from "lucide-react"
 import { WeeklyReportPanel } from "@/components/weekly-report-panel"
+import { OfficeAccomplishmentReport } from "@/components/office-accomplishment-report"
 import { TopCompletersChart } from "@/components/top-completers-chart"
 import { WorkloadDistribution } from "@/components/workload-distribution"
 import { RecentlyCompletedTasks } from "@/components/recently-completed-tasks"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
 import { ActivityLogView } from "@/components/activity-log-view"
 import { SmartBriefing } from "@/components/smart-briefing"
+import { EmployeeWeeklyPerformance } from "@/components/employee-weekly-performance"
 import { formatDate, formatDateTime, calculateTaskProgress, cn } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 import {
@@ -69,10 +72,17 @@ function TaskRow({
   const displayAssignees = task.assignees && task.assignees.length > 0 ? task.assignees : []
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      whileHover={{ x: 4 }}
       onClick={onSelect}
-      className={`w-full flex items-center px-4 py-3 text-left cursor-pointer transition-colors hover:bg-accent/50 border-b border-border ${isSelected ? "bg-accent/70" : ""
-        }`}
+      className={cn(
+        "w-full flex items-center px-4 py-3 text-left cursor-pointer transition-all border-b border-border border-l-4 border-l-transparent hover:border-l-primary hover:bg-muted/80",
+        isSelected ? "bg-accent/70 border-l-primary" : ""
+      )}
     >
       {/* TASK */}
       <div className="flex-1 min-w-0">
@@ -208,26 +218,54 @@ function TaskRow({
         )}
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </div>
-    </div>
+    </motion.div>
   )
 }
 
-function TeamProjectCard({ task, onSelect, isSelected }: { task: Task; onSelect: () => void; isSelected: boolean }) {
+function TeamProjectCard({ 
+  task, 
+  onSelect, 
+  isSelected, 
+  isNew 
+}: { 
+  task: Task; 
+  onSelect: () => void; 
+  isSelected: boolean; 
+  isNew?: boolean 
+}) {
   const isOverdue = task.status !== "completed" && new Date(task.dueDate) < new Date()
   const displayAssignees = task.assignees && task.assignees.length > 0 ? task.assignees : []
   
   return (
-    <Card 
-      className={`cursor-pointer transition-all hover:shadow-md border-border flex flex-col min-h-[160px] ${isSelected ? "ring-2 ring-[hsl(var(--chart-2))] border-transparent" : "hover:border-[hsl(var(--chart-2))]/50"}`}
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
+      className={cn(
+        "cursor-pointer flex flex-col min-h-[160px] rounded-[2rem] border-2",
+        isOverdue ? "border-destructive/50 shadow-[0_0_15px_-5px_rgba(239,68,68,0.2)]" :
+        task.status === "completed" ? "border-emerald-500/50 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]" :
+        task.status === "in-progress" ? "border-orange-500/50 shadow-[0_0_15px_-5px_rgba(249,115,22,0.2)]" :
+        "border-muted-foreground/20",
+        isSelected ? "ring-4 ring-primary/20 border-primary" : ""
+      )}
       onClick={onSelect}
     >
+      <Card className="h-full border-0 bg-transparent shadow-none">
       <CardHeader className="pb-3 pt-4 px-4 shrink-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 pr-2">
             <h3 className="text-base font-semibold text-foreground line-clamp-1">{task.title}</h3>
-            {isOverdue && (
-              <span className="inline-block mt-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded font-medium">Overdue</span>
-            )}
+            <div className="flex items-center gap-1.5 mt-1">
+              {isNew && (
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">NEW</span>
+              )}
+              {isOverdue && (
+                <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded font-medium">Overdue</span>
+              )}
+            </div>
           </div>
           <PriorityBadge priority={task.priority} />
         </div>
@@ -271,6 +309,7 @@ function TeamProjectCard({ task, onSelect, isSelected }: { task: Task; onSelect:
         </div>
       </CardContent>
     </Card>
+  </motion.div>
   )
 }
 
@@ -278,6 +317,13 @@ export function AdminDashboard() {
   const { tasks, archivedTasks, fetchArchivedTasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen, selectedTaskId, selectTask } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showReport, setShowReport] = useState(false)
+  const [showCharts, setShowCharts] = useState(true)
+  const [visibleCharts, setVisibleCharts] = useState({
+    workload: true,
+    performance: true,
+    recent: true,
+    leaderboard: true
+  })
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterPriority, setFilterPriority] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -289,6 +335,14 @@ export function AdminDashboard() {
   
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
   const [myTaskTab, setMyTaskTab] = useState<"assigned" | "delegated">("assigned")
+
+  // Auto-hide the main analytics section if all individual charts are hidden
+  useEffect(() => {
+    const anyVisible = Object.values(visibleCharts).some(v => v)
+    if (!anyVisible && showCharts) {
+      setShowCharts(false)
+    }
+  }, [visibleCharts, showCharts])
 
   // Sync selectedTask with selectedTaskId
   useEffect(() => {
@@ -433,7 +487,7 @@ export function AdminDashboard() {
         />
       </div>
 
-      <div className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
+      <motion.div layout className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
         <SmartBriefing />
 
         {selectedEmployeeId === "my-tasks" && myTaskTab === "assigned" && (
@@ -448,15 +502,73 @@ export function AdminDashboard() {
         )}
 
         {!selectedEmployeeId && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div className="flex flex-col gap-6 w-full">
-              <WorkloadDistribution />
-              <RecentlyCompletedTasks onSelectTask={(task) => selectTask(task.id)} />
-            </div>
-            <div className="w-full">
-              <TopCompletersChart />
-            </div>
-          </div>
+          <AnimatePresence mode="popLayout">
+            {showCharts && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                className="space-y-6 overflow-hidden"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  <AnimatePresence mode="popLayout">
+                    {visibleCharts.workload && (
+                      <motion.div
+                        key="workload"
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <WorkloadDistribution onHide={() => setVisibleCharts(prev => ({ ...prev, workload: false }))} />
+                      </motion.div>
+                    )}
+                    {visibleCharts.performance && (
+                      <motion.div
+                        key="performance"
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <EmployeeWeeklyPerformance onHide={() => setVisibleCharts(prev => ({ ...prev, performance: false }))} />
+                      </motion.div>
+                    )}
+                    {visibleCharts.recent && (
+                      <motion.div
+                        key="recent"
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <RecentlyCompletedTasks 
+                          onSelectTask={(task) => selectTask(task.id)} 
+                          onHide={() => setVisibleCharts(prev => ({ ...prev, recent: false }))} 
+                        />
+                      </motion.div>
+                    )}
+                    {visibleCharts.leaderboard && (
+                      <motion.div
+                        key="leaderboard"
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <TopCompletersChart onHide={() => setVisibleCharts(prev => ({ ...prev, leaderboard: false }))} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
 
         {/* SEARCH & FILTER */}
@@ -511,12 +623,36 @@ export function AdminDashboard() {
 
           <div className="flex gap-2 w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
             <button
+              onClick={() => {
+                if (!showCharts) {
+                  // Reset all to visible when showing the whole section
+                  setVisibleCharts({
+                    workload: true,
+                    performance: true,
+                    recent: true,
+                    leaderboard: true
+                  });
+                }
+                setShowCharts(!showCharts);
+              }}
+              className={cn(
+                "flex items-center justify-center p-2 rounded-md transition-colors shrink-0 border border-border bg-background",
+                showCharts ? "text-primary border-primary/30 bg-primary/5" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              )}
+              title={showCharts ? "Hide Analytics" : "Show Analytics"}
+            >
+              <Activity className="h-4 w-4" />
+            </button>
+            <button
               onClick={() => setShowReport(!showReport)}
               className="flex items-center justify-center p-2 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground shrink-0 border border-border bg-background"
               title="Weekly Report"
             >
               <FileText className="h-4 w-4" />
             </button>
+            {(currentUser?.role?.toUpperCase() === 'SUPERADMIN' || currentUser?.role?.toUpperCase() === 'HEAD_ADMIN') && (
+              <OfficeAccomplishmentReport />
+            )}
             <CreateTaskDialog />
           </div>
         </div>
@@ -540,29 +676,36 @@ export function AdminDashboard() {
           <ActivityLogView />
         ) : selectedEmployeeId === 'team-projects' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-            {filteredTasks.length > 0 ? (
-              filteredTasks.map(task => (
-                <TeamProjectCard
-                  key={task.id}
-                  task={task}
-                  onSelect={() => {
-                    selectTask(task.id);
-                    markAsSeen(task.id);
-                  }}
-                  isSelected={selectedTask?.id === task.id}
-                />
-              ))
-            ) : (
-              <div className="col-span-full flex flex-col items-center justify-center p-8 text-center min-h-[300px] border border-border rounded-lg bg-card">
-                <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                <p className="text-lg font-medium text-foreground">No team projects found</p>
-                <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-                  Team projects are collaborative tasks involving 2 or more assignees.
-                </p>
-              </div>
-            )}
-          </div>
-        ) : (
+             <AnimatePresence mode="popLayout">
+               {filteredTasks.length > 0 ? (
+                 filteredTasks.map(task => (
+                   <TeamProjectCard
+                     key={task.id}
+                     task={task}
+                     onSelect={() => {
+                       selectTask(selectedTaskId === task.id ? null : task.id);
+                       markAsSeen(task.id);
+                     }}
+                     isSelected={selectedTask?.id === task.id}
+                     isNew={!seenTaskIds.has(task.id)}
+                   />
+                 ))
+               ) : (
+                 <motion.div 
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   className="col-span-full flex flex-col items-center justify-center p-8 text-center min-h-[300px] border border-border rounded-lg bg-card"
+                 >
+                   <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                   <p className="text-lg font-medium text-foreground">No team projects found</p>
+                   <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                     Team projects are collaborative tasks involving 2 or more assignees.
+                   </p>
+                 </motion.div>
+               )}
+             </AnimatePresence>
+           </div>
+         ) : (
           <div className="rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl min-h-[500px] overflow-hidden">
             {/* Header / Search Area */}
             <div className="flex flex-col w-full h-full">
@@ -585,67 +728,91 @@ export function AdminDashboard() {
 
               {/* ROWS */}
               <div className="flex flex-col flex-1">
-                {filteredTasks.length > 0 ? (
-                  filteredTasks.map((task) => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      onSelect={() => {
-                        selectTask(task.id);
-                        markAsSeen(task.id);
-                        markCompletedAsSeen(task.id);
-                      }}
-                      isSelected={selectedTask?.id === task.id}
-                      isDelegatedView={selectedEmployeeId === 'my-tasks' && myTaskTab === 'delegated'}
-                      currentUserRole={currentUser?.role?.toUpperCase()}
-                      currentUserId={currentUser?.id}
-                      taskCreatorId={task.createdBy?.id}
-                      isNew={selectedEmployeeId === 'my-tasks' && myTaskTab === 'assigned' && !seenTaskIds.has(task.id)}
-                      onDelete={() => {
-                        deleteTask(task.id);
-                        if (selectedTask?.id === task.id) setSelectedTask(null);
-                        toast.success("Task deleted successfully");
-                      }}
-                    />
-                  ))
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[300px]">
-                    <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                    <p className="text-lg font-medium text-foreground">No tasks found</p>
-                    <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-                      Try adjusting your filters or search query to find what you're looking for.
-                    </p>
-                  </div>
-                )}
-              </div>
+               <AnimatePresence mode="popLayout">
+                 {filteredTasks.length > 0 ? (
+                   filteredTasks.map((task) => (
+                     <TaskRow
+                       key={task.id}
+                       task={task}
+                       onSelect={() => {
+                         selectTask(selectedTaskId === task.id ? null : task.id);
+                         markAsSeen(task.id);
+                         markCompletedAsSeen(task.id);
+                       }}
+                       isSelected={selectedTask?.id === task.id}
+                       isDelegatedView={selectedEmployeeId === 'my-tasks' && myTaskTab === 'delegated'}
+                       currentUserRole={currentUser?.role?.toUpperCase()}
+                       currentUserId={currentUser?.id}
+                       taskCreatorId={task.createdBy?.id}
+                       isNew={selectedEmployeeId === 'my-tasks' && myTaskTab === 'assigned' && !seenTaskIds.has(task.id)}
+                       onDelete={() => {
+                         deleteTask(task.id);
+                         if (selectedTask?.id === task.id) setSelectedTask(null);
+                         toast.success("Task deleted successfully");
+                       }}
+                     />
+                   ))
+                 ) : (
+                   <motion.div 
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[300px]"
+                   >
+                     <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                     <p className="text-lg font-medium text-foreground">No tasks found</p>
+                     <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                       Try adjusting your filters or search query to find what you're looking for.
+                     </p>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
+             </div>
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
-      {liveSelectedTask && (
-        <div className="w-[380px] shrink-0 absolute lg:relative right-0 h-full z-10 filter drop-shadow-xl lg:drop-shadow-none">
-          <TaskDetailPanel
-            task={liveSelectedTask}
-            onClose={() => {
-              setSelectedTask(null);
-              selectTask(null);
-            }}
-            showDeleteButton={
-              currentUser?.role?.toUpperCase() === "SUPERADMIN" || 
-              currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || 
-              liveSelectedTask.createdBy?.id === currentUser?.id
-            }
-            showStatusControl={true}
-          />
-        </div>
-      )}
+      <AnimatePresence>
+        {liveSelectedTask && (
+          <motion.div
+            layout
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.2 }}
+            className="w-[380px] shrink-0 absolute lg:relative right-0 h-full z-10 filter drop-shadow-xl lg:drop-shadow-none"
+          >
+            <TaskDetailPanel
+              task={liveSelectedTask}
+              onClose={() => {
+                setSelectedTask(null);
+                selectTask(null);
+              }}
+              showDeleteButton={
+                currentUser?.role?.toUpperCase() === "SUPERADMIN" || 
+                currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || 
+                liveSelectedTask.createdBy?.id === currentUser?.id
+              }
+              showStatusControl={true}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {showReport && (
-        <div className="w-[380px] shrink-0 border-l border-border overflow-y-auto bg-background shadow-xl lg:shadow-none absolute lg:relative right-0 h-full z-10">
-          <WeeklyReportPanel onClose={() => setShowReport(false)} />
-        </div>
-      )}
+      <AnimatePresence>
+        {showReport && (
+          <motion.div
+            layout
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.2 }}
+            className="w-[380px] shrink-0 border-l border-border overflow-y-auto bg-background shadow-xl lg:shadow-none absolute lg:relative right-0 h-full z-10"
+          >
+            <WeeklyReportPanel onClose={() => setShowReport(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -194,12 +194,55 @@ export async function PUT(
 
     // Handle task_assignments if updating assignees
     if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
-      // Use case-insensitive delete to ensure full cleanup
-      await db.execute("DELETE FROM task_assignments WHERE LOWER(taskId) = LOWER(?)", [realTaskId]);
+      // Get current assignees BEFORE deleting them to compare for logging
+      const currentAssigneeIds = (await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [realTaskId]) as any[]).map(r => r.userId);
+      const newAssigneeIds = [...assigneeIds];
       
-      for (const uId of assigneeIds) {
-        // Use INSERT OR REPLACE to be resilient against race conditions
-        await db.execute("INSERT OR REPLACE INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?)", [realTaskId, uId, 0]);
+      const addedIds = newAssigneeIds.filter(id => !currentAssigneeIds.includes(id));
+      const removedIds = currentAssigneeIds.filter(id => !newAssigneeIds.includes(id));
+
+      if (addedIds.length > 0 || removedIds.length > 0) {
+        // Fetch names for logging
+        let addedNames: string[] = [];
+        let removedNames: string[] = [];
+
+        if (addedIds.length > 0) {
+          const addedUsers = await db.getAll(`SELECT name FROM users WHERE id IN (${addedIds.map(() => '?').join(',')})`, addedIds) as any[];
+          addedNames = addedUsers.map(u => u.name);
+        }
+
+        if (removedIds.length > 0) {
+          const removedUsers = await db.getAll(`SELECT name FROM users WHERE id IN (${removedIds.map(() => '?').join(',')})`, removedIds) as any[];
+          removedNames = removedUsers.map(u => u.name);
+        }
+
+        // Update assignments
+        await db.execute("DELETE FROM task_assignments WHERE LOWER(taskId) = LOWER(?)", [realTaskId]);
+        for (const uId of assigneeIds) {
+          await db.execute("INSERT OR REPLACE INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?)", [realTaskId, uId, 0]);
+        }
+
+        let action: ActivityAction = "ASSIGNEE_CHANGED";
+        if (role === "HEAD_ADMIN" || role === "SUPERADMIN") {
+          action = "TASK_DELEGATED";
+        } else if (newAssigneeIds.length === 1 && currentAssigneeIds.length === 0) {
+          action = "TASK_REASSIGNED";
+        } else {
+          action = "TEAM_MEMBERS_EDITED";
+        }
+
+        await logActivity({
+          action,
+          entityId: realTaskId,
+          entityType: "TASK",
+          userId: auth.user!.id,
+          userName: auth.user!.name,
+          details: { 
+            added: addedNames,
+            removed: removedNames,
+            title: existingTask.title
+          }
+        });
       }
     }
 
@@ -261,36 +304,7 @@ export async function PUT(
       });
     }
 
-    if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
-      const currentAssigneeIds = (await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [realTaskId]) as any[]).map(r => r.userId).sort();
-      const newAssigneeIds = [...assigneeIds].sort();
-      
-      const arraysEqual = currentAssigneeIds.length === newAssigneeIds.length && currentAssigneeIds.every((value, index) => value === newAssigneeIds[index]);
-      
-      if (!arraysEqual) {
-        let action: ActivityAction = "ASSIGNEE_CHANGED";
-        
-        if (role === "HEAD_ADMIN" || role === "SUPERADMIN") {
-          action = "TASK_DELEGATED";
-        } else if (newAssigneeIds.length === 1) {
-          action = "TASK_REASSIGNED";
-        } else if (newAssigneeIds.length > 1) {
-          action = "TEAM_MEMBERS_EDITED";
-        }
 
-        await logActivity({
-          action,
-          entityId: realTaskId,
-          entityType: "TASK",
-          userId: auth.user!.id,
-          userName: auth.user!.name,
-          details: { 
-            assignees: newAssigneeIds,
-            previousAssignees: currentAssigneeIds
-          }
-        });
-      }
-    }
 
     // Fetch updated task data
     const task: any = await db.getOne(`

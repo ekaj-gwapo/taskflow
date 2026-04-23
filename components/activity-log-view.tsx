@@ -90,13 +90,27 @@ export function ActivityLogView() {
       case "STATUS_UPDATED":
         return <span>Updated status of <strong>{taskName}</strong> from <span className="uppercase text-[10px] tracking-wide bg-secondary px-1.5 py-0.5 rounded-md">{log.details?.from?.replace(/_/g, ' ')}</span> to <span className="uppercase text-[10px] tracking-wide bg-secondary px-1.5 py-0.5 rounded-md text-primary font-bold">{log.details?.to?.replace(/_/g, ' ')}</span></span>;
       case "ASSIGNEE_CHANGED":
-        return <span>Updated assignees on <strong>{taskName}</strong></span>;
       case "TASK_REASSIGNED":
-        return <span>Reassigned the task <strong>{taskName}</strong></span>;
       case "TEAM_MEMBERS_EDITED":
-        return <span>Updated the team members for <strong>{taskName}</strong></span>;
       case "TASK_DELEGATED":
-        return <span>Delegated the task <strong>{taskName}</strong> to a team member</span>;
+        const added = log.details?.added || [];
+        const removed = log.details?.removed || [];
+        const isDelegated = log.action === "TASK_DELEGATED";
+        
+        return (
+          <span>
+            {isDelegated ? "Delegated " : "Updated members for "} 
+            <strong>{taskName}</strong>:
+            {added.length > 0 && (
+              <span> added <strong>{added.join(", ")}</strong></span>
+            )}
+            {added.length > 0 && removed.length > 0 && <span> and </span>}
+            {removed.length > 0 && (
+              <span> removed <strong>{removed.join(", ")}</strong></span>
+            )}
+            {added.length === 0 && removed.length === 0 && <span> re-synced team members</span>}
+          </span>
+        );
       case "NOTE_ADDED":
         return <span>Added a progress note to <strong>{taskName}</strong></span>;
       case "COMMENT_ADDED":

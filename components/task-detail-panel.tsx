@@ -84,6 +84,13 @@ export function TaskDetailPanel({
   const [extensionReviewRemark, setExtensionReviewRemark] = useState("")
   const [isReviewingExtension, setIsReviewingExtension] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
+  const [localAssigneeIds, setLocalAssigneeIds] = useState<string[]>(task.assignees?.map(a => a.id) || [])
+  const [isAssigneePopoverOpen, setIsAssigneePopoverOpen] = useState(false)
+
+  // Update local assignees when task data changes
+  useEffect(() => {
+    setLocalAssigneeIds(task.assignees?.map(a => a.id) || [])
+  }, [task.assignees])
 
   // Initialize last seen counts from localStorage
   useEffect(() => {
@@ -269,22 +276,20 @@ export function TaskDetailPanel({
     addStepNote(task.id, stepId, content, attachmentUrl, attachmentName, attachmentType)
   }
 
-  const handleToggleAssignee = async (employeeId: string) => {
-    if (isUpdatingAssignees) return
+  const handleToggleAssignee = (employeeId: string) => {
+    setLocalAssigneeIds(prev => 
+      prev.includes(employeeId) 
+        ? prev.filter(id => id !== employeeId) 
+        : [...prev, employeeId]
+    )
+  }
 
+  const handleSaveAssignees = async () => {
+    if (isUpdatingAssignees) return
     setIsUpdatingAssignees(true)
     try {
-      const currentAssigneeIds = task.assignees?.map(a => a.id) || []
-      const isCurrentlyAssigned = currentAssigneeIds.includes(employeeId)
-
-      let newAssigneeIds: string[]
-      if (isCurrentlyAssigned) {
-        newAssigneeIds = currentAssigneeIds.filter(id => id !== employeeId)
-      } else {
-        newAssigneeIds = [...currentAssigneeIds, employeeId]
-      }
-
-      await updateTaskAssignees(task.id, newAssigneeIds)
+      await updateTaskAssignees(task.id, localAssigneeIds)
+      setIsAssigneePopoverOpen(false)
     } catch (error) {
       console.error("Assignee update failed:", error)
       toast.error("Failed to update team members")
@@ -390,7 +395,7 @@ export function TaskDetailPanel({
                   Assignees
                 </div>
                 {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && task.status === "todo" && (
-                  <Popover>
+                  <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -412,38 +417,59 @@ export function TaskDetailPanel({
                         </span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[240px] p-0 border-border/50 shadow-xl" align="end">
-                      <Command className="bg-popover">
-                        <CommandInput placeholder="Search employees..." className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>No employee found.</CommandEmpty>
-                          <CommandGroup className="p-1.5">
-                            {allEmployees.map((emp) => {
-                              const isAssigned = task.assignees?.some(a => a.id === emp.id)
-                              return (
-                                <CommandItem
-                                  key={emp.id}
-                                  onSelect={() => !isUpdatingAssignees && handleToggleAssignee(emp.id)}
-                                  className={`flex items-center gap-3 px-2 py-2 rounded-lg cursor-pointer transition-colors ${isUpdatingAssignees ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/5 data-[selected=true]:bg-primary/5"}`}
-                                >
-                                  <Checkbox
-                                    checked={isAssigned}
-                                    onCheckedChange={() => !isUpdatingAssignees && handleToggleAssignee(emp.id)}
-                                    disabled={isUpdatingAssignees}
-                                    className="h-4 w-4 rounded-md border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                  />
-                                  <div className="flex flex-col">
-                                    <span className="text-sm font-semibold text-foreground leading-none">{emp.name}</span>
-                                    <span className="text-[10px] text-muted-foreground mt-1 capitalize leading-none">{emp.role}</span>
-                                  </div>
-                                  {isAssigned && !isUpdatingAssignees && <Check className="h-3.5 w-3.5 text-primary ml-auto" />}
-                                  {isUpdatingAssignees && <Loader2 className="h-3.5 w-3.5 animate-spin ml-auto opacity-40" />}
-                                </CommandItem>
-                              )
-                            })}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
+                    <PopoverContent className="w-[280px] p-0 border-border/50 shadow-xl overflow-hidden" align="end">
+                      <div className="bg-popover flex flex-col max-h-[400px]">
+                        <div className="p-2 border-b border-border/50 bg-muted/30">
+                          <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2 py-1">Manage Team</h4>
+                        </div>
+                        <Command className="bg-transparent">
+                          <CommandInput placeholder="Search employees..." className="h-9 border-none focus:ring-0" />
+                          <CommandList className="max-h-[250px]">
+                            <CommandEmpty>No employee found.</CommandEmpty>
+                            <CommandGroup className="p-1.5">
+                              {allEmployees.map((emp) => {
+                                const isSelected = localAssigneeIds.includes(emp.id)
+                                return (
+                                  <CommandItem
+                                    key={emp.id}
+                                    onSelect={() => handleToggleAssignee(emp.id)}
+                                    className={`flex items-center gap-3 px-2 py-2 rounded-lg cursor-pointer transition-colors hover:bg-primary/5 data-[selected=true]:bg-primary/5`}
+                                  >
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={() => handleToggleAssignee(emp.id)}
+                                      className="h-4 w-4 rounded-md border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                    />
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-semibold text-foreground leading-none">{emp.name}</span>
+                                      <span className="text-[10px] text-muted-foreground mt-1 capitalize leading-none">{emp.role}</span>
+                                    </div>
+                                    {isSelected && <Check className="h-3.5 w-3.5 text-primary ml-auto" />}
+                                  </CommandItem>
+                                )
+                              })}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                        <div className="p-3 border-t border-border/50 bg-muted/20 flex flex-col gap-2">
+                           <div className="flex items-center justify-between px-1">
+                              <span className="text-[10px] font-bold text-muted-foreground">
+                                {localAssigneeIds.length} members selected
+                              </span>
+                              {localAssigneeIds.length !== (task.assignees?.length || 0) && (
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                              )}
+                           </div>
+                           <Button 
+                              size="sm" 
+                              className="w-full h-8 text-[11px] font-bold uppercase tracking-wider"
+                              disabled={isUpdatingAssignees || localAssigneeIds.length === 0}
+                              onClick={handleSaveAssignees}
+                           >
+                              {isUpdatingAssignees ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : "Save Changes"}
+                           </Button>
+                        </div>
+                      </div>
                     </PopoverContent>
                   </Popover>
                 )}

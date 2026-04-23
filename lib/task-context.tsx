@@ -30,7 +30,7 @@ interface TaskContextType {
   tasks: Task[]
   archivedTasks: Task[]
   fetchArchivedTasks: () => Promise<void>
-  createTask: (task: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees"> & { assigneeIds: string[] }, actionSteps?: string[]) => void
+  createTask: (task: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees" | "archived"> & { assigneeIds: string[] }, actionSteps?: string[]) => Promise<boolean>
   updateTaskStatus: (taskId: string, status: TaskStatus) => void
   updateTaskAssignees: (taskId: string, assigneeIds: string[]) => void
   deleteTask: (taskId: string) => Promise<boolean>
@@ -241,7 +241,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [currentUser, seenCompletedTaskIds]);
 
   const createTask = useCallback(
-    async (taskData: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees"> & { assigneeIds: string[] }, actionSteps?: string[]) => {
+    async (taskData: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees" | "archived"> & { assigneeIds: string[] }, actionSteps?: string[]) => {
       try {
         const token = localStorage.getItem("token")
         const response = await fetch("/api/tasks", {
@@ -262,8 +262,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
         const data = await response.json()
         setTasks((prev) => [data.task, ...prev])
+        return true
       } catch (error) {
         console.error("Create task error:", error)
+        toast.error("Failed to create task. Please try again.")
+        return false
       }
     },
     []

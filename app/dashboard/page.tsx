@@ -35,7 +35,7 @@ function AppContent() {
         {(currentRole === "superadmin") ? (
           <div className="flex-1 flex min-h-0">
             <div className="hidden lg:block w-80 shrink-0 border-r border-border">
-              <AdminSidebar selectedEmployeeId={null} onSelectEmployee={() => {}} />
+              <AdminSidebar selectedEmployeeId={null} onSelectEmployee={() => {}} onSelectTask={() => {}} />
             </div>
             <div className="flex-1 overflow-y-auto bg-secondary/10">
               <UserManagement />

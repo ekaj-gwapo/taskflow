@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -221,9 +222,16 @@ export function AdminSidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col min-h-full">
-          {activeTab === "employees" && (
-            <div className="p-3 space-y-1">
+        <AnimatePresence mode="wait">
+          {activeTab === "employees" ? (
+            <motion.div
+              key="employees"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="p-3 space-y-1"
+            >
               {/* ALWAYS VISIBLE SYSTEM BUTTONS */}
               {currentUser?.role?.toUpperCase() === "SUPERADMIN" && (
                 <Button
@@ -267,7 +275,7 @@ export function AdminSidebar({
                 </button>
               )}
 
-              {currentUser?.role?.toUpperCase() === "ADMIN" && (
+              {(currentUser?.role?.toUpperCase() === "ADMIN") && (
                 <button
                   onClick={() => onSelectEmployee('my-tasks')}
                   className={cn(
@@ -332,7 +340,6 @@ export function AdminSidebar({
                 </button>
               )}
 
-              {/* Pending Extension Requests Badge - Interactive Popover */}
               {pendingExtensionsCount > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
@@ -385,7 +392,6 @@ export function AdminSidebar({
 
               <div className="h-px bg-border/50 my-2" />
 
-              {/* LISTS - ALWAYS VISIBLE */}
               <button
                 onClick={() => onSelectEmployee('team-projects')}
                 className={cn(
@@ -454,96 +460,111 @@ export function AdminSidebar({
                 <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-white">
                   Individual Employees
                 </span>
-                {isEmployeesExpanded ? (
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0" />
-                ) : (
+                <motion.div
+                  animate={{ rotate: isEmployeesExpanded ? 90 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-                )}
+                </motion.div>
               </button>
 
-              {isEmployeesExpanded && (
-                <div className="animate-in slide-in-from-top-1 duration-200 space-y-1">
-                  <div className="px-1 py-2">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-                      <Input
-                        placeholder="Search employees..."
-                        className="pl-8 h-8 text-xs bg-secondary/30 border-transparent focus-visible:bg-background"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
+              <AnimatePresence>
+                {isEmployeesExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden space-y-1"
+                  >
+                    <div className="px-1 py-2">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                        <Input
+                          placeholder="Search employees..."
+                          className="pl-8 h-8 text-xs bg-secondary/30 border-transparent focus-visible:bg-background"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {filteredEmployees.map((employee) => {
-                    const stats = getEmployeeTaskStats(employee.id)
-                    const empInitials = employee.name.split(" ").map(n => n[0]).join("").toUpperCase()
-                    const isActive = selectedEmployeeId === employee.id
+                    {filteredEmployees.map((employee) => {
+                      const stats = getEmployeeTaskStats(employee.id)
+                      const empInitials = employee.name.split(" ").map(n => n[0]).join("").toUpperCase()
+                      const isActive = selectedEmployeeId === employee.id
 
-                    return (
-                      <button
-                        key={employee.id}
-                        onClick={() => onSelectEmployee(employee.id)}
-                        className={cn(
-                          "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all border group",
-                          isActive
-                            ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.01]"
-                            : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 border-transparent"
-                        )}
-                      >
-                        <Avatar className={cn(
-                          "h-7 w-7 border transition-all",
-                          isActive ? "border-white/30 scale-105" : "border-border/50"
-                        )}>
-                          {employee.avatar ? (
-                            <AvatarImage src={employee.avatar} />
-                          ) : (
-                            <AvatarFallback className={cn(
-                              "text-[10px] font-bold",
-                              isActive ? "bg-white/20 text-primary-foreground" : "bg-primary/10 text-primary"
-                            )}>
-                              {empInitials}
-                            </AvatarFallback>
+                      return (
+                        <motion.button
+                          layout
+                          key={employee.id}
+                          onClick={() => onSelectEmployee(employee.id)}
+                          className={cn(
+                            "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all border group",
+                            isActive
+                              ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.01]"
+                              : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 border-transparent"
                           )}
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            "text-xs font-semibold truncate",
-                            isActive ? "text-white" : "text-foreground"
+                        >
+                          <Avatar className={cn(
+                            "h-7 w-7 border transition-all",
+                            isActive ? "border-white/30 scale-105" : "border-border/50"
                           )}>
-                            {employee.name}
-                          </p>
-                          {!isActive && (
-                            <div className="flex items-center gap-2 mt-0.5">
-                              {stats.inProgress > 0 && (
-                                <span className="flex items-center gap-1 text-[10px] text-primary font-medium">
-                                  <span className="h-1 w-1 rounded-full bg-primary" />
-                                  {stats.inProgress}
-                                </span>
-                              )}
-                              {stats.overdue > 0 && (
-                                <span className="flex items-center gap-1 text-[10px] text-destructive font-medium">
-                                  <span className="h-1 w-1 rounded-full bg-destructive" />
-                                  {stats.overdue}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <ChevronRight className={cn(
-                          "h-3 w-3 shrink-0 transition-transform",
-                          isActive ? "text-white/70 translate-x-0.5" : "text-muted-foreground/30"
-                        )} />
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === "profile" && (
-            <div className="p-4 space-y-6 animate-in fade-in duration-300">
+                            {employee.avatar ? (
+                              <AvatarImage src={employee.avatar} />
+                            ) : (
+                              <AvatarFallback className={cn(
+                                "text-[10px] font-bold",
+                                isActive ? "bg-white/20 text-primary-foreground" : "bg-primary/10 text-primary"
+                              )}>
+                                {empInitials}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className={cn(
+                              "text-xs font-semibold truncate",
+                              isActive ? "text-white" : "text-foreground"
+                            )}>
+                              {employee.name}
+                            </p>
+                            {!isActive && (
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {stats.inProgress > 0 && (
+                                  <span className="flex items-center gap-1 text-[10px] text-primary font-medium">
+                                    <span className="h-1 w-1 rounded-full bg-primary" />
+                                    {stats.inProgress}
+                                  </span>
+                                )}
+                                {stats.overdue > 0 && (
+                                  <span className="flex items-center gap-1 text-[10px] text-destructive font-medium">
+                                    <span className="h-1 w-1 rounded-full bg-destructive" />
+                                    {stats.overdue}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <ChevronRight className={cn(
+                            "h-3 w-3 shrink-0 transition-transform",
+                            isActive ? "text-white/70 translate-x-0.5" : "text-muted-foreground/30"
+                          )} />
+                        </motion.button>
+                      )
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+              className="p-4 space-y-6"
+            >
               <div className="flex flex-col items-center text-center p-6 rounded-xl bg-secondary/30 border border-border/50 shadow-inner">
                 <div className="relative group">
                   <Avatar className="h-20 w-20 border-4 border-background shadow-xl mb-4 transition-transform hover:scale-105 cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
@@ -704,9 +725,9 @@ export function AdminSidebar({
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
 
       <div className="mt-auto border-t border-border/40 bg-muted/20">
