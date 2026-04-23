@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
+import confetti from "canvas-confetti"
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { ActionStepsSection } from "@/components/action-steps-section"
@@ -61,7 +61,9 @@ export function TaskDetailPanel({
   showNoteInput = false,
   showDeleteButton = false,
 }: TaskDetailPanelProps) {
-  const { currentRole, currentUser, updateTaskStatus, addProgressNote, addTaskComment, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees, requestExtension, reviewExtension, toggleArchiveTask } = useTaskContext()
+  const { currentRole, currentUser, updateTaskStatus, addProgressNote, addTaskComment, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees, requestExtension, reviewExtension, toggleArchiveTask, targetSection, setTargetSection } = useTaskContext()
+  const discussionRef = useRef<HTMLDivElement>(null)
+  const extensionRef = useRef<HTMLDivElement>(null)
   const [noteContent, setNoteContent] = useState("")
   const [commentContent, setCommentContent] = useState("")
   const [isAddingComment, setIsAddingComment] = useState(false)
@@ -115,6 +117,27 @@ export function TaskDetailPanel({
   const hasNewComments = !isDiscussionExpanded && othersCommentsCount > lastSeenComments
   const hasNewNotes = !isProgressNotesExpanded && othersNotesCount > lastSeenNotes
 
+  // Handle deep linking to sections
+  useEffect(() => {
+    if (!targetSection) return
+
+    if (targetSection === "discussion") {
+      setIsDiscussionExpanded(true)
+      // Small timeout to allow expansion animation to start or complete
+      setTimeout(() => {
+        discussionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 300)
+    } else if (targetSection === "extensions") {
+      // The extension section is part of the main meta area, but we can scroll to it
+      setTimeout(() => {
+        extensionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+      }, 300)
+    }
+
+    // Clear target section after handling
+    setTargetSection(null)
+  }, [targetSection, setTargetSection])
+
   const isAssignee = task.assigneeId === currentUser?.id || task.assignees?.some(a => a.id === currentUser?.id)
   const isStatusEditable = showStatusControl && (
     currentRole === "employee" ||
@@ -131,6 +154,14 @@ export function TaskDetailPanel({
         toast.error(`Cannot complete task: ${incompleteSteps.length} action required items are still incomplete.`)
         return
       }
+      
+      // 🎉 Celebration!
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#10b981", "#34d399", "#6ee7b7"]
+      });
     }
     updateTaskStatus(task.id, newStatus)
   }
@@ -307,7 +338,7 @@ export function TaskDetailPanel({
         )}
       </div>
 
-      <ScrollArea className="flex-1 relative z-10">
+      <div className="flex-1 overflow-y-auto relative z-10">
         <div className="flex flex-col pb-4">
           {/* Meta */}
           <div className="p-6 border-b border-border/50 flex flex-col gap-4 bg-background/20 relative">
@@ -443,7 +474,7 @@ export function TaskDetailPanel({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-2 pt-1">
+            <div ref={extensionRef} className="grid grid-cols-1 gap-2 pt-1">
               {task.createdAt && (
                 <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-secondary/30 transition-colors group">
                   <span className="text-xs font-semibold text-muted-foreground flex items-center gap-2.5">
@@ -542,21 +573,21 @@ export function TaskDetailPanel({
                 <div className="mt-4 space-y-3">
                   {/* Pending Request Banner */}
                   {pendingRequest && (
-                    <div className="rounded-xl border border-amber-200/70 bg-amber-50/50 p-3.5 shadow-sm animate-in fade-in duration-300">
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 shadow-sm animate-in fade-in duration-300 backdrop-blur-sm">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1 rounded-md bg-amber-100 border border-amber-200">
-                          <CalendarClock className="h-3.5 w-3.5 text-amber-600" />
+                        <div className="p-1 rounded-md bg-amber-500/20 border border-amber-500/30">
+                          <CalendarClock className="h-3.5 w-3.5 text-amber-500" />
                         </div>
-                        <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">Extension Pending</span>
+                        <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Extension Pending</span>
                       </div>
                       <div className="space-y-1.5 ml-8">
-                        <p className="text-xs text-amber-900">
-                          <span className="font-semibold">{pendingRequest.requestedByName}</span> requested to extend to{" "}
-                          <span className="font-bold">
+                        <p className="text-xs text-foreground/90">
+                          <span className="font-bold text-amber-600 dark:text-amber-400">{pendingRequest.requestedByName}</span> requested to extend to{" "}
+                          <span className="font-bold text-foreground">
                             {new Date(pendingRequest.proposedDueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                           </span>
                         </p>
-                        <p className="text-xs text-amber-800/80 italic">"{pendingRequest.reason}"</p>
+                        <p className="text-xs text-muted-foreground italic">"{pendingRequest.reason}"</p>
                       </div>
 
                       {/* Admin: Approve/Reject (Restrict to Assigner/Superadmin) */}
@@ -567,7 +598,7 @@ export function TaskDetailPanel({
                             onChange={(e) => setExtensionReviewRemark(e.target.value)}
                             placeholder="Remark (optional)..."
                             rows={2}
-                            className="w-full text-xs rounded-lg border border-amber-200 bg-white/80 p-2 placeholder:text-amber-400 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 resize-none"
+                            className="w-full text-xs rounded-lg border border-amber-500/30 bg-background/50 p-2 placeholder:text-muted-foreground/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 resize-none text-foreground"
                           />
                           <div className="flex gap-2">
                             <button
@@ -612,7 +643,7 @@ export function TaskDetailPanel({
                   {canRequest && !showExtensionForm && (
                     <button
                       onClick={() => setShowExtensionForm(true)}
-                      className="w-full flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-xl border border-dashed border-amber-300 text-amber-700 bg-amber-50/30 hover:bg-amber-50 hover:border-amber-400 transition-all"
+                      className="w-full flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-xl border border-dashed border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500 transition-all"
                     >
                       <CalendarClock className="h-3.5 w-3.5" />
                       Request Deadline Extension {totalRequests > 0 && `(${2 - totalRequests} left)`}
@@ -624,13 +655,13 @@ export function TaskDetailPanel({
                   )}
 
                   {showExtensionForm && (
-                    <div className="rounded-xl border border-amber-200/70 bg-amber-50/30 p-3.5 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-3 animate-in slide-in-from-top-2 duration-200 backdrop-blur-sm">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-2">
                           <CalendarClock className="h-3.5 w-3.5" />
                           Request Extension
                         </span>
-                        <button onClick={() => { setShowExtensionForm(false); setExtensionDate(""); setExtensionReason("") }} className="text-muted-foreground hover:text-foreground">
+                        <button onClick={() => { setShowExtensionForm(false); setExtensionDate(""); setExtensionReason("") }} className="text-muted-foreground hover:text-foreground transition-colors">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -680,9 +711,9 @@ export function TaskDetailPanel({
                     <div className="space-y-2">
                       <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Extension History</span>
                       {extensionRequests.filter(r => r.status !== "PENDING").map((r) => (
-                        <div key={r.id} className={`rounded-lg border p-3 text-xs space-y-1 ${r.status === "APPROVED"
-                            ? "border-emerald-200/70 bg-emerald-50/30"
-                            : "border-red-200/70 bg-red-50/30"
+                        <div key={r.id} className={`rounded-lg border p-3 text-xs space-y-1 backdrop-blur-sm ${r.status === "APPROVED"
+                            ? "border-emerald-500/30 bg-emerald-500/5"
+                            : "border-red-500/30 bg-red-500/5"
                           }`}>
                           <div className="flex items-center justify-between">
                             <span className="flex items-center gap-1.5 font-bold">
@@ -793,7 +824,7 @@ export function TaskDetailPanel({
           ) : null}
 
           {/* Discussion Thread */}
-          <div className="flex flex-col bg-background/30 rounded-xl mt-6 mb-6 border border-border/40 shadow-sm mx-6 overflow-hidden">
+          <div ref={discussionRef} className="flex flex-col bg-background/30 rounded-xl mt-6 mb-6 border border-border/40 shadow-sm mx-6 overflow-hidden">
             <button
               onClick={() => setIsDiscussionExpanded(!isDiscussionExpanded)}
               className="flex items-center justify-between w-full px-5 pt-4 pb-3 border-b border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors group/header"
@@ -995,7 +1026,7 @@ export function TaskDetailPanel({
             )}
           </div>
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Note Input */}
       {showNoteInput && task.status === "in-progress" && (

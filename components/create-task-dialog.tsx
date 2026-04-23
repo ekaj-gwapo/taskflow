@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Plus, X, Users, User } from "lucide-react"
+import { Plus, X, Users, User, Calendar } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -186,13 +186,16 @@ export function CreateTaskDialog() {
 
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="due-date" className="text-foreground text-sm">Due Date</Label>
-                  <Input
-                    id="due-date"
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="bg-secondary border-border text-foreground"
-                  />
+                  <div className="relative group">
+                    <Input
+                      id="due-date"
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className="bg-secondary border-border text-foreground pr-10 hover:border-primary/50 transition-colors cursor-pointer"
+                    />
+                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-hover:text-primary pointer-events-none transition-colors" />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -277,13 +280,16 @@ export function CreateTaskDialog() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="due-date" className="text-foreground text-sm">Due Date</Label>
-                  <Input
-                    id="due-date"
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="bg-secondary border-border text-foreground"
-                  />
+                  <div className="relative group">
+                    <Input
+                      id="due-date"
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className="bg-secondary border-border text-foreground pr-10 hover:border-primary/50 transition-colors cursor-pointer"
+                    />
+                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-hover:text-primary pointer-events-none transition-colors" />
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label className="text-foreground text-sm">Date Created</Label>

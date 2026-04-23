@@ -1,14 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Image from "next/image"
 import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive, Palette, Check, Sun, Moon, LogOut } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive, Palette, Check, Sun, Moon, LogOut, ExternalLink } from "lucide-react"
 import { ProfileDialog } from "@/components/profile-dialog"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
+import type { Task } from "@/lib/store"
 
 function Confetti() {
   const [particles] = useState(() =>
@@ -78,11 +83,13 @@ function FlippingLogo({ front, back, alt }: { front: string; back: string; alt: 
 interface AdminSidebarProps {
   selectedEmployeeId: string | null
   onSelectEmployee: (employeeId: string | null) => void
+  onSelectTask: (task: Task) => void
 }
 
 export function AdminSidebar({
   selectedEmployeeId,
   onSelectEmployee,
+  onSelectTask,
 }: AdminSidebarProps) {
   const { allEmployees, tasks, currentUser, login, seenTaskIds } = useTaskContext()
   const [activeTab, setActiveTab] = useState<"employees" | "profile">("employees")
@@ -161,26 +168,31 @@ export function AdminSidebar({
     t.status !== 'completed'
   )
 
-  const pendingExtensionsCount = tasks.reduce((count, t) => {
-    // Only count if current user is the assigner (creator or delegator) OR is a SuperAdmin
-    const isAssigner = currentUser?.id === t.createdById || currentUser?.id === t.delegatedById
-    const isSuperAdmin = currentUser?.role?.toUpperCase() === "SUPERADMIN"
-    
-    if (isAssigner || isSuperAdmin) {
-      return count + (t.extensionRequests?.filter(r => r.status === "PENDING").length || 0)
-    }
-    return count
-  }, 0)
+  const tasksWithPendingExtensions = useMemo(() => {
+    return tasks.filter(t => {
+      // Only show if current user is the assigner (creator or delegator) OR is a SuperAdmin
+      const isAssigner = currentUser?.id === t.createdById || currentUser?.id === t.delegatedById
+      const isSuperAdmin = currentUser?.role?.toUpperCase() === "SUPERADMIN"
+      const hasPending = t.extensionRequests?.some(r => r.status === "PENDING")
+      
+      return (isAssigner || isSuperAdmin) && hasPending
+    })
+  }, [tasks, currentUser])
+
+  const pendingExtensionsCount = tasksWithPendingExtensions.length
 
   return (
     <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg">
-      {/* Sidebar Header - Logos Row */}
-      <div className="p-4 border-b border-border bg-primary/5">
-        <div className="flex justify-between items-center px-1">
-          <FlippingLogo front="/logos/logo4.png" back="/logos/logo-back1.jpg" alt="Logo 4" />
-          <FlippingLogo front="/logos/logo3.jpg" back="/logos/logo-back2.jpg" alt="Logo 3" />
-          <FlippingLogo front="/logos/logo1.jpg" back="/logos/logo-back3.jpg" alt="Logo 1" />
-          <FlippingLogo front="/logos/logo2.png" back="/logos/logo-back4.jpg" alt="Logo 2" />
+      {/* Sidebar Header */}
+      <div className="p-6 border-b border-border bg-primary/5">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
+            <LayoutDashboard className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-foreground tracking-tight">TaskFlow</span>
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none">Admin Panel</span>
+          </div>
         </div>
       </div>
 
@@ -208,7 +220,7 @@ export function AdminSidebar({
         </button>
       </div>
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col min-h-full">
           {activeTab === "employees" && (
             <div className="p-3 space-y-1">
@@ -320,19 +332,55 @@ export function AdminSidebar({
                 </button>
               )}
 
-              {/* Pending Extension Requests Badge */}
+              {/* Pending Extension Requests Badge - Interactive Popover */}
               {pendingExtensionsCount > 0 && (
-                <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-amber-200 bg-amber-50/50 mb-1 animate-in fade-in duration-300">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-100 border border-amber-200 text-amber-600">
-                    <CalendarClock className="h-4 w-4" />
-                  </div>
-                  <span className="flex-1 text-xs font-semibold text-amber-800">
-                    Pending Extensions
-                  </span>
-                  <span className="flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-bold animate-pulse shadow-sm">
-                    {pendingExtensionsCount}
-                  </span>
-                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 border border-amber-200 bg-amber-50/50 mb-1 hover:bg-amber-100/50 transition-all cursor-pointer group/ext animate-in fade-in duration-300">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-100 border border-amber-200 text-amber-600 group-hover/ext:scale-110 transition-transform">
+                        <CalendarClock className="h-4 w-4" />
+                      </div>
+                      <span className="flex-1 text-xs font-semibold text-amber-800">
+                        Pending Extensions
+                      </span>
+                      <span className="flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-bold animate-pulse shadow-sm">
+                        {pendingExtensionsCount}
+                      </span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[280px] p-2 bg-card border-amber-200 shadow-xl" side="right" align="start">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest p-2 border-b border-amber-100 mb-2 flex items-center gap-2">
+                        <CalendarClock className="h-3 w-3" /> Select Task to Review
+                      </p>
+                      <div className="overflow-y-auto max-h-[300px] pr-1">
+                        {tasksWithPendingExtensions.map((task) => (
+                          <button
+                            key={task.id}
+                            onClick={() => onSelectTask(task)}
+                            className="w-full flex flex-col gap-1 p-2 rounded-md hover:bg-amber-50 text-left transition-colors group/item"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-xs font-bold text-foreground line-clamp-1 flex-1 group-hover/item:text-amber-700">
+                                {task.title}
+                              </span>
+                              <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-muted-foreground font-medium truncate">
+                                By {task.assigneeName || task.assignees?.[0]?.name || "Team"}
+                              </span>
+                              <span className="h-1 w-1 rounded-full bg-amber-300" />
+                              <span className="text-[9px] text-amber-600 font-bold">
+                                {task.extensionRequests?.filter(r => r.status === "PENDING").length} req
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
 
               <div className="h-px bg-border/50 my-2" />
@@ -557,13 +605,31 @@ export function AdminSidebar({
 
                 <div className="space-y-3 px-1">
                   <p className="text-[10px] text-muted-foreground font-medium">Accent Color</p>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {[
                       { id: "emerald", color: "bg-[#10b981]", label: "Emerald" },
                       { id: "blue", color: "bg-[#3b82f6]", label: "Ocean" },
                       { id: "violet", color: "bg-[#8b5cf6]", label: "Royal" },
                       { id: "amber", color: "bg-[#f59e0b]", label: "Sunset" },
                       { id: "rose", color: "bg-[#f43f5e]", label: "Velvet" },
+                      { id: "slate", color: "bg-[#64748b]", label: "Slate" },
+                      { id: "indigo", color: "bg-[#6366f1]", label: "Indigo" },
+                      { id: "teal", color: "bg-[#0d9488]", label: "Teal" },
+                      { id: "orange", color: "bg-[#f97316]", label: "Orange" },
+                      { id: "red", color: "bg-[#ef4444]", label: "Red" },
+                      { id: "pink", color: "bg-[#ec4899]", label: "Pink" },
+                      { id: "sky", color: "bg-[#0ea5e9]", label: "Sky" },
+                      { id: "lime", color: "bg-[#84cc16]", label: "Lime" },
+                      { id: "cyan", color: "bg-[#06b6d4]", label: "Cyan" },
+                      { id: "fuchsia", color: "bg-[#d946ef]", label: "Fuchsia" },
+                      { id: "purple", color: "bg-[#a855f7]", label: "Purple" },
+                      { id: "yellow", color: "bg-[#eab308]", label: "Yellow" },
+                      { id: "green", color: "bg-[#16a34a]", label: "Green" },
+                      { id: "zinc", color: "bg-[#18181b]", label: "Zinc" },
+                      { id: "stone", color: "bg-[#78716c]", label: "Stone" },
+                      { id: "coffee", color: "bg-[#5d4037]", label: "Coffee" },
+                      { id: "navy", color: "bg-[#0a192f]", label: "Navy" },
+                      { id: "forest", color: "bg-[#064e3b]", label: "Forest" },
                     ].map((t) => (
                       <button
                         key={t.id}
@@ -580,14 +646,14 @@ export function AdminSidebar({
                           }
                         }}
                         className={cn(
-                          "group relative flex h-7 w-7 items-center justify-center rounded-full transition-all ring-offset-background",
+                          "group relative flex h-6 w-6 items-center justify-center rounded-full transition-all ring-offset-background",
                           theme === t.id ? "ring-2 ring-primary ring-offset-2" : "hover:scale-110"
                         )}
                         title={t.label}
                       >
                         <div className={cn("h-full w-full rounded-full border border-black/10 shadow-sm", t.color)} />
                         {theme === t.id && (
-                          <Check className="absolute h-3 w-3 text-white drop-shadow-md" />
+                          <Check className="absolute h-2.5 w-2.5 text-white drop-shadow-md" />
                         )}
                       </button>
                     ))}
@@ -641,23 +707,17 @@ export function AdminSidebar({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
-      <div className="p-4 border-t border-border bg-background/50">
+      <div className="mt-auto border-t border-border/40 bg-muted/20">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-4 h-12 px-4 rounded-xl text-muted-foreground hover:text-white hover:bg-destructive shadow-sm transition-all duration-300 group overflow-hidden relative border border-transparent hover:border-destructive/30"
+            <button
+              className="w-full flex items-center gap-3 px-6 py-4 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all group"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-destructive/0 to-destructive/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative flex items-center gap-4 w-full">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background border border-border group-hover:bg-destructive group-hover:border-destructive/50 transition-colors">
-                  <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                </div>
-                <span className="font-bold text-sm tracking-wide">Logout</span>
-              </div>
-            </Button>
+              <LogOut className="h-4 w-4 transition-transform group-hover:scale-110" />
+              <span className="text-xs font-bold uppercase tracking-wider">Logout</span>
+            </button>
           </AlertDialogTrigger>
           <AlertDialogContent className="bg-card border-border sm:max-w-[400px]">
             <AlertDialogHeader>

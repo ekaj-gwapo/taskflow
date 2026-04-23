@@ -6,6 +6,27 @@
   .text-balance {
     text-wrap: balance;
   }
+  
+  .glass-card {
+    @apply bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl;
+  }
+
+  .premium-gradient {
+    @apply bg-gradient-to-br from-primary via-primary/90 to-primary/80;
+  }
+
+  .premium-gradient-subtle {
+    @apply bg-gradient-to-br from-primary/10 via-primary/5 to-transparent;
+  }
+  
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
 }
 
 @layer base {
@@ -78,6 +99,132 @@
     --ring: 346.8 77.2% 49.8%;
   }
 
+  [data-theme='slate'] {
+    --primary: 215.4 16.3% 46.9%;
+    --secondary: 210 40% 96.1%;
+    --accent: 215.4 16.3% 46.9%;
+    --ring: 215.4 16.3% 46.9%;
+  }
+
+  [data-theme='indigo'] {
+    --primary: 238.7 83.5% 66.7%;
+    --secondary: 240 4.8% 95.9%;
+    --accent: 238.7 83.5% 66.7%;
+    --ring: 238.7 83.5% 66.7%;
+  }
+
+  [data-theme='teal'] {
+    --primary: 173.4 80.4% 40%;
+    --secondary: 180 100% 96%;
+    --accent: 173.4 80.4% 40%;
+    --ring: 173.4 80.4% 40%;
+  }
+
+  [data-theme='orange'] {
+    --primary: 24.6 95% 53.1%;
+    --secondary: 33 100% 96%;
+    --accent: 24.6 95% 53.1%;
+    --ring: 24.6 95% 53.1%;
+  }
+
+  [data-theme='red'] {
+    --primary: 0 84.2% 60.2%;
+    --secondary: 0 100% 96%;
+    --accent: 0 84.2% 60.2%;
+    --ring: 0 84.2% 60.2%;
+  }
+
+  [data-theme='pink'] {
+    --primary: 327.3 73.3% 61.2%;
+    --secondary: 325 100% 96%;
+    --accent: 327.3 73.3% 61.2%;
+    --ring: 327.3 73.3% 61.2%;
+  }
+
+  [data-theme='sky'] {
+    --primary: 199.1 88.7% 48.4%;
+    --secondary: 200 100% 96%;
+    --accent: 199.1 88.7% 48.4%;
+    --ring: 199.1 88.7% 48.4%;
+  }
+
+  [data-theme='lime'] {
+    --primary: 84.8 85.2% 44.5%;
+    --secondary: 80 100% 96%;
+    --accent: 84.8 85.2% 44.5%;
+    --ring: 84.8 85.2% 44.5%;
+  }
+
+  [data-theme='cyan'] {
+    --primary: 188.7 94.5% 42.7%;
+    --secondary: 187 100% 96%;
+    --accent: 188.7 94.5% 42.7%;
+    --ring: 188.7 94.5% 42.7%;
+  }
+
+  [data-theme='fuchsia'] {
+    --primary: 292.2 84.1% 60.6%;
+    --secondary: 290 100% 96%;
+    --accent: 292.2 84.1% 60.6%;
+    --ring: 292.2 84.1% 60.6%;
+  }
+
+  [data-theme='purple'] {
+    --primary: 270.7 91% 65.1%;
+    --secondary: 270 100% 96%;
+    --accent: 270.7 91% 65.1%;
+    --ring: 270.7 91% 65.1%;
+  }
+
+  [data-theme='yellow'] {
+    --primary: 47.9 95.8% 51.2%;
+    --secondary: 60 100% 96%;
+    --accent: 47.9 95.8% 51.2%;
+    --ring: 47.9 95.8% 51.2%;
+  }
+
+  [data-theme='green'] {
+    --primary: 142.1 76.2% 36.3%;
+    --secondary: 140 100% 96%;
+    --accent: 142.1 76.2% 36.3%;
+    --ring: 142.1 76.2% 36.3%;
+  }
+
+  [data-theme='zinc'] {
+    --primary: 240 5.9% 10%;
+    --secondary: 240 4.8% 95.9%;
+    --accent: 240 5.9% 10%;
+    --ring: 240 5.9% 10%;
+  }
+
+  [data-theme='stone'] {
+    --primary: 25 5.3% 44.7%;
+    --secondary: 33.3 4.8% 95.9%;
+    --accent: 25 5.3% 44.7%;
+    --ring: 25 5.3% 44.7%;
+  }
+
+  [data-theme='coffee'] {
+    --primary: 25 35% 35%;
+    --secondary: 25 35% 95%;
+    --accent: 25 35% 35%;
+    --ring: 25 35% 35%;
+  }
+
+  [data-theme='navy'] {
+    --primary: 222 47% 11%;
+    --secondary: 210 40% 96.1%;
+    --accent: 222 47% 11%;
+    --ring: 222 47% 11%;
+  }
+
+  [data-theme='forest'] {
+    --primary: 150 100% 15%;
+    --secondary: 150 100% 95%;
+    --accent: 150 100% 15%;
+    --ring: 150 100% 15%;
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -118,6 +265,35 @@
   }
   body {
     @apply bg-background text-foreground;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  /* Custom Scrollbar for Webkit browsers */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full transition-colors;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+
+  /* Hide scrollbar utility */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 

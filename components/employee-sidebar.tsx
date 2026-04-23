@@ -4,7 +4,6 @@ import { useState } from "react"
 import Image from "next/image"
 import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ClipboardList, User, Mail, Phone, MapPin, Save, X, LayoutDashboard, Search, ChevronRight, Shield, Clipboard, Users, Activity, Palette, Check, Sun, Moon, LogOut } from "lucide-react"
@@ -153,13 +152,16 @@ export function EmployeeSidebar({
 
   return (
     <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg">
-      {/* Sidebar Header - Logos Row */}
-      <div className="p-4 border-b border-border bg-primary/5">
-        <div className="flex justify-between items-center px-1">
-          <FlippingLogo front="/logos/logo4.png" back="/logos/logo-back1.jpg" alt="Logo 4" />
-          <FlippingLogo front="/logos/logo3.jpg" back="/logos/logo-back2.jpg" alt="Logo 3" />
-          <FlippingLogo front="/logos/logo1.jpg" back="/logos/logo-back3.jpg" alt="Logo 1" />
-          <FlippingLogo front="/logos/logo2.png" back="/logos/logo-back4.jpg" alt="Logo 2" />
+      {/* Sidebar Header */}
+      <div className="p-6 border-b border-border bg-primary/5">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
+            <ClipboardList className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-foreground tracking-tight">TaskFlow</span>
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none">Employee Portal</span>
+          </div>
         </div>
       </div>
 
@@ -200,7 +202,7 @@ export function EmployeeSidebar({
         </button>
       </div>
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col min-h-full">
           {activeTab === "tasks" && (
             <div className="p-3 space-y-2 animate-in slide-in-from-left-1 duration-200">
@@ -380,13 +382,31 @@ export function EmployeeSidebar({
 
                 <div className="space-y-3 px-1">
                   <p className="text-[10px] text-muted-foreground font-medium">Accent Color</p>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {[
                       { id: "emerald", color: "bg-[#10b981]", label: "Emerald" },
                       { id: "blue", color: "bg-[#3b82f6]", label: "Ocean" },
                       { id: "violet", color: "bg-[#8b5cf6]", label: "Royal" },
                       { id: "amber", color: "bg-[#f59e0b]", label: "Sunset" },
                       { id: "rose", color: "bg-[#f43f5e]", label: "Velvet" },
+                      { id: "slate", color: "bg-[#64748b]", label: "Slate" },
+                      { id: "indigo", color: "bg-[#6366f1]", label: "Indigo" },
+                      { id: "teal", color: "bg-[#0d9488]", label: "Teal" },
+                      { id: "orange", color: "bg-[#f97316]", label: "Orange" },
+                      { id: "red", color: "bg-[#ef4444]", label: "Red" },
+                      { id: "pink", color: "bg-[#ec4899]", label: "Pink" },
+                      { id: "sky", color: "bg-[#0ea5e9]", label: "Sky" },
+                      { id: "lime", color: "bg-[#84cc16]", label: "Lime" },
+                      { id: "cyan", color: "bg-[#06b6d4]", label: "Cyan" },
+                      { id: "fuchsia", color: "bg-[#d946ef]", label: "Fuchsia" },
+                      { id: "purple", color: "bg-[#a855f7]", label: "Purple" },
+                      { id: "yellow", color: "bg-[#eab308]", label: "Yellow" },
+                      { id: "green", color: "bg-[#16a34a]", label: "Green" },
+                      { id: "zinc", color: "bg-[#18181b]", label: "Zinc" },
+                      { id: "stone", color: "bg-[#78716c]", label: "Stone" },
+                      { id: "coffee", color: "bg-[#5d4037]", label: "Coffee" },
+                      { id: "navy", color: "bg-[#0a192f]", label: "Navy" },
+                      { id: "forest", color: "bg-[#064e3b]", label: "Forest" },
                     ].map((t) => (
                       <button
                         key={t.id}
@@ -402,14 +422,14 @@ export function EmployeeSidebar({
                           }
                         }}
                         className={cn(
-                          "group relative flex h-7 w-7 items-center justify-center rounded-full transition-all ring-offset-background",
+                          "group relative flex h-6 w-6 items-center justify-center rounded-full transition-all ring-offset-background",
                           theme === t.id ? "ring-2 ring-primary ring-offset-2" : "hover:scale-110"
                         )}
                         title={t.label}
                       >
                         <div className={cn("h-full w-full rounded-full border border-black/10 shadow-sm", t.color)} />
                         {theme === t.id && (
-                          <Check className="absolute h-3 w-3 text-white drop-shadow-md" />
+                          <Check className="absolute h-2.5 w-2.5 text-white drop-shadow-md" />
                         )}
                       </button>
                     ))}
@@ -463,23 +483,17 @@ export function EmployeeSidebar({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
-      <div className="p-4 border-t border-border bg-background/50">
+      <div className="mt-auto border-t border-border/40 bg-muted/20">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-4 h-12 px-4 rounded-xl text-muted-foreground hover:text-white hover:bg-destructive shadow-sm transition-all duration-300 group overflow-hidden relative border border-transparent hover:border-destructive/30"
+            <button
+              className="w-full flex items-center gap-3 px-6 py-4 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all group"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-destructive/0 to-destructive/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative flex items-center gap-4 w-full">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background border border-border group-hover:bg-destructive group-hover:border-destructive/50 transition-colors">
-                  <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                </div>
-                <span className="font-bold text-sm tracking-wide">Logout</span>
-              </div>
-            </Button>
+              <LogOut className="h-4 w-4 transition-transform group-hover:scale-110" />
+              <span className="text-xs font-bold uppercase tracking-wider">Logout</span>
+            </button>
           </AlertDialogTrigger>
           <AlertDialogContent className="bg-card border-border sm:max-w-[400px]">
             <AlertDialogHeader>

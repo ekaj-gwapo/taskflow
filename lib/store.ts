@@ -136,7 +136,7 @@ export interface WeeklyReport {
 
 export interface ActivityLog {
   id: string
-  action: "TASK_CREATED" | "TASK_DELETED" | "STATUS_UPDATED" | "ASSIGNEE_CHANGED" | "NOTE_ADDED" | "COMMENT_ADDED" | "STEP_ADDED" | "STEP_UPDATED" | "STEP_DELETED" | "STEP_NOTE_ADDED" | "PROFILE_UPDATED" | "AVATAR_UPDATED" | "PASSWORD_RESET" | "USER_STATUS_UPDATED" | "TASK_REASSIGNED" | "TEAM_MEMBERS_EDITED" | "TASK_DELEGATED" | "EXTENSION_REQUESTED" | "EXTENSION_APPROVED" | "EXTENSION_REJECTED"
+  action: "TASK_CREATED" | "TASK_DELETED" | "STATUS_UPDATED" | "ASSIGNEE_CHANGED" | "NOTE_ADDED" | "COMMENT_ADDED" | "STEP_ADDED" | "STEP_UPDATED" | "STEP_DELETED" | "STEP_NOTE_ADDED" | "PROFILE_UPDATED" | "AVATAR_UPDATED" | "PASSWORD_RESET" | "USER_STATUS_UPDATED" | "TASK_REASSIGNED" | "TEAM_MEMBERS_EDITED" | "TASK_DELEGATED" | "EXTENSION_REQUESTED" | "EXTENSION_APPROVED" | "EXTENSION_REJECTED" | "TASK_ARCHIVED" | "TASK_RESTORED"
   entityId: string
   entityType: string
   userId: string
@@ -144,6 +144,17 @@ export interface ActivityLog {
   details?: any
   createdAt: string
   taskTitle?: string
+}
+
+export interface Notification {
+  id: string
+  userId: string
+  type: string
+  title: string
+  message: string
+  link?: string
+  isRead: number
+  createdAt: string
 }
 
 // Mock data removed for pure SQLite implementation

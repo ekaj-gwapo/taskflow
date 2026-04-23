@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
         SELECT al.*, t.title as taskTitle
         FROM activity_logs al
         LEFT JOIN tasks t ON al.entityId = t.id
-        WHERE al.entityType = 'TASK' AND (
+        WHERE (al.entityType != 'TASK' OR (
           t.assigneeId = ? 
           OR t.createdById = ?
           OR EXISTS (
             SELECT 1 FROM task_assignments ta 
             WHERE ta.taskId = t.id AND ta.userId = ?
           )
-        )
+        ))
         ORDER BY al.createdAt DESC
         LIMIT 100
       `;
@@ -37,18 +37,37 @@ export async function GET(request: NextRequest) {
         SELECT al.*, t.title as taskTitle
         FROM activity_logs al
         LEFT JOIN tasks t ON al.entityId = t.id
-        WHERE al.entityType = 'TASK'
         ORDER BY al.createdAt DESC
         LIMIT 200
       `;
       logs = await db.getAll(query) as any[];
     }
 
+    console.log(`[API] Fetched ${logs.length} raw logs`);
+
     // Parse the details JSON string for easier frontend consumption
-    const formattedLogs = logs.map(log => ({
-      ...log,
-      details: log.details ? JSON.parse(log.details) : null
-    }));
+    const formattedLogs = logs.map(log => {
+      // Handle potential case-sensitivity issues from different DB adapters
+      const normalizedLog = {
+        ...log,
+        userName: log.userName || log.username || 'System',
+        createdAt: log.createdAt || log.createdat,
+        details: log.details || log.details_json // some adapters use different names
+      };
+
+      try {
+        if (typeof normalizedLog.details === 'string') {
+          normalizedLog.details = JSON.parse(normalizedLog.details);
+        }
+      } catch (e) {
+        console.error(`[API] Failed to parse activity log details for ID ${log.id}:`, e);
+        normalizedLog.details = null;
+      }
+
+      return normalizedLog;
+    });
+
+    console.log(`[API] Returning ${formattedLogs.length} formatted logs`);
 
     return NextResponse.json({ logs: formattedLogs }, { status: 200 })
   } catch (error) {

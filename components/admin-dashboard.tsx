@@ -2,13 +2,13 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { useTaskContext } from "@/lib/task-context"
-import { StatsCards } from "@/components/stats-cards"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { TaskDetailPanel } from "@/components/task-detail-panel"
 import { AdminSidebar } from "@/components/admin-sidebar"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import {
@@ -25,7 +25,8 @@ import { WorkloadDistribution } from "@/components/workload-distribution"
 import { RecentlyCompletedTasks } from "@/components/recently-completed-tasks"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
 import { ActivityLogView } from "@/components/activity-log-view"
-import { formatDate, formatDateTime } from "@/lib/utils"
+import { SmartBriefing } from "@/components/smart-briefing"
+import { formatDate, formatDateTime, calculateTaskProgress, cn } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 import {
   AlertDialog,
@@ -99,6 +100,15 @@ function TaskRow({
         <p className="text-xs text-muted-foreground truncate">
           {task.description}
         </p>
+        
+        {/* Task Progress Mini-bar */}
+        <div className="mt-2.5 max-w-[200px] space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] font-bold text-primary/80 uppercase tracking-tighter">
+            <span>Progress</span>
+            <span>{calculateTaskProgress(task)}%</span>
+          </div>
+          <Progress value={calculateTaskProgress(task)} className="h-1.5 bg-secondary border border-border/50" />
+        </div>
       </div>
 
       {/* ✅ FIXED COLUMNS */}
@@ -228,6 +238,15 @@ function TeamProjectCard({ task, onSelect, isSelected }: { task: Task; onSelect:
           {task.description || "No description provided."}
         </p>
         
+        {/* Card Progress Bar */}
+        <div className="mb-4 space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+            <span>Action Required Progress</span>
+            <span>{calculateTaskProgress(task)}%</span>
+          </div>
+          <Progress value={calculateTaskProgress(task)} className="h-1 bg-secondary" />
+        </div>
+        
         <div className="flex items-center justify-between mt-auto shrink-0 pt-2 border-t border-border/50">
           <StatusBadge status={task.status} />
           
@@ -256,7 +275,7 @@ function TeamProjectCard({ task, onSelect, isSelected }: { task: Task; onSelect:
 }
 
 export function AdminDashboard() {
-  const { tasks, archivedTasks, fetchArchivedTasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen } = useTaskContext()
+  const { tasks, archivedTasks, fetchArchivedTasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen, selectedTaskId, selectTask } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showReport, setShowReport] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -270,6 +289,16 @@ export function AdminDashboard() {
   
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
   const [myTaskTab, setMyTaskTab] = useState<"assigned" | "delegated">("assigned")
+
+  // Sync selectedTask with selectedTaskId
+  useEffect(() => {
+    if (selectedTaskId) {
+      const task = [...tasks, ...archivedTasks].find(t => t.id === selectedTaskId)
+      if (task) setSelectedTask(task)
+    } else {
+      setSelectedTask(null)
+    }
+  }, [selectedTaskId, tasks, archivedTasks])
 
   // Track the newest completed task to trigger notifications
   const [lastCheckTime, setLastCheckTime] = useState(Date.now());
@@ -352,7 +381,7 @@ export function AdminDashboard() {
     const currentSearch = isTeamView ? teamSearchQuery : searchQuery
     const currentTasksPool = isArchivedView ? archivedTasks : tasks
 
-    return currentTasksPool.filter((t) => {
+    const result = currentTasksPool.filter((t) => {
       const status = t.status?.toLowerCase()
       const priority = t.priority?.toLowerCase()
       
@@ -377,6 +406,9 @@ export function AdminDashboard() {
         )
       )
     })
+
+    console.log(`[AdminDashboard] Pool: ${currentTasksPool.length}, Result: ${result.length}, Status: ${currentStatus}`);
+    return result;
   }, [tasks, filterStatus, filterPriority, searchQuery, teamFilterStatus, teamFilterPriority, teamSearchQuery, selectedEmployeeId, myTaskTab, currentUser])
 
   const selectedEmployee = selectedEmployeeId
@@ -385,24 +417,30 @@ export function AdminDashboard() {
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden relative">
-      <div className="hidden lg:block w-80 shrink-0 border-r border-border overflow-y-auto">
+      <div className="hidden lg:block w-80 shrink-0 border-r border-border">
         <AdminSidebar
           selectedEmployeeId={selectedEmployeeId}
           onSelectEmployee={(id) => {
             setSelectedEmployeeId(id)
             setSelectedTask(null)
+            selectTask(null)
+          }}
+          onSelectTask={(task) => {
+            selectTask(task.id);
+            markAsSeen(task.id);
+            markCompletedAsSeen(task.id);
           }}
         />
       </div>
 
       <div className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
-        {selectedEmployeeId !== 'activity-log' && <StatsCards tasks={tasks.filter(matchesHierarchy)} />}
+        <SmartBriefing />
 
         {selectedEmployeeId === "my-tasks" && myTaskTab === "assigned" && (
           <UrgentTasksSection 
             tasks={tasks.filter(t => t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)} 
             onSelectTask={(task) => {
-              setSelectedTask(task);
+              selectTask(task.id);
               markAsSeen(task.id);
               markCompletedAsSeen(task.id);
             }} 
@@ -413,7 +451,7 @@ export function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="flex flex-col gap-6 w-full">
               <WorkloadDistribution />
-              <RecentlyCompletedTasks onSelectTask={(task) => setSelectedTask(task)} />
+              <RecentlyCompletedTasks onSelectTask={(task) => selectTask(task.id)} />
             </div>
             <div className="w-full">
               <TopCompletersChart />
@@ -508,7 +546,7 @@ export function AdminDashboard() {
                   key={task.id}
                   task={task}
                   onSelect={() => {
-                    setSelectedTask(task);
+                    selectTask(task.id);
                     markAsSeen(task.id);
                   }}
                   isSelected={selectedTask?.id === task.id}
@@ -525,8 +563,8 @@ export function AdminDashboard() {
             )}
           </div>
         ) : (
-          <div className="border rounded-lg flex flex-col bg-card min-h-[500px]">
-            {/* HEADER */}
+          <div className="rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl min-h-[500px] overflow-hidden">
+            {/* Header / Search Area */}
             <div className="flex flex-col w-full h-full">
               <div className="flex items-center px-4 py-2.5 border-b bg-muted shrink-0">
                 <span className="flex-1 text-xs uppercase text-muted-foreground font-semibold">Task</span>
@@ -553,7 +591,7 @@ export function AdminDashboard() {
                       key={task.id}
                       task={task}
                       onSelect={() => {
-                        setSelectedTask(task);
+                        selectTask(task.id);
                         markAsSeen(task.id);
                         markCompletedAsSeen(task.id);
                       }}
@@ -589,7 +627,10 @@ export function AdminDashboard() {
         <div className="w-[380px] shrink-0 absolute lg:relative right-0 h-full z-10 filter drop-shadow-xl lg:drop-shadow-none">
           <TaskDetailPanel
             task={liveSelectedTask}
-            onClose={() => setSelectedTask(null)}
+            onClose={() => {
+              setSelectedTask(null);
+              selectTask(null);
+            }}
             showDeleteButton={
               currentUser?.role?.toUpperCase() === "SUPERADMIN" || 
               currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || 

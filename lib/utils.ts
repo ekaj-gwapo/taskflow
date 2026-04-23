@@ -29,3 +29,12 @@ export function formatDateTime(dateString: string | null | undefined) {
     minute: "2-digit",
   })
 }
+
+export function calculateTaskProgress(task: any) {
+  if (!task.actionSteps || task.actionSteps.length === 0) {
+    return task.status === "completed" ? 100 : 0;
+  }
+  const totalSteps = task.actionSteps.length;
+  const completedSteps = task.actionSteps.filter((s: any) => s.completed).length;
+  return Math.round((completedSteps / totalSteps) * 100);
+}

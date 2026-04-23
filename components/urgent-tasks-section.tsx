@@ -3,7 +3,8 @@
 import { useMemo } from "react"
 import { AlertTriangle, Clock, ChevronRight } from "lucide-react"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
-import { formatDate, formatDateTime, cn } from "@/lib/utils"
+import { formatDate, formatDateTime, cn, calculateTaskProgress } from "@/lib/utils"
+import { Progress } from "@/components/ui/progress"
 import type { Task } from "@/lib/store"
 
 interface UrgentTasksSectionProps {
@@ -67,6 +68,10 @@ export function UrgentTasksSection({ tasks, onSelectTask }: UrgentTasksSectionPr
                 </div>
                 <span>•</span>
                 <span>{task.assigneeName || "Unassigned"}</span>
+              </div>
+              {/* Progress Mini-bar */}
+              <div className="mt-2.5 max-w-[150px] space-y-1">
+                <Progress value={calculateTaskProgress(task)} className="h-1 bg-destructive/10" />
               </div>
             </div>
 

@@ -1,6 +1,5 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
-import { promisify } from 'util';
 
 const dbPath = path.resolve(process.cwd(), process.env.DATABASE_URL || 'local.db');
 const sqlite = new sqlite3.Database(dbPath);
@@ -75,4 +74,3 @@ export const db = {
 };
 
 export default db;
-

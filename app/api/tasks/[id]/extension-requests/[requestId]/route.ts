@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
 import { logActivity } from "@/lib/activity"
+import { v4 as uuidv4 } from "uuid"
 
 // PUT — Approve or reject an extension request
 export async function PUT(
@@ -99,6 +100,26 @@ export async function PUT(
         remark: remark?.trim() || null,
       },
     })
+
+    // Create Notification for the requester
+    const notificationId = uuidv4()
+    const notificationTitle = action === "APPROVE" ? "Extension Approved" : "Extension Rejected"
+    const notificationMessage = action === "APPROVE" 
+      ? `Your extension request for "${extRequest.taskTitle}" has been approved.` 
+      : `Your extension request for "${extRequest.taskTitle}" has been rejected.`
+    
+    await db.execute(
+      "INSERT INTO notifications (id, userId, type, title, message, link, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [
+        notificationId, 
+        extRequest.requestedById, 
+        action === "APPROVE" ? "EXTENSION_APPROVED" : "EXTENSION_REJECTED",
+        notificationTitle,
+        notificationMessage,
+        `/tasks/${taskId}`,
+        now
+      ]
+    )
 
     const updated: any = await db.getOne("SELECT * FROM extension_requests WHERE id = ?", [requestId])
 

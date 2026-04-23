@@ -5,13 +5,13 @@ import { useTaskContext } from "@/lib/task-context"
 import { TaskDetailPanel } from "@/components/task-detail-panel"
 import { EmployeeSidebar } from "@/components/employee-sidebar"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { ClipboardList, Clock, CheckCircle2, AlertTriangle, Bell, ChevronRight } from "lucide-react"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
 import { ActivityLogView } from "@/components/activity-log-view"
-import { cn, formatDate, formatDateTime } from "@/lib/utils"
+import { SmartBriefing } from "@/components/smart-briefing"
+import { cn, formatDate, formatDateTime, calculateTaskProgress } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import type { Task, User } from "@/lib/store"
 
@@ -90,10 +90,12 @@ function EmployeeTaskCard({
   return (
     <button
       onClick={onSelect}
-      className={`w-full text-left rounded-lg border transition-colors ${isSelected
+      className={cn(
+        "w-full text-left rounded-[1.5rem] border border-border/50 transition-all glass-card",
+        isSelected
           ? "border-primary bg-primary/5"
-          : "border-border bg-card hover:bg-accent/50"
-        }`}
+          : "hover:bg-accent/50"
+      )}
     >
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
@@ -131,6 +133,21 @@ function EmployeeTaskCard({
             Due {formatDateTime(task.dueDate)}
           </span>
         </div>
+        
+        {/* Progress Bar */}
+        <div className="mt-4 space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+            <span>Action Progress</span>
+            <span>{calculateTaskProgress(task)}%</span>
+          </div>
+          <Progress 
+            value={calculateTaskProgress(task)} 
+            className="h-1 bg-secondary"
+            // We can't easily add gradient to the component itself without custom styles, 
+            // but we can use className for the container.
+          />
+        </div>
+
         <NoteReminder task={task} />
       </div>
     </button>
@@ -138,10 +155,20 @@ function EmployeeTaskCard({
 }
 
 export function EmployeeDashboard() {
-  const { tasks, currentUser, canAccessTask, seenTaskIds, markAsSeen } = useTaskContext()
+  const { tasks, currentUser, canAccessTask, seenTaskIds, markAsSeen, selectedTaskId, selectTask } = useTaskContext()
   const [selectedCategory, setSelectedCategory] = useState<"individual" | "team" | "profile" | "activity-log">("individual")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>("all")
+
+  // Sync selectedTask with selectedTaskId
+  useEffect(() => {
+    if (selectedTaskId) {
+      const task = tasks.find(t => t.id === selectedTaskId)
+      if (task) setSelectedTask(task)
+    } else {
+      setSelectedTask(null)
+    }
+  }, [selectedTaskId, tasks])
 
   const individualTasks = useMemo(() => {
     return tasks.filter((t) =>
@@ -179,15 +206,9 @@ export function EmployeeDashboard() {
     (t) => t.status?.toLowerCase() !== "completed" && new Date(t.dueDate) < new Date()
   ).length
 
-  const stats = [
-    { label: selectedCategory === "individual" ? "My Tasks" : "Team Tasks", value: currentCategoryTasks.length, icon: ClipboardList, iconBg: "bg-primary/10", iconColor: "text-primary" },
-    { label: "In Progress", value: inProgress, icon: Clock, iconBg: "bg-[hsl(var(--warning))]/10", iconColor: "text-[hsl(var(--warning))]" },
-    { label: "Completed", value: completed, icon: CheckCircle2, iconBg: "bg-[hsl(var(--success))]/10", iconColor: "text-[hsl(var(--success))]" },
-    { label: "Overdue", value: overdue, icon: AlertTriangle, iconBg: "bg-destructive/10", iconColor: "text-destructive" },
-  ]
 
   return (
-    <div className="flex flex-1 min-h-0">
+    <div className="flex flex-1 min-h-0 overflow-hidden relative">
       {/* Sidebar with My Tasks and Profile */}
       <div className="hidden lg:block">
         <EmployeeSidebar
@@ -196,37 +217,20 @@ export function EmployeeDashboard() {
         />
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {selectedCategory === "activity-log" ? (
           <div className="p-4 lg:p-6 w-full h-full">
             <ActivityLogView />
           </div>
         ) : (
           <div className="p-4 lg:p-6 flex flex-col gap-6">
-            {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((stat) => (
-              <Card key={stat.label} className="border-border bg-card">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.iconBg}`}>
-                      <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-2xl font-bold text-foreground leading-none">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+            <SmartBriefing />
 
           {/* Urgent Tasks Section */}
           <UrgentTasksSection
             tasks={currentCategoryTasks}
             onSelectTask={(task) => {
-              setSelectedTask(task);
+              selectTask(task.id);
               markAsSeen(task.id);
             }}
           />
@@ -262,43 +266,54 @@ export function EmployeeDashboard() {
               ) : selectedCategory === "team" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                   {filteredTasks.map((task) => (
-                    <Card
+                    <div
                       key={task.id}
                       className={cn(
-                        "cursor-pointer transition-all hover:shadow-md border-t-4",
-                        selectedTask?.id === task.id ? "ring-2 ring-primary border-primary" : "border-t-[hsl(var(--chart-2))]",
+                        "flex flex-col p-5 rounded-[1.5rem] border border-border/50 glass-card transition-all hover:scale-[1.01] hover:shadow-lg cursor-pointer",
+                        selectedTask?.id === task.id ? "ring-2 ring-primary border-primary" : "",
                         task.status === "completed" ? "opacity-75" : ""
                       )}
                       onClick={() => {
-                        setSelectedTask(selectedTask?.id === task.id ? null : task);
+                        selectTask(selectedTask?.id === task.id ? null : task.id);
                         markAsSeen(task.id);
                       }}
                     >
-                      <CardContent className="p-4 flex flex-col h-full">
-                        <div className="flex justify-between items-start mb-2">
-                          <StatusBadge status={task.status} />
-                          <PriorityBadge priority={task.priority} />
+                      <div className="flex justify-between items-start mb-2">
+                        <StatusBadge status={task.status} />
+                        <PriorityBadge priority={task.priority} />
+                      </div>
+                      <h3 className="font-bold text-sm mb-1 line-clamp-1">{task.title}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2 flex-1 mb-3">
+                        {task.description}
+                      </p>
+                      
+                      {/* Team Progress Bar */}
+                      <div className="mb-4 space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+                          <span>Progress</span>
+                          <span>{calculateTaskProgress(task)}%</span>
                         </div>
-                        <h3 className="font-bold text-sm mb-1 line-clamp-1">{task.title}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2 flex-1 mb-3">
-                          {task.description}
-                        </p>
-                        <div className="flex items-center justify-between mt-auto">
-                          <div className="flex -space-x-2 overflow-hidden">
-                            {task.assignees?.map((a) => (
-                              <Avatar key={a.id} className="h-6 w-6 border-2 border-background">
-                                <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
-                                  {a.name[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                            ))}
-                          </div>
-                          <span className="text-[10px] text-muted-foreground font-medium">
-                            Due {formatDate(task.dueDate)}
-                          </span>
+                        <Progress 
+                          value={calculateTaskProgress(task)} 
+                          className="h-1 bg-secondary"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between mt-auto">
+                        <div className="flex -space-x-2 overflow-hidden">
+                          {task.assignees?.map((a) => (
+                            <Avatar key={a.id} className="h-6 w-6 border-2 border-background">
+                              <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
+                                {a.name[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                          ))}
                         </div>
-                      </CardContent>
-                    </Card>
+                        <span className="text-[10px] text-muted-foreground font-medium">
+                          Due {formatDate(task.dueDate)}
+                        </span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -308,7 +323,7 @@ export function EmployeeDashboard() {
                       key={task.id}
                       task={task}
                       onSelect={() => {
-                        setSelectedTask(selectedTask?.id === task.id ? null : task);
+                        selectTask(selectedTaskId === task.id ? null : task.id);
                         markAsSeen(task.id);
                       }}
                       isSelected={selectedTask?.id === task.id}
@@ -329,7 +344,10 @@ export function EmployeeDashboard() {
         <div className="hidden lg:block w-[380px] shrink-0 filter drop-shadow-xl lg:drop-shadow-none">
           <TaskDetailPanel
             task={tasks.find((t) => t.id === selectedTask.id) || selectedTask}
-            onClose={() => setSelectedTask(null)}
+            onClose={() => {
+              setSelectedTask(null);
+              selectTask(null);
+            }}
             showStatusControl
             showNoteInput
           />

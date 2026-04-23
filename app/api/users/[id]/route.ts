@@ -60,6 +60,11 @@ export async function PUT(
     const { name, email, phone, location, theme, mode } = await request.json()
     console.log(`[API] Updating user ${id}:`, { name, email, phone, location, theme, mode })
 
+    // Get current data to check if we should log activity
+    const currentUserData = await db.getOne(`
+      SELECT name, email, phone, location FROM users WHERE id = ?
+    `, [id]);
+
     if (role === "EMPLOYEE") {
       await db.execute(`
         UPDATE users 
@@ -86,14 +91,23 @@ export async function PUT(
       `, [name, email, phone, location, theme, mode, id]);
     }
 
-    await logActivity({
-      action: "PROFILE_UPDATED",
-      entityId: id,
-      entityType: "USER",
-      userId: auth.user!.id,
-      userName: auth.user!.name,
-      details: { updatedUserId: id, name, email }
-    });
+    // Only log if core profile info changed (not just theme/mode)
+    const profileInfoChanged = 
+      (name && name !== currentUserData.name) || 
+      (email && email !== currentUserData.email) ||
+      (phone !== undefined && phone !== currentUserData.phone) ||
+      (location !== undefined && location !== currentUserData.location);
+
+    if (profileInfoChanged) {
+      await logActivity({
+        action: "PROFILE_UPDATED",
+        entityId: id,
+        entityType: "USER",
+        userId: auth.user!.id,
+        userName: auth.user!.name,
+        details: { updatedUserId: id, name, email }
+      });
+    }
 
     const user = await db.getOne(`
       SELECT id, name, email, phone, location, role, theme, mode 

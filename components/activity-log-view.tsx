@@ -21,7 +21,8 @@ export function ActivityLogView() {
         });
         if (res.ok) {
           const data = await res.json();
-          setLogs(data.logs);
+          console.log("Activity logs data:", data);
+          setLogs(data.logs || []);
         }
       } catch (err) {
         console.error("Failed to fetch activity logs", err);
@@ -117,13 +118,13 @@ export function ActivityLogView() {
       case "PASSWORD_RESET":
         return <span>Reset the password for user ID <strong>{log.details?.resetUserId}</strong></span>;
       case "USER_STATUS_UPDATED":
-        return <span>{log.details?.isActive ? "Activated" : "Deactivated"} user account <strong>{log.details?.updatedUserId}</strong></span>;
+        return <span>{log.details?.isActive ? "Activated" : "Deactivated"} user account <strong>{log.details?.updatedUserId || "Unknown"}</strong></span>;
       case "TASK_ARCHIVED":
         return <span>Archived the task <strong>{taskName}</strong></span>;
       case "TASK_RESTORED":
         return <span>Restored the task <strong>{taskName}</strong> from archive</span>;
       default:
-        return <span>Performed an unknown action on <strong>{taskName}</strong></span>;
+        return <span>Performed an action on <strong>{taskName}</strong></span>;
     }
   };
 
@@ -160,7 +161,16 @@ export function ActivityLogView() {
           <div className="relative border-l-2 border-border/60 ml-4 md:ml-6 space-y-8 pb-8">
             {logs.map((log) => {
               const config = getActionConfig(log.action);
-              const initials = log.userName.split(" ").map(n => n[0]).join("").toUpperCase();
+              const userName = log.userName || "Unknown User";
+              const initials = userName
+                .split(" ")
+                .filter(Boolean)
+                .map(n => n[0])
+                .join("")
+                .toUpperCase() || "?";
+              
+              const date = log.createdAt ? new Date(log.createdAt) : new Date();
+              const formattedDate = isNaN(date.getTime()) ? "Unknown date" : format(date, 'MMM d, yyyy h:mm a');
               
               return (
                 <div key={log.id} className="relative pl-6 md:pl-8 group">
@@ -176,10 +186,10 @@ export function ActivityLogView() {
                         <Avatar className="h-6 w-6 border border-border/50">
                           <AvatarFallback className="text-[9px] bg-secondary text-foreground font-bold">{initials}</AvatarFallback>
                         </Avatar>
-                        <span className="text-sm font-semibold text-foreground">{log.userName}</span>
+                        <span className="text-sm font-semibold text-foreground">{userName}</span>
                       </div>
                       <span className="text-[11px] font-medium text-muted-foreground shrink-0 uppercase tracking-wide">
-                        {format(new Date(log.createdAt), 'MMM d, yyyy h:mm a')}
+                        {formattedDate}
                       </span>
                     </div>
                     

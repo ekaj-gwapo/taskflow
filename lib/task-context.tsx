@@ -12,6 +12,7 @@ import {
   type ActionStep,
   type ExtensionRequest,
   type WeeklyReport,
+  type Notification,
   initialReports,
 } from "./store"
 import { useEffect } from "react"
@@ -71,6 +72,17 @@ interface TaskContextType {
   markAsSeen: (taskId: string) => void
   seenCompletedTaskIds: Set<string>
   markCompletedAsSeen: (taskId: string) => void
+
+  // Global Task Selection
+  selectedTaskId: string | null
+  selectTask: (taskId: string | null) => void
+  targetSection: string | null
+  setTargetSection: (section: string | null) => void
+
+  // Notifications
+  notifications: Notification[]
+  fetchNotifications: () => Promise<void>
+  markNotificationAsRead: (id?: string) => Promise<void>
 }
 
 const TaskContext = createContext<TaskContextType | null>(null)
@@ -85,6 +97,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [allEmployees, setAllEmployees] = useState<User[]>([])
   const [seenTaskIds, setSeenTaskIds] = useState<Set<string>>(new Set())
   const [seenCompletedTaskIds, setSeenCompletedTaskIds] = useState<Set<string>>(new Set())
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [targetSection, setTargetSection] = useState<string | null>(null)
 
   const login = useCallback((role: UserRole, userId?: string, userData?: any) => {
     if (userData) {
@@ -145,6 +160,37 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [currentUser]);
 
   const pathname = usePathname();
+  const [notifiedIds] = useState<Set<string>>(new Set()) // Persistent set for the session
+
+  // Watch for new notifications and show toasts
+  useEffect(() => {
+    if (!currentUser || notifications.length === 0) return
+
+    notifications.forEach(n => {
+      if (n.isRead === 0 && !notifiedIds.has(n.id)) {
+        notifiedIds.add(n.id)
+        
+        const isApproval = n.type === "EXTENSION_APPROVED"
+        const isRejection = n.type === "EXTENSION_REJECTED"
+        
+        if (isApproval) {
+          toast.success(`✅ ${n.title}`, {
+            description: n.message,
+            duration: 6000,
+          })
+        } else if (isRejection) {
+          toast.error(`❌ ${n.title}`, {
+            description: n.message,
+            duration: 6000,
+          })
+        } else {
+          toast.info(n.title, {
+            description: n.message,
+          })
+        }
+      }
+    })
+  }, [notifications, currentUser, notifiedIds])
 
   // Handle Theme and Dark Mode
   useEffect(() => {
@@ -821,6 +867,48 @@ const url = `/api/tasks/${taskId}`
     }
   }, [tasks, currentRole, currentUser])
 
+  const fetchNotifications = useCallback(async () => {
+    if (!currentUser) return
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch("/api/notifications", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setNotifications(data.notifications || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error)
+    }
+  }, [currentUser])
+
+  const markNotificationAsRead = useCallback(async (id?: string) => {
+    if (!currentUser) return
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch("/api/notifications", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id }),
+      })
+      if (response.ok) {
+        if (id) {
+          setNotifications((prev) =>
+            prev.map((n) => (n.id === id ? { ...n, isRead: 1 } : n))
+          )
+        } else {
+          setNotifications((prev) => prev.map((n) => ({ ...n, isRead: 1 })))
+        }
+      }
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error)
+    }
+  }, [currentUser])
+
   // Session restoration
   useEffect(() => {
     const restoreSession = async () => {
@@ -892,13 +980,23 @@ const url = `/api/tasks/${taskId}`
 
         // Fetch Employees
         await refreshUsers();
+
+        // Fetch Notifications
+        await fetchNotifications();
       } catch (error) {
         console.error('Failed to fetch data:', error);
       }
     };
 
     fetchData();
-  }, [currentUser, currentRole, refreshUsers]);
+
+    // Poll for notifications every 30 seconds
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [currentUser, currentRole, refreshUsers, fetchNotifications]);
 
   return (
     <TaskContext.Provider
@@ -936,6 +1034,13 @@ const url = `/api/tasks/${taskId}`
         markAsSeen,
         seenCompletedTaskIds,
         markCompletedAsSeen,
+        notifications,
+        fetchNotifications,
+        markNotificationAsRead,
+        selectedTaskId,
+        selectTask: setSelectedTaskId,
+        targetSection,
+        setTargetSection,
       }}
     >
       {children}
