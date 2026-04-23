@@ -67,9 +67,9 @@ export function ActionStepsSection({
   const handleAddNote = async (stepId: string) => {
     const content = stepNoteInputs[stepId] || ""
     const selectedFile = selectedFiles[stepId]
-    
+
     if (!content.trim() && !selectedFile) return
-    
+
     setIsUploading((prev) => ({ ...prev, [stepId]: true }))
     try {
       let attachmentUrl = undefined
@@ -79,7 +79,7 @@ export function ActionStepsSection({
       if (selectedFile) {
         const formData = new FormData()
         formData.append("file", selectedFile)
-        
+
         const token = localStorage.getItem("token")
         const uploadRes = await fetch("/api/upload", {
           method: "POST",
@@ -90,7 +90,7 @@ export function ActionStepsSection({
         })
 
         if (!uploadRes.ok) throw new Error("Upload failed")
-        
+
         const uploadData = await uploadRes.json()
         attachmentUrl = uploadData.url
         attachmentName = uploadData.name
@@ -187,9 +187,8 @@ export function ActionStepsSection({
                 )}
                 {userRole !== "employee" && (
                   <div
-                    className={`h-4 w-4 rounded border border-border flex items-center justify-center ${
-                      step.completed ? "bg-primary" : "bg-secondary"
-                    }`}
+                    className={`h-4 w-4 rounded border border-border flex items-center justify-center ${step.completed ? "bg-primary" : "bg-secondary"
+                      }`}
                   >
                     {step.completed && <span className="text-white text-xs">✓</span>}
                   </div>
@@ -205,11 +204,10 @@ export function ActionStepsSection({
                       )}
                     </div>
                     <p
-                      className={`text-sm leading-snug ${
-                        step.completed
+                      className={`text-sm leading-snug ${step.completed
                           ? "text-muted-foreground line-through"
                           : "text-foreground font-medium"
-                      }`}
+                        }`}
                     >
                       {step.title}
                     </p>
@@ -226,11 +224,10 @@ export function ActionStepsSection({
                         e.stopPropagation();
                         onUpdateStepActed?.(step.id, !step.isActed);
                       }}
-                      className={`h-7 px-3 text-[10px] uppercase font-bold tracking-wider rounded-lg transition-all shrink-0 ${
-                        step.isActed 
-                          ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 hover:text-primary' 
+                      className={`h-7 px-3 text-[10px] uppercase font-bold tracking-wider rounded-lg transition-all shrink-0 ${step.isActed
+                          ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 hover:text-primary'
                           : 'bg-background border-border/50 text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-border'
-                      }`}
+                        }`}
                     >
                       {step.isActed ? 'Retract' : 'Mark Acted'}
                     </Button>
@@ -240,9 +237,8 @@ export function ActionStepsSection({
                     className="text-muted-foreground hover:text-foreground p-1 shrink-0 transition-colors"
                   >
                     <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                        expandedSteps.has(step.id) ? "rotate-180" : ""
-                      }`}
+                      className={`h-4 w-4 transition-transform ${expandedSteps.has(step.id) ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
                 </div>
@@ -267,7 +263,7 @@ export function ActionStepsSection({
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
+                        <AlertDialogAction
                           onClick={(e) => {
                             e.stopPropagation();
                             onDeleteStep(step.id);
@@ -321,15 +317,15 @@ export function ActionStepsSection({
                                 {note.attachmentUrl && (
                                   <div className="mt-2 pt-2 border-t border-border/20">
                                     {note.attachmentType?.startsWith("image/") ? (
-                                      <a 
-                                        href={note.attachmentUrl} 
-                                        target="_blank" 
+                                      <a
+                                        href={note.attachmentUrl}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="relative inline-block group/img overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 transition-all"
                                       >
-                                        <img 
-                                          src={note.attachmentUrl} 
-                                          alt={note.attachmentName} 
+                                        <img
+                                          src={note.attachmentUrl}
+                                          alt={note.attachmentName}
                                           className="max-w-[150px] max-h-[100px] object-cover"
                                         />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
@@ -337,9 +333,9 @@ export function ActionStepsSection({
                                         </div>
                                       </a>
                                     ) : (
-                                      <a 
-                                        href={note.attachmentUrl} 
-                                        target="_blank" 
+                                      <a
+                                        href={note.attachmentUrl}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-2.5 p-2 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-background/80 transition-all group/file max-w-[200px]"
                                       >
@@ -379,9 +375,9 @@ export function ActionStepsSection({
                             </div>
                             <span className="text-[10px] font-bold text-foreground truncate max-w-[150px]">{selectedFiles[step.id]?.name}</span>
                           </div>
-                          <button 
+                          <button
                             onClick={() => setSelectedFiles(prev => {
-                              const next = {...prev}
+                              const next = { ...prev }
                               delete next[step.id]
                               return next
                             })}
@@ -392,10 +388,10 @@ export function ActionStepsSection({
                         </div>
                       )}
                       <div className="flex gap-2">
-                        <input 
-                          type="file" 
+                        <input
+                          type="file"
                           id={`file-${step.id}`}
-                          className="hidden" 
+                          className="hidden"
                           onChange={(e) => handleFileChange(step.id, e)}
                           accept="image/*,application/pdf"
                         />

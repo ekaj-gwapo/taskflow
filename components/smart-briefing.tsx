@@ -258,9 +258,17 @@ export function SmartBriefing() {
 
   // Management Specific Stats
   const totalTasks = tasks.length
-  const pendingExtensions = tasks.filter(t => 
-    t.extensionRequests?.some(r => r.status === "PENDING")
-  ).length
+  const pendingExtensions = tasks.filter(t => {
+    const isCreator = t.createdById === currentUser.id
+    const isSuperAdmin = currentUser.role?.toUpperCase() === "SUPERADMIN"
+    
+    // Only count if user is Creator/SuperAdmin AND there is a pending request NOT from themselves
+    const hasReviewableRequest = t.extensionRequests?.some(r => 
+      r.status === "PENDING" && r.requestedById !== currentUser.id
+    )
+    
+    return (isCreator || isSuperAdmin) && hasReviewableRequest
+  }).length
   const totalEmployees = allEmployees.length
   const completedLifetime = tasks.filter(t => t.status === "completed").length
 
