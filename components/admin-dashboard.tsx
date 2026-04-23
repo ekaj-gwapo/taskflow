@@ -73,14 +73,13 @@ function TaskRow({
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.98 }}
       whileHover={{ x: 4 }}
       onClick={onSelect}
       className={cn(
-        "w-full flex items-center px-4 py-3 text-left cursor-pointer transition-all border-b border-border border-l-4 border-l-transparent hover:border-l-primary hover:bg-muted/80",
+        "w-full flex items-center px-4 py-3 text-left cursor-pointer border-b border-border border-l-4 border-l-transparent hover:border-l-primary hover:bg-muted/80 transition-colors",
         isSelected ? "bg-accent/70 border-l-primary" : ""
       )}
     >
@@ -238,10 +237,9 @@ function TeamProjectCard({
   
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
+      exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
       className={cn(
         "cursor-pointer flex flex-col min-h-[160px] rounded-[2rem] border-2",
@@ -487,7 +485,7 @@ export function AdminDashboard() {
         />
       </div>
 
-      <motion.div layout className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
         <SmartBriefing />
 
         {selectedEmployeeId === "my-tasks" && myTaskTab === "assigned" && (
@@ -501,162 +499,171 @@ export function AdminDashboard() {
           />
         )}
 
-        {!selectedEmployeeId && (
-          <AnimatePresence mode="popLayout">
-            {showCharts && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-                className="space-y-6 overflow-hidden"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                  <AnimatePresence mode="popLayout">
-                    {visibleCharts.workload && (
-                      <motion.div
-                        key="workload"
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <WorkloadDistribution onHide={() => setVisibleCharts(prev => ({ ...prev, workload: false }))} />
-                      </motion.div>
-                    )}
-                    {visibleCharts.performance && (
-                      <motion.div
-                        key="performance"
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <EmployeeWeeklyPerformance onHide={() => setVisibleCharts(prev => ({ ...prev, performance: false }))} />
-                      </motion.div>
-                    )}
-                    {visibleCharts.recent && (
-                      <motion.div
-                        key="recent"
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <RecentlyCompletedTasks 
-                          onSelectTask={(task) => selectTask(task.id)} 
-                          onHide={() => setVisibleCharts(prev => ({ ...prev, recent: false }))} 
-                        />
-                      </motion.div>
-                    )}
-                    {visibleCharts.leaderboard && (
-                      <motion.div
-                        key="leaderboard"
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <TopCompletersChart onHide={() => setVisibleCharts(prev => ({ ...prev, leaderboard: false }))} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
+        <AnimatePresence mode="wait">
+          {!selectedEmployeeId && showCharts && (
+            <motion.div 
+              key="charts-section"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="space-y-6 overflow-hidden"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <AnimatePresence mode="popLayout">
+                  {visibleCharts.workload && (
+                    <motion.div
+                      key="workload"
+                      layout
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <WorkloadDistribution onHide={() => setVisibleCharts(prev => ({ ...prev, workload: false }))} />
+                    </motion.div>
+                  )}
+                  {visibleCharts.performance && (
+                    <motion.div
+                      key="performance"
+                      layout
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <EmployeeWeeklyPerformance onHide={() => setVisibleCharts(prev => ({ ...prev, performance: false }))} />
+                    </motion.div>
+                  )}
+                  {visibleCharts.recent && (
+                    <motion.div
+                      key="recent"
+                      layout
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <RecentlyCompletedTasks 
+                        onSelectTask={(task) => selectTask(task.id)} 
+                        onHide={() => setVisibleCharts(prev => ({ ...prev, recent: false }))} 
+                      />
+                    </motion.div>
+                  )}
+                  {visibleCharts.leaderboard && (
+                    <motion.div
+                      key="leaderboard"
+                      layout
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <TopCompletersChart onHide={() => setVisibleCharts(prev => ({ ...prev, leaderboard: false }))} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* SEARCH & FILTER */}
-        {selectedEmployeeId !== 'activity-log' && (
-          <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
-          <div className="w-full flex flex-col sm:flex-row gap-3 items-center flex-1">
-            <div className="relative w-full sm:w-80 shrink-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={selectedEmployeeId === 'team-projects' ? teamSearchQuery : searchQuery}
-                onChange={(e) => selectedEmployeeId === 'team-projects' ? setTeamSearchQuery(e.target.value) : setSearchQuery(e.target.value)}
-                className="pl-9 bg-background border-border text-foreground"
-                placeholder="Search tasks or Assignee"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 flex-wrap sm:flex-nowrap">
-              <Select 
-                value={selectedEmployeeId === 'team-projects' ? teamFilterPriority : filterPriority} 
-                onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterPriority : setFilterPriority}
-              >
-                <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
-                  <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                  <SelectValue placeholder="All Priorities" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  <SelectItem value="all">All Priorities</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select 
-                value={selectedEmployeeId === 'team-projects' ? teamFilterStatus : filterStatus} 
-                onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterStatus : setFilterStatus}
-              >
-                <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
-                  <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex gap-2 w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
-            <button
-              onClick={() => {
-                if (!showCharts) {
-                  // Reset all to visible when showing the whole section
-                  setVisibleCharts({
-                    workload: true,
-                    performance: true,
-                    recent: true,
-                    leaderboard: true
-                  });
-                }
-                setShowCharts(!showCharts);
-              }}
-              className={cn(
-                "flex items-center justify-center p-2 rounded-md transition-colors shrink-0 border border-border bg-background",
-                showCharts ? "text-primary border-primary/30 bg-primary/5" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              )}
-              title={showCharts ? "Hide Analytics" : "Show Analytics"}
+        <AnimatePresence mode="wait">
+          {selectedEmployeeId !== 'activity-log' && (
+            <motion.div
+              key="search-filter-section"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
             >
-              <Activity className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setShowReport(!showReport)}
-              className="flex items-center justify-center p-2 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground shrink-0 border border-border bg-background"
-              title="Weekly Report"
-            >
-              <FileText className="h-4 w-4" />
-            </button>
-            {(currentUser?.role?.toUpperCase() === 'SUPERADMIN' || currentUser?.role?.toUpperCase() === 'HEAD_ADMIN') && (
-              <OfficeAccomplishmentReport />
-            )}
-            <CreateTaskDialog />
-          </div>
-        </div>
-        )}
+              <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center py-2">
+                <div className="w-full flex flex-col sm:flex-row gap-3 items-center flex-1">
+                  <div className="relative w-full sm:w-80 shrink-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={selectedEmployeeId === 'team-projects' ? teamSearchQuery : searchQuery}
+                      onChange={(e) => selectedEmployeeId === 'team-projects' ? setTeamSearchQuery(e.target.value) : setSearchQuery(e.target.value)}
+                      className="pl-9 bg-background border-border text-foreground"
+                      placeholder="Search tasks or Assignee"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 flex-wrap sm:flex-nowrap">
+                    <Select 
+                      value={selectedEmployeeId === 'team-projects' ? teamFilterPriority : filterPriority} 
+                      onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterPriority : setFilterPriority}
+                    >
+                      <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
+                        <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                        <SelectValue placeholder="All Priorities" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border">
+                        <SelectItem value="all">All Priorities</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select 
+                      value={selectedEmployeeId === 'team-projects' ? teamFilterStatus : filterStatus} 
+                      onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterStatus : setFilterStatus}
+                    >
+                      <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
+                        <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                        <SelectValue placeholder="All Statuses" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border">
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="todo">To Do</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="overdue">Overdue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
+                  <button
+                    onClick={() => {
+                      if (!showCharts) {
+                        setVisibleCharts({
+                          workload: true,
+                          performance: true,
+                          recent: true,
+                          leaderboard: true
+                        });
+                      }
+                      setShowCharts(!showCharts);
+                    }}
+                    className={cn(
+                      "flex items-center justify-center p-2 rounded-md transition-colors shrink-0 border border-border bg-background",
+                      showCharts ? "text-primary border-primary/30 bg-primary/5" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    )}
+                    title={showCharts ? "Hide Analytics" : "Show Analytics"}
+                  >
+                    <Activity className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setShowReport(!showReport)}
+                    className="flex items-center justify-center p-2 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground shrink-0 border border-border bg-background"
+                    title="Weekly Report"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </button>
+                  {(currentUser?.role?.toUpperCase() === 'SUPERADMIN' || currentUser?.role?.toUpperCase() === 'HEAD_ADMIN') && (
+                    <OfficeAccomplishmentReport />
+                  )}
+                  <CreateTaskDialog />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {selectedEmployeeId === 'my-tasks' && (
           <Tabs value={myTaskTab} onValueChange={(v) => setMyTaskTab(v as any)} className="w-full">
@@ -672,11 +679,27 @@ export function AdminDashboard() {
         )}
 
         {/* TABLE OR GRID */}
-        {selectedEmployeeId === 'activity-log' ? (
-          <ActivityLogView />
-        ) : selectedEmployeeId === 'team-projects' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-             <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="wait">
+          {selectedEmployeeId === 'activity-log' ? (
+            <motion.div
+              key="activity-log"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ActivityLogView />
+            </motion.div>
+          ) : selectedEmployeeId === 'team-projects' ? (
+            <motion.div
+              key="team-projects"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4"
+            >
+               <AnimatePresence mode="wait">
                {filteredTasks.length > 0 ? (
                  filteredTasks.map(task => (
                    <TeamProjectCard
@@ -704,9 +727,16 @@ export function AdminDashboard() {
                  </motion.div>
                )}
              </AnimatePresence>
-           </div>
+           </motion.div>
          ) : (
-          <div className="rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl min-h-[500px] overflow-hidden">
+            <motion.div
+              key="task-list"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl min-h-[500px] overflow-hidden"
+            >
             {/* Header / Search Area */}
             <div className="flex flex-col w-full h-full">
               <div className="flex items-center px-4 py-2.5 border-b bg-muted shrink-0">
@@ -728,7 +758,7 @@ export function AdminDashboard() {
 
               {/* ROWS */}
               <div className="flex flex-col flex-1">
-               <AnimatePresence mode="popLayout">
+               <AnimatePresence mode="wait">
                  {filteredTasks.length > 0 ? (
                    filteredTasks.map((task) => (
                      <TaskRow
@@ -768,9 +798,10 @@ export function AdminDashboard() {
                </AnimatePresence>
              </div>
             </div>
-          </div>
-        )}
-      </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <AnimatePresence>
         {liveSelectedTask && (
