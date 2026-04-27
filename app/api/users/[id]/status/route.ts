@@ -16,16 +16,11 @@ export async function PUT(
     const { isActive } = await request.json()
     const { id } = await params
 
-    if (typeof isActive !== "number") {
-      return NextResponse.json(
-        { error: "isActive must be a number (0 or 1)" },
-        { status: 400 }
-      )
-    }
+    const isActiveValue = typeof isActive === "boolean" ? isActive : !!isActive;
 
     await db.execute(
       "UPDATE users SET isActive = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-      [isActive, id]
+      [isActiveValue, id]
     )
 
     await logActivity({

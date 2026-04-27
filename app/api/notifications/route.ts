@@ -40,12 +40,12 @@ export async function PUT(request: NextRequest) {
 
     if (id) {
       await db.execute(
-        "UPDATE notifications SET isRead = 1 WHERE id = ? AND userId = ?",
+        "UPDATE notifications SET isRead = true WHERE id = ? AND userId = ?",
         [id, user.id]
       )
     } else {
       await db.execute(
-        "UPDATE notifications SET isRead = 1 WHERE userId = ?",
+        "UPDATE notifications SET isRead = true WHERE userId = ?",
         [user.id]
       )
     }

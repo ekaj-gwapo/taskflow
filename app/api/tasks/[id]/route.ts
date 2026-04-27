@@ -24,7 +24,7 @@ export async function GET(
       LEFT JOIN users u1 ON t.assigneeId = u1.id
       LEFT JOIN users u2 ON t.createdById = u2.id
       LEFT JOIN users u3 ON t.delegatedById = u3.id
-      WHERE LOWER(t.id) = ?
+      WHERE t.id = ?
     `, [taskId])
 
     if (!task) {
@@ -99,7 +99,7 @@ export async function PUT(
     console.debug("PUT /api/tasks/:id", { id: taskId, body: { status, priority, assigneeIds, archived }, user: auth.user })
 
     // Fetch task using case-insensitive search but keep track of the REAL ID from the database
-    const existingTask: any = await db.getOne("SELECT * FROM tasks WHERE LOWER(id) = LOWER(?)", [taskId])
+    const existingTask: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId])
     if (!existingTask) {
       console.warn("Task not found in DB", { id: taskId })
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
@@ -214,7 +214,7 @@ export async function PUT(
         // Update assignments
         await db.execute("DELETE FROM task_assignments WHERE LOWER(taskId) = LOWER(?)", [realTaskId]);
         for (const uId of assigneeIds) {
-          await db.execute("INSERT OR REPLACE INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?)", [realTaskId, uId, 0]);
+          await db.execute("INSERT INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?) ON CONFLICT (taskId, userId) DO UPDATE SET points = EXCLUDED.points", [realTaskId, uId, 0]);
         }
 
         let action: ActivityAction = "ASSIGNEE_CHANGED";
@@ -288,9 +288,9 @@ export async function PUT(
       });
     }
 
-    if (archived !== undefined && archived !== existingTask.archived) {
+    if (archived !== undefined && archived !== !!existingTask.archived) {
       await logActivity({
-        action: archived === 1 ? "TASK_ARCHIVED" : "TASK_RESTORED",
+        action: archived ? "TASK_ARCHIVED" : "TASK_RESTORED",
         entityId: realTaskId,
         entityType: "TASK",
         userId: auth.user!.id,
@@ -380,7 +380,7 @@ export async function DELETE(
     await db.execute("DELETE FROM step_notes WHERE stepId IN (SELECT id FROM action_steps WHERE taskId = ?)", [taskId])
     await db.execute("DELETE FROM action_steps WHERE taskId = ?", [taskId])
     await db.execute("DELETE FROM progress_notes WHERE taskId = ?", [taskId])
-    await db.execute("DELETE FROM tasks WHERE LOWER(id) = ?", [taskId])
+    await db.execute("DELETE FROM tasks WHERE id = ?", [taskId])
 
     await logActivity({
       action: "TASK_DELETED",

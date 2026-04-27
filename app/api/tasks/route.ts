@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const showArchived = searchParams.get("showArchived") === "true"
-    const archivedValue = showArchived ? 1 : 0
+    const archivedValue = showArchived ? true : false
 
     let tasks: any[]
     if (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN") {
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         await db.execute(`
           INSERT INTO action_steps (id, title, taskId, completed, createdAt, updatedAt)
           VALUES (?, ?, ?, ?, ?, ?)
-        `, [stepId, stepTitle, taskId, 0, new Date().toISOString(), new Date().toISOString()])
+        `, [stepId, stepTitle, taskId, false, new Date().toISOString(), new Date().toISOString()])
       }
     }
 

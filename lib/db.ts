@@ -1,41 +1,23 @@
-import sqlite3 from 'sqlite3';
-import path from 'path';
+import { Pool } from 'pg';
 
-const dbPath = path.resolve(process.cwd(), process.env.DATABASE_URL || 'local.db');
-const sqlite = new sqlite3.Database(dbPath);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Required for Supabase/Neon in some environments
+  }
+});
 
-const dbRun = (sql: string, params: any[] = []): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    sqlite.run(sql, params, function (err) {
-      if (err) reject(err);
-      else resolve({ lastID: this.lastID, changes: this.changes });
-    });
-  });
-};
-
-const dbGet = (sql: string, params: any[] = []): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    sqlite.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-};
-
-const dbAll = (sql: string, params: any[] = []): Promise<any[]> => {
-  return new Promise((resolve, reject) => {
-    sqlite.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
+// Helper to convert SQLite '?' placeholders to PostgreSQL '$1, $2...' placeholders
+const convertPlaceholders = (text: string) => {
+  let count = 1;
+  return text.replace(/\?/g, () => `$${count++}`);
 };
 
 export const db = {
   async query(text: string, params?: any[]) {
     try {
-      const rows = await dbAll(text, params || []);
-      return { rows };
+      const result = await pool.query(convertPlaceholders(text), params);
+      return { rows: result.rows };
     } catch (error) {
       console.error('Database query error:', error);
       throw error;
@@ -44,8 +26,8 @@ export const db = {
 
   async execute(text: string, params?: any[]) {
     try {
-      const result = await dbRun(text, params || []);
-      return result;
+      const result = await pool.query(convertPlaceholders(text), params);
+      return { lastID: null, changes: result.rowCount }; 
     } catch (error) {
       console.error('Database execute error:', error);
       throw error;
@@ -54,8 +36,8 @@ export const db = {
 
   async getOne(text: string, params?: any[]) {
     try {
-      const row = await dbGet(text, params || []);
-      return row || null;
+      const result = await pool.query(convertPlaceholders(text), params);
+      return result.rows[0] || null;
     } catch (error) {
       console.error('Database getOne error:', error);
       throw error;
@@ -64,8 +46,8 @@ export const db = {
 
   async getAll(text: string, params?: any[]) {
     try {
-      const rows = await dbAll(text, params || []);
-      return rows;
+      const result = await pool.query(convertPlaceholders(text), params);
+      return result.rows;
     } catch (error) {
       console.error('Database getAll error:', error);
       throw error;

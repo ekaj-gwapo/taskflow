@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+      import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
 import { logActivity } from "@/lib/activity"
@@ -17,7 +17,7 @@ export async function PUT(
 
     const taskId = (await params).id?.toLowerCase()
     // Verify task exists
-    const task: any = await db.getOne("SELECT * FROM tasks WHERE LOWER(id) = ?", [taskId]);
+    const task: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId]);
 
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
@@ -40,12 +40,12 @@ export async function PUT(
     }
 
     const currentStep: any = await db.getOne("SELECT completed, isActed FROM action_steps WHERE id = ?", [(await params).stepId]);
-    const newCompleted = completed !== undefined ? (completed ? 1 : 0) : currentStep.completed;
-    let newIsActed = isActed !== undefined ? (isActed ? 1 : 0) : currentStep.isActed;
+    const newCompleted = completed !== undefined ? !!completed : !!currentStep.completed;
+    let newIsActed = isActed !== undefined ? !!isActed : !!currentStep.isActed;
 
     // Automatically mark as acted if it's being marked completed
-    if (newCompleted === 1) {
-      newIsActed = 1;
+    if (newCompleted) {
+      newIsActed = true;
     }
 
     await db.execute(`
@@ -102,7 +102,7 @@ export async function DELETE(
 
     const taskId = (await params).id?.toLowerCase()
     // Verify task exists
-    const task: any = await db.getOne("SELECT * FROM tasks WHERE LOWER(id) = ?", [taskId]);
+    const task: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId]);
 
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
