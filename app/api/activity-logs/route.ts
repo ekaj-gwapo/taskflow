@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       const query = `
         SELECT al.*, t.title as taskTitle
         FROM activity_logs al
-        LEFT JOIN tasks t ON al."entityId"::uuid = t.id
+        LEFT JOIN tasks t ON t.id::text = al."entityId"
         WHERE (al."entityType" != 'TASK' OR (
           t."assigneeId" = $1::uuid 
           OR t."createdById" = $2::uuid
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       const query = `
         SELECT al.*, t.title as taskTitle
         FROM activity_logs al
-        LEFT JOIN tasks t ON al."entityId"::uuid = t.id
+        LEFT JOIN tasks t ON t.id::text = al."entityId"
         ORDER BY al."createdAt" DESC
         LIMIT 200
       `;

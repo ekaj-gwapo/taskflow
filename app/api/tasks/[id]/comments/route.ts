@@ -23,7 +23,7 @@ export async function POST(
       )
     }
 
-    const taskId = (await params).id?.toLowerCase()
+    const taskId = (await params).id
     
     // Verify task exists
     const task: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId]);

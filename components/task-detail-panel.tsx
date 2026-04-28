@@ -812,26 +812,26 @@ export function TaskDetailPanel({
                 onClick={async () => {
                   setIsArchiving(true)
                   try {
-                    await toggleArchiveTask(task.id, task.archived === 0)
+                    await toggleArchiveTask(task.id, !task.archived)
                   } finally {
                     setIsArchiving(false)
                   }
                 }}
                 className={cn(
                   "w-full transition-all duration-300 flex items-center justify-center py-5 rounded-xl shadow-sm hover:shadow-md",
-                  task.archived === 0
+                  !task.archived
                     ? "text-amber-600 border-amber-200/50 bg-amber-50/30 hover:bg-amber-600 hover:text-white"
                     : "text-emerald-600 border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-600 hover:text-white"
                 )}
               >
                 {isArchiving ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : task.archived === 0 ? (
+                ) : !task.archived ? (
                   <Archive className="h-4 w-4 mr-2" />
                 ) : (
                   <RefreshCcw className="h-4 w-4 mr-2" />
                 )}
-                {task.archived === 0 ? "Archive Task" : "Restore Task"}
+                {!task.archived ? "Archive Task" : "Restore Task"}
               </Button>
             )}
           </div>
