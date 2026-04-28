@@ -18,16 +18,16 @@ export async function GET(request: NextRequest) {
       const query = `
         SELECT al.*, t.title as taskTitle
         FROM activity_logs al
-        LEFT JOIN tasks t ON al.entityId = t.id
-        WHERE (al.entityType != 'TASK' OR (
-          t.assigneeId = ? 
-          OR t.createdById = ?
+        LEFT JOIN tasks t ON al."entityId"::uuid = t.id
+        WHERE (al."entityType" != 'TASK' OR (
+          t."assigneeId" = $1::uuid 
+          OR t."createdById" = $2::uuid
           OR EXISTS (
             SELECT 1 FROM task_assignments ta 
-            WHERE ta.taskId = t.id AND ta.userId = ?
+            WHERE ta."taskId" = t.id AND ta."userId" = $3::uuid
           )
         ))
-        ORDER BY al.createdAt DESC
+        ORDER BY al."createdAt" DESC
         LIMIT 100
       `;
       logs = await db.getAll(query, [auth.user!.id, auth.user!.id, auth.user!.id]) as any[];
@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
       const query = `
         SELECT al.*, t.title as taskTitle
         FROM activity_logs al
-        LEFT JOIN tasks t ON al.entityId = t.id
-        ORDER BY al.createdAt DESC
+        LEFT JOIN tasks t ON al."entityId"::uuid = t.id
+        ORDER BY al."createdAt" DESC
         LIMIT 200
       `;
       logs = await db.getAll(query) as any[];
