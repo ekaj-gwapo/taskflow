@@ -652,7 +652,7 @@ const url = `/api/tasks/${taskId}`
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ archived: archived ? 1 : 0 }),
+          body: JSON.stringify({ archived: archived }),
         })
 
         if (!response.ok) {
@@ -666,14 +666,14 @@ const url = `/api/tasks/${taskId}`
           const taskToArchive = tasks.find(t => t.id === taskId);
           if (taskToArchive) {
             setTasks(prev => prev.filter(t => t.id !== taskId));
-            setArchivedTasks(prev => [{ ...taskToArchive, archived: 1 }, ...prev]);
+            setArchivedTasks(prev => [{ ...taskToArchive, archived: true }, ...prev]);
           }
         } else {
           // Restoring from archived to active
           const taskToRestore = archivedTasks.find(t => t.id === taskId);
           if (taskToRestore) {
             setArchivedTasks(prev => prev.filter(t => t.id !== taskId));
-            setTasks(prev => [{ ...taskToRestore, archived: 0 }, ...prev]);
+            setTasks(prev => [{ ...taskToRestore, archived: false }, ...prev]);
           }
         }
         

@@ -95,8 +95,8 @@ export async function PUT(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { status, priority, assigneeIds, archived } = await request.json()
-    console.debug("PUT /api/tasks/:id", { id: taskId, body: { status, priority, assigneeIds, archived }, user: auth.user })
+    const { status, priority, assigneeIds, archived, dueDate } = await request.json()
+    console.debug("PUT /api/tasks/:id", { id: taskId, body: { status, priority, assigneeIds, archived, dueDate }, user: auth.user })
 
     // Fetch task using case-insensitive search but keep track of the REAL ID from the database
     const existingTask: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId])
@@ -126,6 +126,10 @@ export async function PUT(
 
       if (archived !== undefined) {
         return NextResponse.json({ error: "Employees cannot archive tasks" }, { status: 403 })
+      }
+
+      if (dueDate !== undefined) {
+        return NextResponse.json({ error: "Employees cannot update due date" }, { status: 403 })
       }
     } else if (role === "ADMIN" || role === "HEAD_ADMIN") {
       // ADMIN and HEAD_ADMIN can update priority and assignee.
@@ -168,6 +172,7 @@ export async function PUT(
       UPDATE tasks 
       SET status = COALESCE(?, status), 
           priority = COALESCE(?, priority),
+          dueDate = COALESCE(?, dueDate),
           completedAt = COALESCE(?, completedAt),
           delegatedById = ?,
           delegatedAt = ?,
@@ -178,6 +183,7 @@ export async function PUT(
     `, [
       dbStatus, 
       priority ? priority.toUpperCase() : null, 
+      dueDate ? new Date(dueDate).toISOString() : null,
       completedAt, 
       newDelegatedById, 
       newDelegatedAt, 
