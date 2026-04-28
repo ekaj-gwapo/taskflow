@@ -46,19 +46,19 @@ export async function GET(request: NextRequest) {
 
     // Format tasks to match expected structure
     const formattedTasks = await Promise.all(tasks.map(async (t) => {
-      const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [t.id]) as any[]
+      const actionSteps = await db.getAll("SELECT *, createdAt as \"createdAt\", updatedAt as \"updatedAt\" FROM action_steps WHERE taskId = ?", [t.id]) as any[]
       const actionStepsWithNotes = await Promise.all(actionSteps.map(async (as: any) => ({
         ...as,
-        notes: await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[]
+        notes: await db.getAll("SELECT *, createdAt as \"createdAt\", authorName as \"authorName\" FROM step_notes WHERE stepId = ?", [as.id]) as any[]
       })))
       const progressNotes = await db.getAll(`
-        SELECT pn.*, u.avatarUrl as authorAvatar 
+        SELECT pn.*, u.avatarUrl as authorAvatar, pn.createdAt as "createdAt", pn.updatedAt as "updatedAt", pn.authorName as "authorName"
         FROM progress_notes pn 
         LEFT JOIN users u ON pn.authorId = u.id 
         WHERE pn.taskId = ?
       `, [t.id]) as any[]
       const comments = await db.getAll(`
-        SELECT tc.*, u.avatarUrl as authorAvatar 
+        SELECT tc.*, u.avatarUrl as authorAvatar, tc.createdAt as "createdAt", tc.updatedAt as "updatedAt", tc.authorName as "authorName"
         FROM task_comments tc 
         LEFT JOIN users u ON tc.authorId = u.id 
         WHERE tc.taskId = ? 
@@ -87,7 +87,11 @@ export async function GET(request: NextRequest) {
         assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
         createdBy: t.createdById ? { id: t.createdById, name: t.creatorName, email: t.creatorEmail, role: t.creatorRole, avatar: t.creatorAvatar } : null,
         delegatedBy: t.delegatedById ? { id: t.delegatedById, name: t.delegatorName, email: t.delegatorEmail, role: t.delegatorRole, avatar: t.delegatorAvatar } : null,
-        delegatedAt: t.delegatedAt || null,
+        delegatedAt: t.delegatedAt || t.delegatedat || null,
+        createdAt: t.createdAt || t.createdat,
+        updatedAt: t.updatedAt || t.updatedat,
+        dueDate: t.dueDate || t.duedate,
+        completedAt: t.completedAt || t.completedat || null,
         actionSteps: actionStepsWithNotes,
         progressNotes,
         comments,

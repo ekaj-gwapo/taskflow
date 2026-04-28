@@ -15,26 +15,23 @@ export async function POST(
     }
 
     const { content } = await request.json()
+    const taskId = (await params).id?.toLowerCase()
 
-    if (!content) {
-      return NextResponse.json(
-        { error: "Content is required" },
-        { status: 400 }
-      )
+    console.log(`[COMMENTS_API] Adding comment to task ${taskId} by user ${auth.user!.id} (${auth.user!.role})`);
+
+    if (!content || content.trim() === "") {
+      return NextResponse.json({ error: "Content is required" }, { status: 400 })
     }
 
-    const taskId = (await params).id
-    
     // Verify task exists
     const task: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId]);
 
     if (!task) {
+      console.warn(`[COMMENTS_API] Task not found: ${taskId}`);
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
     // Permission check: admins/superadmins can add to any, employee only if they are assigned. 
-    // If the task represents a broad discussion, we could let any employee comment, 
-    // but sticking to standard access: employees can only comment on tasks they have access to.
     const role = auth.user!.role?.toUpperCase()
     if (role === "EMPLOYEE") {
       const assignment = await db.getOne(
@@ -43,8 +40,9 @@ export async function POST(
       )
 
       if (!assignment && task.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
+        console.warn(`[COMMENTS_API] Access denied for user ${auth.user!.id} on task ${taskId}. Not assigned.`);
         return NextResponse.json(
-          { error: "Access denied" },
+          { error: "Access denied. You must be assigned to this task to add comments." },
           { status: 403 }
         )
       }
@@ -65,7 +63,7 @@ export async function POST(
     ]);
 
     const comment: any = await db.getOne(`
-      SELECT tc.*, u.avatarUrl as authorAvatar
+      SELECT tc.*, u.avatarUrl as authorAvatar, tc.createdAt as \"createdAt\", tc.updatedAt as \"updatedAt\", tc.authorName as \"authorName\"
       FROM task_comments tc
       LEFT JOIN users u ON tc.authorId = u.id
       WHERE tc.id = ?

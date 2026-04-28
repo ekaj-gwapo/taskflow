@@ -12,10 +12,13 @@ export async function GET(request: NextRequest) {
     }
 
     const user = auth.user!
-    const notifications = await db.getAll(
+    const notifications = (await db.getAll(
       "SELECT * FROM notifications WHERE userId = ? ORDER BY createdAt DESC LIMIT 50",
       [user.id]
-    )
+    )).map((n: any) => ({
+      ...n,
+      createdAt: n.createdAt || n.createdat
+    }))
 
     return NextResponse.json({ notifications }, { status: 200 })
   } catch (error) {

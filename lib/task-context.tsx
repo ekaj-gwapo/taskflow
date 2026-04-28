@@ -393,13 +393,14 @@ const url = `/api/tasks/${taskId}`
         }
 
         const data = await response.json()
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === taskId
-              ? { ...t, comments: [...(t.comments || []), data.comment] }
-              : t
-          )
-        )
+        // Update both tasks and archivedTasks to ensure the UI stays in sync regardless of where the task is
+        const updateTask = (t: Task) => 
+          t.id.toLowerCase() === taskId.toLowerCase()
+            ? { ...t, comments: [...(t.comments || []), data.comment] }
+            : t
+
+        setTasks(prev => prev.map(updateTask))
+        setArchivedTasks(prev => prev.map(updateTask))
       } catch (error) {
         console.error("Add comment error:", error)
       }
@@ -431,13 +432,14 @@ const url = `/api/tasks/${taskId}`
         }
 
         const data = await response.json()
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === taskId
-              ? { ...t, progressNotes: [...(t.progressNotes || []), data.note] }
-              : t
-          )
-        )
+        // Update both tasks and archivedTasks to ensure the UI stays in sync regardless of where the task is
+        const updateTask = (t: Task) => 
+          t.id.toLowerCase() === taskId.toLowerCase()
+            ? { ...t, progressNotes: [...(t.progressNotes || []), data.note] }
+            : t
+
+        setTasks(prev => prev.map(updateTask))
+        setArchivedTasks(prev => prev.map(updateTask))
       } catch (error) {
         console.error("Add progress note error:", error)
       }

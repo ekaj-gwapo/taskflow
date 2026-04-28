@@ -289,9 +289,9 @@ export function ActionStepsSection({
                       </p>
                       <div className="flex flex-col gap-2">
                         {step.notes.map((note) => {
-                          const initials = note.authorName
+                          const initials = (note.authorName || (note as any).authorname || "User")
                             .split(" ")
-                            .map((n) => n[0])
+                            .map((n: string) => n[0])
                             .join("")
                           return (
                             <div key={note.id} className="flex gap-2">
@@ -303,12 +303,17 @@ export function ActionStepsSection({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs font-medium text-foreground">
-                                    {note.authorName}
+                                    {note.authorName || (note as any).authorname || "Anonymous"}
                                   </span>
                                   <span className="text-[10px] text-muted-foreground">
-                                    {formatDistanceToNow(new Date(note.createdAt), {
-                                      addSuffix: true,
-                                    })}
+                                    {(() => {
+                                      const dateVal = note.createdAt || (note as any).createdat;
+                                      try {
+                                        return dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : "recently";
+                                      } catch (e) {
+                                        return "recently";
+                                      }
+                                    })()}
                                   </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">

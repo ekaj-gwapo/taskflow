@@ -910,7 +910,7 @@ export function TaskDetailPanel({
                 ) : (
                   <div className="flex flex-col gap-4">
                     {task.comments.map((comment) => {
-                      const initials = comment.authorName.split(" ").map((n) => n[0]).join("")
+                      const initials = (comment.authorName || "User").split(" ").map((n: string) => n[0]).join("")
                       return (
                         <div key={comment.id} className="flex gap-3 group">
                           <Avatar className="h-8 w-8 shrink-0 border border-border/50 shadow-sm">
@@ -925,7 +925,14 @@ export function TaskDetailPanel({
                                 {comment.authorName}
                               </span>
                               <span className="text-[10px] font-medium text-muted-foreground">
-                                {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                                {(() => {
+                                  const dateVal = comment.createdAt || (comment as any).createdat;
+                                  try {
+                                    return dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : "recently";
+                                  } catch (e) {
+                                    return "recently";
+                                  }
+                                })()}
                               </span>
                             </div>
                             <div className="text-sm text-foreground/90 leading-relaxed bg-secondary/30 p-3 rounded-2xl rounded-tl-sm border border-border/30">
@@ -980,9 +987,9 @@ export function TaskDetailPanel({
                 ) : (
                   <div className="flex flex-col gap-4 pb-6 mt-2">
                     {task.progressNotes.map((note) => {
-                      const initials = note.authorName
+                      const initials = (note.authorName || (note as any).authorname || "User")
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join("")
                       return (
                         <div key={note.id} className="flex gap-3.5 group">
@@ -994,13 +1001,18 @@ export function TaskDetailPanel({
                           </Avatar>
                           <div className="flex-1 min-w-0 bg-secondary/20 p-3.5 rounded-2xl rounded-tl-sm border border-border/40 shadow-sm group-hover:shadow-md transition-all duration-300">
                             <div className="flex items-center justify-between gap-2 mb-1.5">
-                              <span className="text-xs font-bold text-foreground">
-                                {note.authorName}
+                              <span className="text-sm font-bold text-foreground">
+                                {note.authorName || (note as any).authorname || "Anonymous"}
                               </span>
                               <span className="text-[10px] font-medium text-muted-foreground bg-background px-2 py-0.5 rounded-full border border-border/50">
-                                {formatDistanceToNow(new Date(note.createdAt), {
-                                  addSuffix: true,
-                                })}
+                                {(() => {
+                                  const dateVal = note.createdAt || (note as any).createdat;
+                                  try {
+                                    return dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : "recently";
+                                  } catch (e) {
+                                    return "recently";
+                                  }
+                                })()}
                               </span>
                             </div>
                             <p className="text-sm text-foreground/80 leading-relaxed">

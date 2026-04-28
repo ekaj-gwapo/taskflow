@@ -45,12 +45,12 @@ export async function GET(
       }
     }
 
-    const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [taskId])
+    const actionSteps = await db.getAll("SELECT *, createdAt as \"createdAt\", updatedAt as \"updatedAt\" FROM action_steps WHERE taskId = ?", [taskId])
     const actionStepsWithNotes = await Promise.all((actionSteps as any[]).map(async (as: any) => ({
       ...as,
-      notes: await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id])
+      notes: await db.getAll("SELECT *, createdAt as \"createdAt\", authorName as \"authorName\" FROM step_notes WHERE stepId = ?", [as.id])
     })))
-    const progressNotes = await db.getAll("SELECT * FROM progress_notes WHERE taskId = ?", [taskId])
+    const progressNotes = await db.getAll("SELECT *, createdAt as \"createdAt\", updatedAt as \"updatedAt\", authorName as \"authorName\" FROM progress_notes WHERE taskId = ?", [taskId])
 
     const assigneesData = await db.getAll(`
       SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
@@ -59,20 +59,25 @@ export async function GET(
       WHERE ta.taskId = ?
     `, [taskId]) as any[]
 
-    const formattedTask = {
-      ...task,
-      status: task.status ? task.status.toLowerCase().replace('_', '-') : 'todo',
-      assignees: assigneesData,
-      assigneeId: assigneesData[0]?.id || null,
-      assigneeName: assigneesData[0]?.name || null,
-      assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
-      createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole } : null,
-      delegatedBy: task.delegatedById ? { id: task.delegatedById, name: task.delegatorName, email: task.delegatorEmail, role: task.delegatorRole, avatar: task.delegatorAvatar } : null,
-      actionSteps: actionStepsWithNotes,
-      progressNotes
-    }
-
-    return NextResponse.json({ task: formattedTask }, { status: 200 })
+    return NextResponse.json({ 
+      task: {
+        ...task,
+        status: task.status ? task.status.toLowerCase().replace('_', '-') : 'todo',
+        assignees: assigneesData,
+        assigneeId: assigneesData[0]?.id || null,
+        assigneeName: assigneesData[0]?.name || null,
+        assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
+        createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole } : null,
+        delegatedBy: task.delegatedById ? { id: task.delegatedById, name: task.delegatorName, email: task.delegatorEmail, role: task.delegatorRole, avatar: task.delegatorAvatar } : null,
+        actionSteps: actionStepsWithNotes,
+        progressNotes,
+        createdAt: task.createdAt || task.createdat,
+        updatedAt: task.updatedAt || task.updatedat,
+        dueDate: task.dueDate || task.duedate,
+        completedAt: task.completedAt || task.completedat || null,
+        delegatedAt: task.delegatedAt || task.delegatedat || null,
+      } 
+    }, { status: 200 })
   } catch (error) {
     console.error("Get task error:", error)
     return NextResponse.json(
@@ -323,9 +328,9 @@ export async function PUT(
     const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [realTaskId])
     const actionStepsWithNotes = await Promise.all((actionSteps as any[]).map(async (as: any) => ({
       ...as,
-      notes: await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id])
+      notes: await db.getAll("SELECT *, createdAt as \"createdAt\", authorName as \"authorName\" FROM step_notes WHERE stepId = ?", [as.id])
     })))
-    const progressNotes = await db.getAll("SELECT * FROM progress_notes WHERE taskId = ?", [realTaskId])
+    const progressNotes = await db.getAll("SELECT *, createdAt as \"createdAt\", updatedAt as \"updatedAt\", authorName as \"authorName\" FROM progress_notes WHERE taskId = ?", [realTaskId])
 
     const assigneesData = await db.getAll(`
       SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
