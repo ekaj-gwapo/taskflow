@@ -218,7 +218,7 @@ export async function PUT(
         }
 
         // Update assignments
-        await db.execute("DELETE FROM task_assignments WHERE LOWER(taskId) = LOWER(?)", [realTaskId]);
+        await db.execute("DELETE FROM task_assignments WHERE taskId = ?", [realTaskId]);
         for (const uId of assigneeIds) {
           await db.execute("INSERT INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?) ON CONFLICT (taskId, userId) DO UPDATE SET points = EXCLUDED.points", [realTaskId, uId, 0]);
         }
@@ -281,7 +281,7 @@ export async function PUT(
       if (finalPoints < 0) finalPoints = 0;
     }
     
-    await db.execute("UPDATE task_assignments SET points = ? WHERE LOWER(taskId) = LOWER(?)", [finalPoints, realTaskId]);
+    await db.execute("UPDATE task_assignments SET points = ? WHERE taskId = ?", [finalPoints, realTaskId]);
 
     if (status && dbStatus !== existingTask.status) {
       await logActivity({
@@ -373,7 +373,7 @@ export async function DELETE(
     const taskId = (await params).id?.toLowerCase()
     
     // Explicitly check if task is completed
-    const existingTask: any = await db.getOne("SELECT status, title FROM tasks WHERE LOWER(id) = ?", [taskId])
+    const existingTask: any = await db.getOne("SELECT status, title FROM tasks WHERE id = ?", [taskId])
     if (existingTask && existingTask.status === "COMPLETED") {
       return NextResponse.json(
         { error: "Completed tasks cannot be deleted" },

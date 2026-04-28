@@ -25,7 +25,7 @@ export async function POST(
 
     // Verify task exists and user can access it
     const taskId = (await params).id?.toLowerCase()
-    const task: any = await db.getOne("SELECT * FROM tasks WHERE LOWER(id) = ?", [taskId]);
+    const task: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId]);
 
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
