@@ -19,7 +19,7 @@ interface User {
   phone?: string
   location?: string
   avatar?: string
-  isActive?: number
+  isActive?: boolean
 }
 
 export function UserManagement() {
@@ -70,9 +70,9 @@ export function UserManagement() {
     }
   }
 
-  const toggleUserStatus = async (id: string, currentStatus: number = 1) => {
+  const toggleUserStatus = async (id: string, currentStatus: boolean = true) => {
     try {
-      const newStatus = currentStatus === 1 ? 0 : 1
+      const newStatus = !currentStatus
       const res = await fetch(`/api/users/${id}/status`, {
         method: "PUT",
         headers: {
@@ -82,7 +82,7 @@ export function UserManagement() {
         body: JSON.stringify({ isActive: newStatus })
       })
       if (res.ok) {
-        toast.success(`User ${newStatus === 1 ? 'activated' : 'deactivated'} successfully`)
+        toast.success(`User ${newStatus ? 'activated' : 'deactivated'} successfully`)
         fetchUsers()
       } else {
         const data = await res.json()
@@ -281,10 +281,10 @@ export function UserManagement() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filteredUsers.map((user) => (
-                      <tr key={user.id} className={`hover:bg-accent/30 transition-colors group ${user.isActive === 0 ? "opacity-60 bg-muted/30" : ""}`}>
+                      <tr key={user.id} className={`hover:bg-accent/30 transition-colors group ${user.isActive === false ? "opacity-60 bg-muted/30" : ""}`}>
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
-                            <Avatar className={`h-9 w-9 border border-border ${user.isActive === 0 ? "grayscale" : ""}`}>
+                            <Avatar className={`h-9 w-9 border border-border ${user.isActive === false ? "grayscale" : ""}`}>
                               {user.avatar ? (
                                 <AvatarImage src={user.avatar} />
                               ) : (
@@ -296,7 +296,7 @@ export function UserManagement() {
                             <div>
                               <div className="text-sm font-semibold flex items-center gap-2">
                                 {user.name}
-                                {user.isActive === 0 && (
+                                {user.isActive === false && (
                                   <Badge variant="destructive" className="h-5 px-1.5 py-0">Deactivated</Badge>
                                 )}
                               </div>
@@ -344,9 +344,9 @@ export function UserManagement() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => toggleUserStatus(user.id, user.isActive ?? 1)}
-                              className={`h-8 w-8 ${user.isActive === 0 ? 'text-green-600 bg-green-100 hover:bg-green-200' : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'}`}
-                              title={user.isActive === 0 ? "Activate User" : "Deactivate User"}
+                              onClick={() => toggleUserStatus(user.id, user.isActive ?? true)}
+                              className={`h-8 w-8 ${user.isActive === false ? 'text-green-600 bg-green-100 hover:bg-green-200' : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'}`}
+                              title={user.isActive === false ? "Activate User" : "Deactivate User"}
                             >
                               <Power className="h-4 w-4" />
                             </Button>
