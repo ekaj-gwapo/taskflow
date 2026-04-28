@@ -18,16 +18,16 @@ export async function GET(request: NextRequest) {
       const query = `
         SELECT al.*, t.title as taskTitle
         FROM activity_logs al
-        LEFT JOIN tasks t ON t.id::text = al."entityId"
-        WHERE (al."entityType" != 'TASK' OR (
-          t."assigneeId" = $1::uuid 
-          OR t."createdById" = $2::uuid
+        LEFT JOIN tasks t ON t.id::text = al.entityid
+        WHERE (al.entitytype != 'TASK' OR (
+          t.assigneeid = $1::uuid 
+          OR t.createdbyid = $2::uuid
           OR EXISTS (
             SELECT 1 FROM task_assignments ta 
-            WHERE ta."taskId" = t.id AND ta."userId" = $3::uuid
+            WHERE ta.taskid = t.id AND ta.userid = $3::uuid
           )
         ))
-        ORDER BY al."createdAt" DESC
+        ORDER BY al.createdat DESC
         LIMIT 100
       `;
       logs = await db.getAll(query, [auth.user!.id, auth.user!.id, auth.user!.id]) as any[];
@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
       const query = `
         SELECT al.*, t.title as taskTitle
         FROM activity_logs al
-        LEFT JOIN tasks t ON t.id::text = al."entityId"
-        ORDER BY al."createdAt" DESC
+        LEFT JOIN tasks t ON t.id::text = al.entityid
+        ORDER BY al.createdat DESC
         LIMIT 200
       `;
       logs = await db.getAll(query) as any[];
@@ -50,8 +50,12 @@ export async function GET(request: NextRequest) {
       // Handle potential case-sensitivity issues from different DB adapters
       const normalizedLog = {
         ...log,
+        entityId: log.entityId || log.entityid,
+        entityType: log.entityType || log.entitytype,
+        userId: log.userId || log.userid,
         userName: log.userName || log.username || 'System',
         createdAt: log.createdAt || log.createdat,
+        taskTitle: log.taskTitle || log.tasktitle,
         details: log.details || log.details_json // some adapters use different names
       };
 
