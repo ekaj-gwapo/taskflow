@@ -112,7 +112,7 @@ export interface Task {
     avatar?: string
   } | null
   delegatedAt?: string | null
-  archived: number
+  archived: boolean
   createdAt: string
   dueDate: string
   completedAt: string | null
@@ -153,7 +153,7 @@ export interface Notification {
   title: string
   message: string
   link?: string
-  isRead: number
+  isRead: boolean
   createdAt: string
 }
 

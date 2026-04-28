@@ -17,7 +17,7 @@ export function NotificationBell() {
   const { notifications, markNotificationAsRead, selectTask, setTargetSection } = useTaskContext()
   const [isOpen, setIsOpen] = useState(false)
 
-  const unreadCount = notifications.filter((n) => n.isRead === 0).length
+  const unreadCount = notifications.filter((n) => !n.isRead).length
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -66,7 +66,7 @@ export function NotificationBell() {
                   key={n.id}
                   className={cn(
                     "flex flex-col p-4 border-b last:border-b-0 hover:bg-accent/50 transition-colors cursor-pointer relative group",
-                    n.isRead === 0 ? "bg-primary/5" : "bg-background"
+                    !n.isRead ? "bg-primary/5" : "bg-background"
                   )}
                   onClick={() => {
                     markNotificationAsRead(n.id)
@@ -90,7 +90,7 @@ export function NotificationBell() {
               >
                 <div className="flex justify-between items-start gap-2 mb-1.5">
                   <span className="font-bold text-sm leading-tight">{n.title}</span>
-                  {n.isRead === 0 && (
+                  {!n.isRead && (
                     <div className={cn(
                       "h-3 w-3 rounded-full shrink-0 mt-1 shadow-sm",
                       n.type === "EXTENSION_REQUESTED" ? "bg-orange-500 animate-pulse" : "bg-primary"

@@ -166,7 +166,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!currentUser || notifications.length === 0) return
 
     notifications.forEach(n => {
-      if (n.isRead === 0 && !notifiedIds.has(n.id)) {
+      if (!n.isRead && !notifiedIds.has(n.id)) {
         notifiedIds.add(n.id)
         
         const isApproval = n.type === "EXTENSION_APPROVED"
@@ -663,14 +663,14 @@ const url = `/api/tasks/${taskId}`
           const taskToArchive = tasks.find(t => t.id === taskId);
           if (taskToArchive) {
             setTasks(prev => prev.filter(t => t.id !== taskId));
-            setArchivedTasks(prev => [{ ...taskToArchive, archived: 1 }, ...prev]);
+            setArchivedTasks(prev => [{ ...taskToArchive, archived: true }, ...prev]);
           }
         } else {
           // Restoring from archived to active
           const taskToRestore = archivedTasks.find(t => t.id === taskId);
           if (taskToRestore) {
             setArchivedTasks(prev => prev.filter(t => t.id !== taskId));
-            setTasks(prev => [{ ...taskToRestore, archived: 0 }, ...prev]);
+            setTasks(prev => [{ ...taskToRestore, archived: false }, ...prev]);
           }
         }
         
@@ -898,10 +898,10 @@ const url = `/api/tasks/${taskId}`
       if (response.ok) {
         if (id) {
           setNotifications((prev) =>
-            prev.map((n) => (n.id === id ? { ...n, isRead: 1 } : n))
+            prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
           )
         } else {
-          setNotifications((prev) => prev.map((n) => ({ ...n, isRead: 1 })))
+          setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
         }
       }
     } catch (error) {
