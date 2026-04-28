@@ -452,8 +452,8 @@ export function AdminDashboard() {
         (currentPriority === "all" || priority === currentPriority) &&
         (
           currentSearch === "" ||
-          t.title.toLowerCase().includes(currentSearch.toLowerCase()) ||
-          (t.assignees?.some(a => a.name.toLowerCase().includes(currentSearch.toLowerCase())) || 
+          t.title?.toLowerCase().includes(currentSearch.toLowerCase()) ||
+          (t.assignees?.some(a => a.name?.toLowerCase().includes(currentSearch.toLowerCase())) || 
            (t.assigneeName || "").toLowerCase().includes(currentSearch.toLowerCase()))
         )
       )

@@ -529,15 +529,17 @@ export function TaskDetailPanel({
                 <span
                   className={`text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm border transition-colors ${isOverdue ? "text-destructive bg-destructive/10 border-destructive/20" : "text-foreground bg-background border-border/50 group-hover:border-primary/30"}`}
                 >
-                  {task.dueDate.includes("T")
-                    ? new Date(task.dueDate).toLocaleString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })
-                    : task.dueDate}
-                  {isOverdue && " (Overdue)"}
+                  {task.dueDate 
+                    ? (task.dueDate.includes("T")
+                      ? new Date(task.dueDate).toLocaleString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })
+                      : task.dueDate)
+                    : "Due N/A"}
+                  {isOverdue && task.dueDate && " (Overdue)"}
                 </span>
               </div>
               {task.delegatedAt && (
