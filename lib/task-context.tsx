@@ -13,7 +13,6 @@ import {
   type ExtensionRequest,
   type WeeklyReport,
   type Notification,
-  initialReports,
 } from "./store"
 import { useEffect } from "react"
 import { toast } from "sonner"
@@ -307,10 +306,9 @@ const url = `/api/tasks/${taskId}`
         toast.success("Task status updated successfully.")
       } catch (error) {
         console.error("Update task status error:", error)
-        if (!toast) return // already toasted
       }
     },
-    [toast]
+    []
   )
 
   const updateTaskAssignees = useCallback(
@@ -371,7 +369,7 @@ const url = `/api/tasks/${taskId}`
       toast.error(error.message || "Failed to delete task.")
       return false
     }
-  }, [toast])
+  }, [])
 
   const addTaskComment = useCallback(
     async (taskId: string, content: string) => {
@@ -515,10 +513,9 @@ const url = `/api/tasks/${taskId}`
         toast.success("Action step status updated successfully.")
       } catch (error) {
         console.error("Update action step status error:", error)
-        if (!toast) return // already toasted
       }
     },
-    [toast]
+    []
   )
 
   const updateActionStepActed = useCallback(
@@ -558,7 +555,7 @@ const url = `/api/tasks/${taskId}`
         console.error("Update action step acted status error:", error)
       }
     },
-    [toast]
+    []
   )
 
   const deleteActionStep = useCallback(
