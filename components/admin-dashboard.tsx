@@ -109,7 +109,7 @@ function TaskRow({
         <p className="text-xs text-muted-foreground truncate">
           {task.description}
         </p>
-        
+
         {/* Task Progress Mini-bar */}
         <div className="mt-2.5 max-w-[200px] space-y-1.5">
           <div className="flex items-center justify-between text-[10px] font-bold text-primary/80 uppercase tracking-tighter">
@@ -184,36 +184,36 @@ function TaskRow({
       <div className="flex items-center justify-end gap-2 ml-4 w-16">
         {(currentUserRole === "SUPERADMIN" || currentUserRole === "HEAD_ADMIN" || taskCreatorId === currentUserId) && task.status === "todo" && (
           <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button
-              onClick={(e) => e.stopPropagation()}
-              className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
-              title="Delete Task"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete the task "{task.title}" and all its associated action required items and notes. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            <AlertDialogTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                title="Delete Task"
               >
-                Delete Task
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete the task "{task.title}" and all its associated action required items and notes. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete Task
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </div>
@@ -221,20 +221,20 @@ function TaskRow({
   )
 }
 
-function TeamProjectCard({ 
-  task, 
-  onSelect, 
-  isSelected, 
-  isNew 
-}: { 
-  task: Task; 
-  onSelect: () => void; 
-  isSelected: boolean; 
-  isNew?: boolean 
+function TeamProjectCard({
+  task,
+  onSelect,
+  isSelected,
+  isNew
+}: {
+  task: Task;
+  onSelect: () => void;
+  isSelected: boolean;
+  isNew?: boolean
 }) {
   const isOverdue = task.status !== "completed" && new Date(task.dueDate) < new Date()
   const displayAssignees = task.assignees && task.assignees.length > 0 ? task.assignees : []
-  
+
   return (
     <motion.div
       layout
@@ -245,70 +245,70 @@ function TeamProjectCard({
       className={cn(
         "cursor-pointer flex flex-col min-h-[160px] rounded-[2rem] border-2",
         isOverdue ? "border-destructive/50 shadow-[0_0_15px_-5px_rgba(239,68,68,0.2)]" :
-        task.status === "completed" ? "border-emerald-500/50 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]" :
-        task.status === "in-progress" ? "border-orange-500/50 shadow-[0_0_15px_-5px_rgba(249,115,22,0.2)]" :
-        "border-muted-foreground/20",
+          task.status === "completed" ? "border-emerald-500/50 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]" :
+            task.status === "in-progress" ? "border-orange-500/50 shadow-[0_0_15px_-5px_rgba(249,115,22,0.2)]" :
+              "border-muted-foreground/20",
         isSelected ? "ring-4 ring-primary/20 border-primary" : ""
       )}
       onClick={onSelect}
     >
       <Card className="h-full border-0 bg-transparent shadow-none">
-      <CardHeader className="pb-3 pt-4 px-4 shrink-0">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 pr-2">
-            <h3 className="text-base font-semibold text-foreground line-clamp-1">{task.title}</h3>
-            <div className="flex items-center gap-1.5 mt-1">
-              {isNew && (
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">NEW</span>
-              )}
-              {isOverdue && (
-                <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded font-medium">Overdue</span>
+        <CardHeader className="pb-3 pt-4 px-4 shrink-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 pr-2">
+              <h3 className="text-base font-semibold text-foreground line-clamp-1">{task.title}</h3>
+              <div className="flex items-center gap-1.5 mt-1">
+                {isNew && (
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">NEW</span>
+                )}
+                {isOverdue && (
+                  <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded font-medium">Overdue</span>
+                )}
+              </div>
+            </div>
+            <PriorityBadge priority={task.priority} />
+          </div>
+        </CardHeader>
+
+        <CardContent className="px-4 pb-4 flex flex-col flex-1">
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-4 flex-1">
+            {task.description || "No description provided."}
+          </p>
+
+          {/* Card Progress Bar */}
+          <div className="mb-4 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+              <span>Action Required Progress</span>
+              <span>{calculateTaskProgress(task)}%</span>
+            </div>
+            <Progress value={calculateTaskProgress(task)} className="h-1 bg-secondary" />
+          </div>
+
+          <div className="flex items-center justify-between mt-auto shrink-0 pt-2 border-t border-border/50">
+            <StatusBadge status={task.status} />
+
+            <div className="flex -space-x-2 overflow-hidden items-center ml-2">
+              {displayAssignees.slice(0, 4).map((a) => (
+                <Avatar key={a.id} className="inline-block h-7 w-7 shrink-0 rounded-full ring-2 ring-background border border-border/50">
+                  {a.avatar ? (
+                    <AvatarImage src={a.avatar} />
+                  ) : (
+                    <AvatarFallback className="text-[10px] bg-secondary text-foreground font-medium">
+                      {a.name.split(" ").map(n => n[0]).join("")}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              ))}
+              {displayAssignees.length > 4 && (
+                <div className="flex items-center justify-center h-7 w-7 shrink-0 rounded-full ring-2 ring-background bg-secondary text-[10px] font-medium text-foreground z-10 border border-border/50">
+                  +{displayAssignees.length - 4}
+                </div>
               )}
             </div>
           </div>
-          <PriorityBadge priority={task.priority} />
-        </div>
-      </CardHeader>
-      
-      <CardContent className="px-4 pb-4 flex flex-col flex-1">
-        <p className="text-xs text-muted-foreground line-clamp-2 mb-4 flex-1">
-          {task.description || "No description provided."}
-        </p>
-        
-        {/* Card Progress Bar */}
-        <div className="mb-4 space-y-1.5">
-          <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
-            <span>Action Required Progress</span>
-            <span>{calculateTaskProgress(task)}%</span>
-          </div>
-          <Progress value={calculateTaskProgress(task)} className="h-1 bg-secondary" />
-        </div>
-        
-        <div className="flex items-center justify-between mt-auto shrink-0 pt-2 border-t border-border/50">
-          <StatusBadge status={task.status} />
-          
-          <div className="flex -space-x-2 overflow-hidden items-center ml-2">
-            {displayAssignees.slice(0, 4).map((a) => (
-              <Avatar key={a.id} className="inline-block h-7 w-7 shrink-0 rounded-full ring-2 ring-background border border-border/50">
-                {a.avatar ? (
-                  <AvatarImage src={a.avatar} />
-                ) : (
-                  <AvatarFallback className="text-[10px] bg-secondary text-foreground font-medium">
-                    {a.name.split(" ").map(n => n[0]).join("")}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-            ))}
-            {displayAssignees.length > 4 && (
-              <div className="flex items-center justify-center h-7 w-7 shrink-0 rounded-full ring-2 ring-background bg-secondary text-[10px] font-medium text-foreground z-10 border border-border/50">
-                +{displayAssignees.length - 4}
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  </motion.div>
+        </CardContent>
+      </Card>
+    </motion.div>
   )
 }
 
@@ -325,12 +325,12 @@ export function AdminDashboard() {
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterPriority, setFilterPriority] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
-  
+
   // Independent filters for Team Projects
   const [teamFilterStatus, setTeamFilterStatus] = useState<string>("all")
   const [teamFilterPriority, setTeamFilterPriority] = useState<string>("all")
   const [teamSearchQuery, setTeamSearchQuery] = useState("")
-  
+
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
   const [myTaskTab, setMyTaskTab] = useState<"assigned" | "delegated">("assigned")
 
@@ -354,38 +354,38 @@ export function AdminDashboard() {
 
   // Track the newest completed task to trigger notifications
   const [lastCheckTime, setLastCheckTime] = useState(Date.now());
-  
+
   // Real-time notification effect
   useMemo(() => {
-    const newlyCompleted = tasks.filter(t => 
-      t.status === "completed" && 
-      t.completedAt && 
+    const newlyCompleted = tasks.filter(t =>
+      t.status === "completed" &&
+      t.completedAt &&
       new Date(t.completedAt).getTime() > lastCheckTime
     );
-    
+
     if (newlyCompleted.length > 0) {
       newlyCompleted.forEach(task => {
         toast.success(`🎉 Task Completed: ${task.title}`, {
           description: `By ${task.assigneeName}`
         });
-        
+
         try {
           const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
           if (AudioContextClass) {
             const audioCtx = new AudioContextClass();
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
-            
+
             oscillator.type = 'sine';
             oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
             oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-            
+
             gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-            
+
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-            
+
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 0.5);
           }
@@ -393,7 +393,7 @@ export function AdminDashboard() {
           console.error("Audio playback failed", e);
         }
       });
-      
+
       const newestTime = Math.max(...newlyCompleted.map(t => new Date(t.completedAt!).getTime()));
       setLastCheckTime(newestTime);
     }
@@ -436,7 +436,7 @@ export function AdminDashboard() {
     const result = currentTasksPool.filter((t) => {
       const status = t.status?.toLowerCase()
       const priority = t.priority?.toLowerCase()
-      
+
       let matchesStatus = false
       if (currentStatus === "all") {
         matchesStatus = true
@@ -453,8 +453,8 @@ export function AdminDashboard() {
         (
           currentSearch === "" ||
           t.title?.toLowerCase().includes(currentSearch.toLowerCase()) ||
-          (t.assignees?.some(a => a.name?.toLowerCase().includes(currentSearch.toLowerCase())) || 
-           (t.assigneeName || "").toLowerCase().includes(currentSearch.toLowerCase()))
+          (t.assignees?.some(a => a.name?.toLowerCase().includes(currentSearch.toLowerCase())) ||
+            (t.assigneeName || "").toLowerCase().includes(currentSearch.toLowerCase()))
         )
       )
     })
@@ -492,20 +492,20 @@ export function AdminDashboard() {
 
         {selectedEmployeeId === "my-tasks" && myTaskTab === "assigned" && (
           <motion.div layout>
-            <UrgentTasksSection 
-              tasks={tasks.filter(t => t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)} 
+            <UrgentTasksSection
+              tasks={tasks.filter(t => t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)}
               onSelectTask={(task) => {
                 selectTask(task.id);
                 markAsSeen(task.id);
                 markCompletedAsSeen(task.id);
-              }} 
+              }}
             />
           </motion.div>
         )}
 
         <AnimatePresence mode="wait">
           {!selectedEmployeeId && showCharts && (
-            <motion.div 
+            <motion.div
               key="charts-section"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -548,9 +548,9 @@ export function AdminDashboard() {
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <RecentlyCompletedTasks 
-                        onSelectTask={(task) => selectTask(task.id)} 
-                        onHide={() => setVisibleCharts(prev => ({ ...prev, recent: false }))} 
+                      <RecentlyCompletedTasks
+                        onSelectTask={(task) => selectTask(task.id)}
+                        onHide={() => setVisibleCharts(prev => ({ ...prev, recent: false }))}
                       />
                     </motion.div>
                   )}
@@ -573,8 +573,8 @@ export function AdminDashboard() {
         </AnimatePresence>
 
         {/* SEARCH, FILTER & TABLE AREA WITH DETAIL PANEL */}
-        <motion.div 
-          layout 
+        <motion.div
+          layout
           transition={{ duration: 0.5, ease: "easeInOut" }}
           className="flex gap-6 items-start"
         >
@@ -837,7 +837,7 @@ export function AdminDashboard() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
-                className="w-[380px] shrink-0 absolute lg:sticky top-[108px] right-0 lg:right-auto h-[calc(100vh-16rem)] z-10 filter drop-shadow-xl lg:drop-shadow-none"
+                className="w-[380px] shrink-0 absolute lg:sticky top-[108px] right-0 lg:right-auto h-[calc(100vh-15rem)] z-10 filter drop-shadow-xl lg:drop-shadow-none"
               >
                 <TaskDetailPanel
                   task={liveSelectedTask}
