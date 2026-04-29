@@ -837,7 +837,7 @@ export function AdminDashboard() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
-                className="w-[380px] shrink-0 absolute lg:sticky top-0 right-0 lg:right-auto h-[calc(100vh-12rem)] z-10 filter drop-shadow-xl lg:drop-shadow-none"
+                className="w-[380px] shrink-0 absolute lg:sticky top-[44px] right-0 lg:right-auto h-[calc(100vh-13rem)] z-10 filter drop-shadow-xl lg:drop-shadow-none"
               >
                 <TaskDetailPanel
                   task={liveSelectedTask}

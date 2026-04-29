@@ -1388,8 +1388,8 @@ export function TaskDetailPanel({
         </div>
       </div>
 
-      {/* Note Input — only for employees (via showNoteInput) and admin assignees. head_admin is excluded even if assigned. */}
-      {task.status === "in-progress" && isAssignee && (showNoteInput || currentRole === "admin") && (
+      {/* Note Input — only shows when Progress Notes section is expanded */}
+      {isProgressNotesExpanded && task.status === "in-progress" && isAssignee && (showNoteInput || currentRole === "admin") && (
 
         <div className="p-5 border-t border-border/50 bg-background/60 backdrop-blur-md">
           {selectedFile && (

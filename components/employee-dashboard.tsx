@@ -428,7 +428,7 @@ export function EmployeeDashboard() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
-            className="hidden lg:block w-[380px] shrink-0 filter drop-shadow-xl lg:drop-shadow-none"
+            className="hidden lg:block w-[380px] shrink-0 sticky top-[44px] self-start h-[calc(100vh-13rem)] filter drop-shadow-xl lg:drop-shadow-none"
           >
             <TaskDetailPanel
               task={tasks.find((t) => t.id === selectedTask.id) || selectedTask}
