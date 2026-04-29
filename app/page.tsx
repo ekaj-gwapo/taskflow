@@ -1,326 +1,280 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowRight, Lock, Eye, FileText, CheckCircle2, UserCircle2, MonitorCheck } from 'lucide-react'
-import { cn } from "@/lib/utils"
-
-function Confetti() {
-  const [particles] = useState(() =>
-    Array.from({ length: 12 }).map((_, i) => ({
-      id: i,
-      dx: `${Math.random() * 120 - 60}px`,
-      dy: `${Math.random() * 120 - 60}px`,
-      color: ['bg-red-400', 'bg-blue-400', 'bg-yellow-400', 'bg-emerald-400', 'bg-pink-400', 'bg-purple-400'][Math.floor(Math.random() * 6)],
-      delay: `${Math.random() * 0.2}s`
-    }))
-  )
-
-  return (
-    <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center overflow-visible">
-      {particles.map(p => (
-        <div
-          key={p.id}
-          className={cn("confetti-particle", p.color)}
-          style={{
-            '--dx': p.dx,
-            '--dy': p.dy,
-            animationDelay: p.delay
-          } as any}
-        />
-      ))}
-    </div>
-  )
-}
-
-function FlippingLogo({ src, backSrc, alt }: { src: string; backSrc: string; alt: string }) {
-  const [isHovered, setIsHovered] = useState(false)
-
-  return (
-    <div
-      className="group w-16 h-16 [perspective:1000px] cursor-pointer relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {isHovered && <Confetti key={Date.now()} />}
-      <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-lg hover:shadow-2xl rounded-full hover:-translate-y-1">
-        {/* Front Face */}
-        <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center p-1">
-          <Image src={src} alt={alt} width={64} height={64} className="object-contain w-full h-full" />
-        </div>
-
-        {/* Back Face */}
-        <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden">
-          <div className="w-full h-full rounded-full overflow-hidden">
-            <Image
-              src={backSrc}
-              alt={`${alt} Back`}
-              width={64}
-              height={64}
-              className="object-cover w-full h-full"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function HeroConfetti() {
-  return (
-    <div className="absolute inset-0 z-10 pointer-events-none">
-      <div className="confetti-particle bg-red-400" style={{ '--dx': '30px', '--dy': '-40px' } as any}></div>
-      <div className="confetti-particle bg-blue-400" style={{ '--dx': '-35px', '--dy': '-20px' } as any}></div>
-      <div className="confetti-particle bg-yellow-400" style={{ '--dx': '20px', '--dy': '35px' } as any}></div>
-      <div className="confetti-particle bg-emerald-400" style={{ '--dx': '-25px', '--dy': '25px' } as any}></div>
-      <div className="confetti-particle bg-pink-400" style={{ '--dx': '10px', '--dy': '-45px' } as any}></div>
-      <div className="confetti-particle bg-purple-400" style={{ '--dx': '-10px', '--dy': '40px' } as any}></div>
-    </div>
-  )
-}
+import './landing.css'
 
 export default function Home() {
   const router = useRouter()
+  const scrollLineRef = useRef<HTMLDivElement>(null)
+  const navRef = useRef<HTMLElement>(null)
+  const [activeStep, setActiveStep] = useState(0)
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem("token")) {
-      router.replace("/dashboard")
+    if (typeof window !== 'undefined' && localStorage.getItem('token')) {
+      router.replace('/dashboard')
     }
   }, [router])
 
-  return (
-    <div className="min-h-screen bg-[#f9f6f0] relative">
+  useEffect(() => {
+    const onScroll = () => {
+      const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100
+      if (scrollLineRef.current) scrollLineRef.current.style.width = scrolled + '%'
+      if (navRef.current) navRef.current.style.background = window.scrollY > 50 ? 'rgba(6,12,7,0.95)' : 'rgba(6,12,7,0.7)'
+    }
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
-      {/* Global Watermark */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden flex flex-col justify-around z-0 opacity-[0.03]">
-        <div className="animate-watermark text-[8rem] font-black text-emerald-950 select-none">
-          {'TRANSACTION HUB • '.repeat(10)}
+  useEffect(() => {
+    const reveals = document.querySelectorAll('.lp-reveal')
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target) } })
+    }, { threshold: 0.15 })
+    reveals.forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
+
+  return (
+    <div className="lp-root">
+      <div className="lp-noise" />
+      <div className="lp-grid" />
+      <div className="lp-scroll-line" ref={scrollLineRef} />
+
+      {/* NAV */}
+      <nav className="lp-nav" ref={navRef}>
+        <a href="#" className="lp-logo">
+          <div className="lp-logo-icon">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="#060c07">
+              <rect x="2" y="2" width="5" height="5" rx="1.5"/>
+              <rect x="9" y="2" width="5" height="5" rx="1.5"/>
+              <rect x="2" y="9" width="5" height="5" rx="1.5"/>
+              <rect x="9" y="9" width="5" height="5" rx="1.5" opacity="0.4"/>
+            </svg>
+          </div>
+          TaskFlow
+        </a>
+        <ul className="lp-nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><Link href="/auth/login" className="lp-nav-cta">Get started free</Link></li>
+        </ul>
+      </nav>
+
+      {/* HERO */}
+      <section className="lp-hero">
+        <div className="lp-hero-glow" />
+        <div className="lp-badge"><span className="lp-badge-dot" /> Now in public beta — free to try</div>
+        <h1 className="lp-h1">Monitor tasks.<br/>Drive <span className="accent">results</span>.</h1>
+        <p className="lp-sub">Assign, track, and complete work with total clarity. Real-time visibility across every task, every team, every deadline.</p>
+        <div className="lp-cta-group">
+          <Link href="/auth/login" className="lp-btn-primary">
+            Start for free
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 7h9M8 3.5L11.5 7 8 10.5"/></svg>
+          </Link>
+          <a href="#features" className="lp-btn-ghost">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3,2 11,7 3,12"/></svg>
+            See how it works
+          </a>
         </div>
-        <div className="animate-watermark-reverse text-[8rem] font-black text-emerald-950 select-none">
-          {'CHECKS ISSUED REPORTS • '.repeat(10)}
+
+        {/* Dashboard Preview */}
+        <div className="lp-preview-wrap">
+          <div className="lp-preview-frame">
+            <div className="lp-frame-bar">
+              <div className="lp-frame-dot" style={{background:'#ff5f57'}}/>
+              <div className="lp-frame-dot" style={{background:'#febc2e'}}/>
+              <div className="lp-frame-dot" style={{background:'#28c840'}}/>
+              <span className="lp-frame-title">TaskFlow — Project Overview</span>
+            </div>
+            <div className="lp-dash-inner">
+              <div className="lp-dash-sidebar">
+                {[['Dashboard','M2 4h12M2 4h12','active'],['My Tasks','M2 4h12M2 8h8M2 12h10',''],['Team','',''],['Reports','M2 12l3-4 3 2 3-5 3 3','']].map(([label,,cls],i) => (
+                  <div key={i} className={`lp-dash-nav-item${cls ? ' active' : ''}`}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                      {i===0 && <><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></>}
+                      {i===1 && <path d="M2 4h12M2 8h8M2 12h10"/>}
+                      {i===2 && <><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/></>}
+                      {i===3 && <path d="M2 12l3-4 3 2 3-5 3 3"/>}
+                    </svg>
+                    {label}
+                  </div>
+                ))}
+              </div>
+              <div className="lp-dash-main">
+                <div className="lp-stats-row">
+                  <div className="lp-stat-card"><div className="lp-stat-label">Total Tasks</div><div className="lp-stat-val">48</div></div>
+                  <div className="lp-stat-card"><div className="lp-stat-label">In Progress</div><div className="lp-stat-val green">12</div></div>
+                  <div className="lp-stat-card"><div className="lp-stat-label">Completed</div><div className="lp-stat-val">31</div></div>
+                  <div className="lp-stat-card"><div className="lp-stat-label">Overdue</div><div className="lp-stat-val red">3</div></div>
+                </div>
+                <table className="lp-task-table">
+                  <thead><tr><th>Task</th><th>Status</th><th>Priority</th><th>Progress</th></tr></thead>
+                  <tbody>
+                    {[
+                      ['Design system tokens','done','Done',100],
+                      ['API integration','inprogress','In Progress',60],
+                      ['QA testing sprint','review','In Review',80],
+                      ['Deploy to production','todo','To Do',0],
+                    ].map(([name,cls,label,pct]) => (
+                      <tr key={name as string}>
+                        <td className="lp-task-name">{name}</td>
+                        <td><span className={`lp-badge-pill lp-badge-${cls}`}>{label}</span></td>
+                        <td><span style={{width:7,height:7,borderRadius:'50%',display:'inline-block',background:cls==='review'?'#ef4444':cls==='inprogress'?'#f59e0b':'#22c55e'}}/></td>
+                        <td><div className="lp-pbar-wrap"><div className="lp-pbar-fill" style={{width:`${pct}%`}}/></div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="animate-watermark text-[8rem] font-black text-emerald-950 select-none">
-          {'EFFICIENT & SECURE • '.repeat(10)}
+      </section>
+
+      {/* STATS */}
+      <div className="lp-stats-section">
+        <div className="lp-stats-inner">
+          {[['98%','On-time delivery rate'],['12k','Teams using TaskFlow'],['3.4M','Tasks completed'],['4.9','Average user rating']].map(([num,label],i) => (
+            <div key={i} className={`lp-big-stat lp-reveal${i>0?' lp-reveal-d'+i:''}`}>
+              <div className="lp-big-stat-num">{num}</div>
+              <div className="lp-big-stat-label">{label}</div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="absolute top-0 left-0 right-0 z-50 bg-transparent">
-        <div className="w-full px-8 py-6 flex justify-between items-center">
-
-          {/* LEFT SIDE */}
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-              T
-            </div>
-
-            <span className="text-2xl md:text-3xl font-semibold text-white tracking-tight drop-shadow-sm">
-              Task Tracker
-            </span>
-          </div>
-
-          {/* RIGHT SIDE */}
-          <div className="flex items-center gap-6">
-
-            <div className="flex items-center gap-4">
-
-              <div className="flex items-center gap-4">
-                <FlippingLogo src="/logos/logo4.png" backSrc="/logos/logo-back1.jpg" alt="Logo 4" />
-                <FlippingLogo src="/logos/logo3.jpg" backSrc="/logos/logo-back2.jpg" alt="Logo 3" />
-                <FlippingLogo src="/logos/logo1.jpg" backSrc="/logos/logo-back3.jpg" alt="Logo 1" />
-                <FlippingLogo src="/logos/logo2.png" backSrc="/logos/logo-back4.jpg" alt="Logo 2" />
+      {/* FEATURES */}
+      <div className="lp-features-section" id="features">
+        <div className="lp-features-head lp-reveal">
+          <div className="lp-section-label">Features</div>
+          <h2 className="lp-h2">Everything you need<br/>to stay in control</h2>
+          <p className="lp-section-sub">From assignment to delivery, TaskFlow gives you full visibility without the noise.</p>
+        </div>
+        <div className="lp-features-grid">
+          {[
+            ['Real-time monitoring','Track every task as it moves through stages. Get instant updates when status changes or a deadline shifts.','M12 2a10 10 0 100 20 10 10 0 000-20zM12 6v6l4 2'],
+            ['Assignee workload','See who\'s overloaded at a glance. Balance tasks across your team with a clear picture of capacity.','M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75'],
+            ['Priority scoring','Automatically surface critical items so your team always knows what matters most.','M18 20V10M12 20V4M6 20v-6'],
+            ['Audit trail','Full activity log of every change — who moved it, when, and why. Complete accountability.','M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8'],
+            ['Deadline alerts','Automatic flags for overdue and approaching tasks. Never miss a deadline again.','M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01'],
+            ['Kanban + list views','Switch between drag-and-drop Kanban and detailed list view. Work the way that suits your team.','M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z'],
+          ].map(([title,desc,path],i) => (
+            <div key={i} className={`lp-feature-card lp-reveal${i%3>0?' lp-reveal-d'+(i%3):''}`}>
+              <div className="lp-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={path as string}/>
+                </svg>
               </div>
-
+              <div className="lp-feature-title">{title}</div>
+              <div className="lp-feature-desc">{desc}</div>
             </div>
-
-            <Link href="/auth/login">
-              <Button className="bg-white text-emerald-700 hover:bg-white/90 px-6 py-3 text-base font-bold shadow-xl border-none">
-                Login
-              </Button>
-            </Link>
-
-          </div>
-
+          ))}
         </div>
-      </nav>
+      </div>
 
-      {/* Hero Section */}
-      <section className="relative w-full py-32 text-center overflow-hidden">
-
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/logos/bg.jpg')" }}
-        />
-
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-white backdrop-blur-sm" />
-
-        <div className="relative z-10 max-w-4xl mx-auto px-6 space-y-8">
-
-          <h1 className="text-5xl md:text-6xl font-bold text-emerald-900 leading-tight tracking-tight">
-            Checked & Issued Reports System
-          </h1>
-
-          <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
-            Track, review, and manage all checked and issued items in one place. Generate accurate reports and monitor transaction history with real-time updates.
-          </p>
-
-          <Link href="/auth/login" className="inline-block mt-4">
-            <div className="relative inline-flex overflow-hidden rounded-[16px] p-[3px] shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:shadow-[0_0_25px_rgba(52,211,153,0.5)] transition-shadow">
-              <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_30%,#10b981_70%,#a7f3d0_100%)]" />
-              <span className="relative inline-flex h-full w-full items-center justify-center rounded-[13px] bg-emerald-600 hover:bg-emerald-700 text-white gap-2 px-8 py-4 text-lg font-bold transition-colors">
-                Login Now <ArrowRight className="w-5 h-5" />
-              </span>
+      {/* HOW IT WORKS */}
+      <div id="how" style={{overflow:'hidden'}}>
+        <div className="lp-workflow-section">
+          <div className="lp-reveal">
+            <div className="lp-section-label">How it works</div>
+            <h2 className="lp-h2">Built for the way<br/>teams actually work</h2>
+            <div style={{marginTop:40}}>
+              {[
+                ['Create and assign tasks','Add tasks in seconds. Assign to team members, set priority levels, and define clear deadlines.'],
+                ['Monitor in real time','Watch tasks move through stages live. Your dashboard updates the moment something changes.'],
+                ['Get alerted before it\'s late','Smart alerts surface overdue tasks and blocked work before they become problems.'],
+                ['Report and improve','Review completion rates, team workload, and bottlenecks. Build faster every sprint.'],
+              ].map(([title,desc],i) => (
+                <div key={i} className={`lp-workflow-step${activeStep===i?' active':''}`} onClick={()=>setActiveStep(i)}>
+                  <div className="lp-step-num">0{i+1}</div>
+                  <div>
+                    <div className="lp-step-title">{title}</div>
+                    <div className="lp-step-desc">{desc}</div>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
+          <div className="lp-reveal lp-reveal-d2">
+            <div className="lp-workflow-visual">
+              <div style={{fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:6}}>Active tasks — Sprint 4</div>
+              {[
+                ['User auth redesign','Design','inprogress','In Progress','#166534','#4ade80','JK','#1e3a5f','#93c5fd','RS'],
+                ['Payment gateway','Backend','review','In Review','#4a1942','#f0abfc','ML',null,null,null],
+                ['Email notifications','Full-stack','done','Done','#451a03','#fdba74','TC','#166534','#4ade80','JK'],
+                ['Mobile responsive QA','QA','todo','Blocked','#1e3a5f','#93c5fd','RS',null,null,null],
+              ].map(([name,team,cls,label,bg1,c1,a1,bg2,c2,a2]) => (
+                <div key={name as string} className="lp-task-row">
+                  <div>
+                    <div className="lp-task-info-name">{name}</div>
+                    <div className="lp-task-info-assignee">Assigned to {team}</div>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <span className={`lp-badge-pill lp-badge-${cls}`}>{label}</span>
+                    <div style={{display:'flex'}}>
+                      <div className="lp-avatar" style={{background:bg1 as string,color:c1 as string}}>{a1}</div>
+                      {a2 && <div className="lp-avatar" style={{background:bg2 as string,color:c2 as string}}>{a2}</div>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* PRICING */}
+      <div className="lp-pricing-section" id="pricing">
+        <div style={{textAlign:'center'}} className="lp-reveal">
+          <div className="lp-section-label" style={{justifyContent:'center'}}>Pricing</div>
+          <h2 className="lp-h2">Simple, transparent pricing</h2>
+          <p className="lp-section-sub" style={{margin:'0 auto'}}>No hidden fees. Cancel anytime. Scale as your team grows.</p>
+        </div>
+        <div className="lp-pricing-grid">
+          {[
+            {name:'Starter',price:'$0',sub:'/mo',desc:'Perfect for solo developers and small teams.',features:['Up to 3 team members','50 tasks per month','Basic dashboard','Email alerts'],cta:'Get started',featured:false},
+            {name:'Pro',price:'$18',sub:'/mo',desc:'For teams that move fast and need full visibility.',features:['Up to 25 team members','Unlimited tasks','Full monitoring dashboard','Kanban + list views','Audit trail & reporting','Priority support'],cta:'Start free trial',featured:true,badge:'Most popular'},
+            {name:'Enterprise',price:'Custom',sub:'',desc:'For organizations that need total control and SLA.',features:['Unlimited members','SSO & advanced roles','Custom integrations','Dedicated support','SLA guarantee'],cta:'Contact sales',featured:false},
+          ].map((plan,i) => (
+            <div key={i} className={`lp-pricing-card lp-reveal${i>0?' lp-reveal-d'+i:''}${plan.featured?' featured':''}`}>
+              {plan.badge && <div className="lp-plan-badge">{plan.badge}</div>}
+              <div className="lp-plan-name">{plan.name}</div>
+              <div className="lp-plan-price">{plan.price}{plan.sub && <span>{plan.sub}</span>}</div>
+              <div className="lp-plan-desc">{plan.desc}</div>
+              <ul className="lp-plan-features">{plan.features.map(f => <li key={f}>{f}</li>)}</ul>
+              <Link href="/auth/login" className={plan.featured ? 'lp-btn-primary' : 'lp-btn-ghost'} style={{width:'100%',justifyContent:'center'}}>{plan.cta}</Link>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <section className="lp-cta-section">
+        <div className="lp-cta-glow" />
+        <div className="lp-reveal">
+          <div className="lp-section-label" style={{justifyContent:'center'}}>Get started</div>
+          <h2 className="lp-h2">Your team is ready.<br/>Are you?</h2>
+          <p style={{fontSize:17,fontWeight:300,color:'var(--text2)',marginBottom:40}}>Start tracking in minutes. No credit card required.</p>
+          <Link href="/auth/login" className="lp-btn-primary" style={{fontSize:16,padding:'16px 40px'}}>
+            Create free account
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 7h9M8 3.5L11.5 7 8 10.5"/></svg>
           </Link>
-
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="bg-white py-28">
-        <div className="max-w-7xl mx-auto px-6">
-
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-emerald-950 tracking-tight">
-              Designed for Efficiency
-            </h2>
-
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Tailored interfaces for different roles to streamline your workflow and ensure data accuracy.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-10">
-
-            {/* Entry User Card */}
-            <Card className="border-emerald-100 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden group bg-white">
-              <div className="h-2 w-full bg-emerald-600" />
-
-              <CardHeader className="pb-4 pt-8 px-8">
-
-                <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-emerald-100 transition-all duration-300 shadow-sm border border-emerald-100">
-                  <FileText className="w-7 h-7 text-emerald-600" />
-                </div>
-
-                <CardTitle className="text-2xl text-emerald-950 font-bold">
-                  Data Entry User
-                </CardTitle>
-
-                <CardDescription className="text-base mt-2">
-                  Specialized interface to input and manage transaction data securely.
-                </CardDescription>
-
-              </CardHeader>
-
-              <CardContent className="px-8 pb-8 space-y-6 text-gray-700">
-
-                <div className="space-y-4">
-
-                  <h4 className="font-semibold text-gray-900 border-b border-emerald-50 pb-2">
-                    Key Data Entry Capabilities
-                  </h4>
-
-                  <ul className="space-y-3">
-
-                    {[
-                      'Bank name, payee, and complete address',
-                      'DV number and detailed particulars',
-                      'Precise amounts, dates, and account codes',
-                      'Comprehensive debit/credit information',
-                      'Control numbers and additional remarks'
-                    ].map((item, i) => (
-
-                      <li key={i} className="flex items-start gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                        <span className="text-gray-600 leading-snug">{item}</span>
-                      </li>
-
-                    ))}
-
-                  </ul>
-                </div>
-
-                <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 mt-6 group-hover:bg-emerald-50 transition-colors">
-                  <p className="text-sm font-medium text-emerald-900 text-center">
-                    Secure and organized data management with comprehensive validation.
-                  </p>
-                </div>
-
-              </CardContent>
-            </Card>
-
-            {/* Viewer Card */}
-            <Card className="border-emerald-100 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden group bg-white">
-              <div className="h-2 w-full bg-emerald-500" />
-
-              <CardHeader className="pb-4 pt-8 px-8">
-
-                <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-emerald-100 transition-all duration-300 shadow-sm border border-emerald-100">
-                  <Eye className="w-7 h-7 text-emerald-600" />
-                </div>
-
-                <CardTitle className="text-2xl text-emerald-950 font-bold">
-                  Viewer User
-                </CardTitle>
-
-                <CardDescription className="text-base mt-2">
-                  Powerful tools to access, analyze, and report transaction records.
-                </CardDescription>
-
-              </CardHeader>
-
-              <CardContent className="px-8 pb-8 space-y-6 text-gray-700">
-
-                <div className="space-y-4">
-
-                  <h4 className="font-semibold text-gray-900 border-b border-emerald-50 pb-2">
-                    Analysis & Filtering Tools
-                  </h4>
-
-                  <ul className="space-y-3">
-
-                    {[
-                      'Instant access to all transaction data',
-                      'Dynamic sorting by bank name and fund',
-                      'Chronological sorting by date',
-                      'Categorized sorting by account code',
-                      'Real-time data synchronization'
-                    ].map((item, i) => (
-
-                      <li key={i} className="flex items-start gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                        <span className="text-gray-600 leading-snug">{item}</span>
-                      </li>
-
-                    ))}
-
-                  </ul>
-                </div>
-
-                <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 mt-6 group-hover:bg-emerald-50 transition-colors">
-                  <p className="text-sm font-medium text-emerald-900 text-center">
-                    Advanced reporting capabilities for better decision making.
-                  </p>
-                </div>
-
-              </CardContent>
-            </Card>
-
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-emerald-100 bg-white py-10">
-        <div className="max-w-7xl mx-auto px-6 text-center text-gray-500 text-sm">
-          <p>© 2026 Transaction Hub. Built for modern financial workflows.</p>
-        </div>
+      {/* FOOTER */}
+      <footer className="lp-footer">
+        <div className="lp-footer-text">© 2025 TaskFlow. All rights reserved.</div>
+        <ul className="lp-footer-links">
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+          <li><a href="#">Docs</a></li>
+          <li><a href="#">Status</a></li>
+        </ul>
       </footer>
-
     </div>
   )
 }

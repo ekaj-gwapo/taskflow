@@ -272,28 +272,31 @@ export function EmployeeDashboard() {
               />
             )}
 
-            {/* Task Filter Tabs */}
-            <Tabs value={filterStatus} onValueChange={setFilterStatus} className="w-full">
+            {/* Task Filter Tabs + Detail Panel side by side */}
+            <div className="flex gap-6 items-start">
+              <div className="flex-1 min-w-0 rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl overflow-hidden min-h-[400px]">
+              <Tabs value={filterStatus} onValueChange={setFilterStatus} className="flex flex-col h-full">
               {selectedCategory !== "profile" && (
-                <div className="flex items-center justify-between mb-2">
-                  <TabsList className="bg-secondary border border-border h-9">
-                    <TabsTrigger value="all" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground">
+                <div className="flex items-center px-5 py-3 border-b border-border/50 bg-muted/30 shrink-0">
+                  <TabsList className="bg-transparent border-0 h-auto p-0 gap-1">
+                    <TabsTrigger value="all" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md px-3 py-1.5">
                       All ({currentCategoryTasks.length})
                     </TabsTrigger>
-                    <TabsTrigger value="todo" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground">
+                    <TabsTrigger value="todo" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md px-3 py-1.5">
                       To Do ({todo})
                     </TabsTrigger>
-                    <TabsTrigger value="in-progress" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground">
+                    <TabsTrigger value="in-progress" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md px-3 py-1.5">
                       In Progress ({inProgress})
                     </TabsTrigger>
-                    <TabsTrigger value="completed" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground">
+                    <TabsTrigger value="completed" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md px-3 py-1.5">
                       Completed ({completed})
                     </TabsTrigger>
                   </TabsList>
                 </div>
               )}
 
-              <TabsContent value={filterStatus} className="mt-0">
+              <div className="flex-1 overflow-y-auto">
+              <TabsContent value={filterStatus} className="mt-0 p-4">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={selectedCategory + filterStatus}
@@ -412,36 +415,37 @@ export function EmployeeDashboard() {
                     )}
                   </motion.div>
                 </AnimatePresence>
-              </TabsContent>
+                 </TabsContent>
+              </div>
               </Tabs>
+              </div>
+              {/* Detail Panel — only beside the task list, SmartBriefing stays full width */}
+              <AnimatePresence>
+                {selectedTask && (
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2 }}
+                    className="hidden lg:block w-[380px] shrink-0 sticky top-[108px] self-start h-[calc(100vh-14rem)] filter drop-shadow-xl lg:drop-shadow-none"
+                  >
+                    <TaskDetailPanel
+                      task={tasks.find((t) => t.id === selectedTask.id) || selectedTask}
+                      onClose={() => { setSelectedTask(null); selectTask(null); }}
+                      showStatusControl
+                      showNoteInput
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
 
-      {/* Detail Panel */}
-      <AnimatePresence>
-        {selectedTask && (
-          <motion.div
-            layout
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2 }}
-            className="hidden lg:block w-[380px] shrink-0 sticky top-[44px] self-start h-[calc(100vh-13rem)] filter drop-shadow-xl lg:drop-shadow-none"
-          >
-            <TaskDetailPanel
-              task={tasks.find((t) => t.id === selectedTask.id) || selectedTask}
-              onClose={() => {
-                setSelectedTask(null);
-                selectTask(null);
-              }}
-              showStatusControl
-              showNoteInput
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </div>
   )
 }
