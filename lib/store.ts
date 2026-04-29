@@ -10,6 +10,11 @@ export interface User {
   location?: string
   theme?: string
   mode?: "light" | "dark"
+  emailVerified?: boolean
+  notifyOnAssign?: boolean
+  notifyOnDeadline?: boolean
+  notifyOnDiscussion?: boolean
+  notifyOnExtension?: boolean
 }
 
 export type TaskStatus = "todo" | "in-progress" | "completed"

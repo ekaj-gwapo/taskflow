@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user: any = await db.getOne('SELECT id, name, email, password, role, phone, location, avatarUrl as avatar, theme, mode, isActive as "isActive", createdAt as "createdAt", updatedAt as "updatedAt" FROM users WHERE email = ?', [email]);
+    const user: any = await db.getOne('SELECT id, name, email, password, role, phone, location, avatarUrl as avatar, theme, mode, "emailVerified", "notifyOnAssign", "notifyOnDeadline", "notifyOnDiscussion", "notifyOnExtension", isActive as "isActive", createdAt as "createdAt", updatedAt as "updatedAt" FROM users WHERE email = ?', [email]);
 
     if (!user) {
       return NextResponse.json(

@@ -12,6 +12,7 @@ import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import Cropper, { Point, Area } from "react-easy-crop"
 import { toast } from "sonner"
+import { EmailSettingsCard } from "./email-settings-card"
 
 interface ProfileDialogProps {
   open: boolean
@@ -206,12 +207,18 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
 
                 </div>
 
-              <Button onClick={handleSave} disabled={loading} className="w-full mt-2">
-                <Save className="h-4 w-4 mr-2" />
-                {loading ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          ) : (
+                <Button onClick={handleSave} disabled={loading} className="w-full mt-2">
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? "Saving..." : "Save Changes"}
+                </Button>
+
+                <div className="w-full h-px bg-border my-2" />
+
+                <div className="w-full">
+                  <EmailSettingsCard />
+                </div>
+              </div>
+            ) : (
             <div className="w-full flex flex-col gap-4">
               <div className="relative h-64 w-full bg-secondary rounded-md overflow-hidden">
                 <Cropper

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
 import { logActivity } from "@/lib/activity"
+import { notifyNewDiscussion } from "@/lib/notify"
 import { v4 as uuidv4 } from "uuid"
 
 export async function POST(
@@ -123,6 +124,15 @@ export async function POST(
             [uuidv4(), userId, "COMMENT_ADDED", notificationTitle, notificationMessage, `/tasks/${taskId}`, now]
           );
         }
+
+        // Send email notifications
+        notifyNewDiscussion({
+          participantIds: notifyUserIds,
+          authorId: auth.user!.id,
+          authorName: auth.user!.name,
+          taskTitle: task.title,
+          messageContent: content || (attachmentName ? `[Attachment: ${attachmentName}]` : "Sent an attachment")
+        });
       }
     } catch (notifError) {
       console.error("Failed to create comment notifications:", notifError);

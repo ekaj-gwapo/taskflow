@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, requireAdmin } from "@/lib/auth-utils"
 import db from "@/lib/db"
 import { logActivity, ActivityAction } from "@/lib/activity"
+import { notifyTaskCompleted } from "@/lib/notify"
 import { v4 as uuidv4 } from "uuid"
 
 export async function GET(
@@ -357,6 +358,15 @@ export async function PUT(
         userName: auth.user!.name,
         details: { from: existingTask.status, to: dbStatus }
       });
+
+      // Notify task creator when an employee completes the task
+      if (dbStatus === "COMPLETED" && existingTask.createdById && existingTask.createdById !== auth.user!.id) {
+        notifyTaskCompleted({
+          creatorId: existingTask.createdById,
+          completedByName: auth.user!.name,
+          taskTitle: existingTask.title
+        });
+      }
     }
 
     if (archived !== undefined && archived !== !!existingTask.archived) {

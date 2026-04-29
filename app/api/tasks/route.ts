@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, requireAdmin } from "@/lib/auth-utils"
 import db from "@/lib/db"
 import { logActivity } from "@/lib/activity"
+import { notifyTaskAssigned } from "@/lib/notify"
 import { v4 as uuidv4 } from "uuid"
 
 export async function GET(request: NextRequest) {
@@ -292,6 +293,16 @@ export async function POST(request: NextRequest) {
         title: task.title,
         assignees: assigneeNames
       }
+    });
+
+    // Notify assignees (fails silently if email is not verified/configured)
+    notifyTaskAssigned({
+      assigneeIds: uIds,
+      taskTitle: task.title,
+      taskId: taskId,
+      priority: taskPriority,
+      dueDate: new Date(dueDate).toISOString(),
+      assignedByName: auth.user!.name
     });
 
     return NextResponse.json(

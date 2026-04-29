@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
 import { logActivity } from "@/lib/activity"
+import { notifyExtensionReviewed } from "@/lib/notify"
 import { v4 as uuidv4 } from "uuid"
 
 // PUT — Approve or reject an extension request (fixed duplicate declaration)
@@ -138,6 +139,14 @@ export async function PUT(
         now
       ]
     )
+
+    // Send email notification to requester
+    notifyExtensionReviewed({
+      requesterId: requestedById,
+      taskTitle: taskTitle,
+      approved: action === "APPROVE",
+      remark: remark?.trim()
+    });
 
     const updated: any = await db.getOne("SELECT * FROM extension_requests WHERE id = ?", [requestId])
     const formattedUpdated = {

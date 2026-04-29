@@ -114,6 +114,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         avatar: userData.avatar || userData.avatarUrl,
         theme: userData.theme || "emerald",
         mode: userData.mode || "light",
+        emailVerified: userData.emailVerified || userData.emailverified || false,
+        notifyOnAssign: userData.notifyOnAssign ?? userData.notifyonassign ?? true,
+        notifyOnDeadline: userData.notifyOnDeadline ?? userData.notifyondeadline ?? true,
+        notifyOnDiscussion: userData.notifyOnDiscussion ?? userData.notifyondiscussion ?? true,
+        notifyOnExtension: userData.notifyOnExtension ?? userData.notifyonextension ?? true,
       }
       setCurrentUser(user)
       setCurrentRole(userData.role.toLowerCase() as UserRole)
