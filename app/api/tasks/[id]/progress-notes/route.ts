@@ -80,10 +80,23 @@ export async function POST(
       details: { noteId, content: note.content }
     });
 
+    const formattedNote = {
+      ...note,
+      authorId: note.authorId || note.authorid,
+      authorName: note.authorName || note.authorname,
+      authorAvatar: note.authorAvatar || note.authoravatar,
+      attachmentUrl: note.attachmentUrl || note.attachmenturl,
+      attachmentName: note.attachmentName || note.attachmentname,
+      attachmentType: note.attachmentType || note.attachmenttype,
+      createdAt: note.createdAt || note.createdat,
+      updatedAt: note.updatedAt || note.updatedat
+    };
+
     return NextResponse.json(
-      { message: "Progress note created successfully", note: note },
+      { message: "Progress note created successfully", note: formattedNote },
       { status: 201 }
     )
+
   } catch (error: any) {
     console.error("Create progress note error:", error)
     return NextResponse.json(

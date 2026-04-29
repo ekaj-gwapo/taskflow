@@ -23,7 +23,11 @@ export interface TaskComment {
   authorAvatar?: string
   content: string
   createdAt: string
+  attachmentUrl?: string
+  attachmentName?: string
+  attachmentType?: string
 }
+
 
 export interface ProgressNote {
   id: string
@@ -136,7 +140,7 @@ export interface WeeklyReport {
 
 export interface ActivityLog {
   id: string
-  action: "TASK_CREATED" | "TASK_DELETED" | "STATUS_UPDATED" | "ASSIGNEE_CHANGED" | "NOTE_ADDED" | "COMMENT_ADDED" | "STEP_ADDED" | "STEP_UPDATED" | "STEP_DELETED" | "STEP_NOTE_ADDED" | "PROFILE_UPDATED" | "AVATAR_UPDATED" | "PASSWORD_RESET" | "USER_STATUS_UPDATED" | "TASK_REASSIGNED" | "TEAM_MEMBERS_EDITED" | "TASK_DELEGATED" | "EXTENSION_REQUESTED" | "EXTENSION_APPROVED" | "EXTENSION_REJECTED" | "TASK_ARCHIVED" | "TASK_RESTORED" | "MEMBER_REMOVED"
+  action: "TASK_CREATED" | "TASK_DELETED" | "STATUS_UPDATED" | "ASSIGNEE_CHANGED" | "NOTE_ADDED" | "COMMENT_ADDED" | "STEP_ADDED" | "STEP_UPDATED" | "STEP_DELETED" | "STEP_NOTE_ADDED" | "PROFILE_UPDATED" | "AVATAR_UPDATED" | "PASSWORD_RESET" | "USER_STATUS_UPDATED" | "TASK_REASSIGNED" | "TEAM_MEMBERS_EDITED" | "TASK_DELEGATED" | "EXTENSION_REQUESTED" | "EXTENSION_APPROVED" | "EXTENSION_REJECTED" | "TASK_ARCHIVED" | "TASK_RESTORED" | "MEMBER_REMOVED" | "DUE_DATE_UPDATED"
   entityId: string
   entityType: string
   userId: string

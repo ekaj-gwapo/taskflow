@@ -1,48 +1,53 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
+require('dotenv').config();
 
-const dbPath = path.resolve(process.cwd(), 'local.db');
-const db = new sqlite3.Database(dbPath);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
-console.log('--- Database Cleanup ---');
-console.log(`Connecting to: ${dbPath}`);
+async function clearData() {
+  console.log('--- Database Cleanup (PostgreSQL) ---');
+  console.log(`Connecting to: ${process.env.DATABASE_URL ? 'Supabase/PostgreSQL' : 'Unknown'}`);
 
-db.serialize(() => {
-  // Get all table names
-  db.all("SELECT name FROM sqlite_master WHERE type='table'", (err, tables) => {
-    if (err) {
-      console.error('Error fetching tables:', err.message);
-      process.exit(1);
-    }
+  try {
+    // Get all tables from the public schema
+    const res = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_type = 'BASE TABLE'
+      AND table_name NOT IN ('users', 'pg_stat_statements')
+    `);
 
-    const tablesToClear = tables
-      .map(t => t.name)
-      .filter(name => name !== 'users' && name !== 'sqlite_sequence' && !name.startsWith('sqlite_'));
+    const tablesToClear = res.rows.map(row => row.table_name);
 
     if (tablesToClear.length === 0) {
       console.log('No data tables found to clear.');
-      db.close();
       return;
     }
 
     console.log(`Tables to clear: ${tablesToClear.join(', ')}`);
 
-    let completed = 0;
+    // Use TRUNCATE with CASCADE to handle foreign key constraints
+    const truncateQuery = `TRUNCATE TABLE ${tablesToClear.map(t => `"${t}"`).join(', ')} RESTART IDENTITY CASCADE;`;
+    
+    await pool.query(truncateQuery);
+    
     tablesToClear.forEach(table => {
-      db.run(`DELETE FROM ${table}`, (deleteErr) => {
-        if (deleteErr) {
-          console.error(`Error clearing ${table}:`, deleteErr.message);
-        } else {
-          console.log(`[OK] Cleared table: ${table}`);
-        }
-        
-        completed++;
-        if (completed === tablesToClear.length) {
-          console.log('--- Cleanup Complete! ---');
-          console.log('All data (excluding users) has been deleted.');
-          db.close();
-        }
-      });
+      console.log(`[OK] Cleared table: ${table}`);
     });
-  });
-});
+
+    console.log('--- Cleanup Complete! ---');
+    console.log('All data (excluding users) has been deleted.');
+  } catch (err) {
+    console.error('Error during cleanup:', err.message);
+  } finally {
+    await pool.end();
+  }
+}
+
+clearData();
+

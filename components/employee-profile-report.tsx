@@ -88,7 +88,7 @@ export function EmployeeProfileReport() {
     const completedThisWeek = completed.filter(t => isDateInCurrentWeek(t.completedAt))
 
     // Admin Specific Stats
-    const isAdmin = currentUser.role !== 'employee'
+    const isAdmin = userRole === 'admin' || userRole === 'head_admin' || userRole === 'superadmin'
     const createdTasksCount = tasks.filter(t => t.createdById === currentUser.id).length
     const reassignedTasksCount = logs.filter(l => 
       l.userId === currentUser.id && 

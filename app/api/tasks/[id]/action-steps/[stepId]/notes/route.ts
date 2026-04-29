@@ -48,20 +48,19 @@ export async function POST(
 
     const noteId = uuidv4();
     await db.execute(`
-      INSERT INTO step_notes (id, content, stepId, authorId, authorName, createdAt, updatedAt, attachmentUrl, attachmentName, attachmentType)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO step_notes (id, content, stepId, authorName, createdAt, attachmentUrl, attachmentName, attachmentType)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       noteId, 
       content, 
       (await params).stepId, 
-      auth.user!.id, 
       auth.user!.name, 
       new Date().toISOString(), 
-      new Date().toISOString(),
       attachmentUrl || null,
       attachmentName || null,
       attachmentType || null
     ]);
+
 
     await logActivity({
       action: "STEP_NOTE_ADDED",
@@ -72,12 +71,21 @@ export async function POST(
       details: { stepId: (await params).stepId, noteId, content }
     });
 
-    const stepNote = await db.getOne("SELECT * FROM step_notes WHERE id = ?", [noteId]);
+    const rawStepNote = await db.getOne("SELECT * FROM step_notes WHERE id = ?", [noteId]) as any;
+    const stepNote = {
+      ...rawStepNote,
+      authorName: rawStepNote.authorName || rawStepNote.authorname,
+      attachmentUrl: rawStepNote.attachmentUrl || rawStepNote.attachmenturl,
+      attachmentName: rawStepNote.attachmentName || rawStepNote.attachmentname,
+      attachmentType: rawStepNote.attachmentType || rawStepNote.attachmenttype,
+      createdAt: rawStepNote.createdAt || rawStepNote.createdat
+    };
 
     return NextResponse.json(
       { message: "Note created successfully", note: stepNote },
       { status: 201 }
     )
+
   } catch (error: any) {
     console.error("Create step note error:", error)
     return NextResponse.json(

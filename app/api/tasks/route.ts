@@ -46,24 +46,50 @@ export async function GET(request: NextRequest) {
 
     // Format tasks to match expected structure
     const formattedTasks = await Promise.all(tasks.map(async (t) => {
-      const actionSteps = await db.getAll("SELECT *, createdAt as \"createdAt\", updatedAt as \"updatedAt\" FROM action_steps WHERE taskId = ?", [t.id]) as any[]
-      const actionStepsWithNotes = await Promise.all(actionSteps.map(async (as: any) => ({
-        ...as,
-        notes: await db.getAll("SELECT *, createdAt as \"createdAt\", authorName as \"authorName\" FROM step_notes WHERE stepId = ?", [as.id]) as any[]
-      })))
+      const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [t.id]) as any[]
+      const actionStepsWithNotes = await Promise.all(actionSteps.map(async (as: any) => {
+        const notes = await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[];
+        return {
+          ...as,
+          isActed: as.isActed !== undefined ? as.isActed : as.isacted,
+          completed: as.completed !== undefined ? as.completed : as.completed,
+          createdAt: as.createdAt || as.createdat,
+          updatedAt: as.updatedAt || as.updatedat,
+          notes: notes.map(n => ({
+            ...n,
+            authorName: n.authorName || n.authorname,
+            attachmentUrl: n.attachmentUrl || n.attachmenturl,
+            attachmentName: n.attachmentName || n.attachmentname,
+            attachmentType: n.attachmentType || n.attachmenttype,
+            createdAt: n.createdAt || n.createdat
+          }))
+        };
+      }))
+
       const progressNotes = await db.getAll(`
         SELECT pn.*, u.avatarUrl as authorAvatar, pn.createdAt as "createdAt", pn.updatedAt as "updatedAt", pn.authorName as "authorName"
         FROM progress_notes pn 
         LEFT JOIN users u ON pn.authorId = u.id 
         WHERE pn.taskId = ?
       `, [t.id]) as any[]
-      const comments = await db.getAll(`
-        SELECT tc.*, u.avatarUrl as authorAvatar, tc.createdAt as "createdAt", tc.updatedAt as "updatedAt", tc.authorName as "authorName"
+      const commentsRaw = await db.getAll(`
+        SELECT tc.*, u.avatarUrl as authorAvatar
         FROM task_comments tc 
         LEFT JOIN users u ON tc.authorId = u.id 
         WHERE tc.taskId = ? 
         ORDER BY tc.createdAt ASC
       `, [t.id]) as any[]
+      const comments = commentsRaw.map(tc => ({
+        ...tc,
+        authorName: tc.authorName || tc.authorname,
+        authorAvatar: tc.authorAvatar || tc.authoravatar,
+        attachmentUrl: tc.attachmentUrl || tc.attachmenturl,
+        attachmentName: tc.attachmentName || tc.attachmentname,
+        attachmentType: tc.attachmentType || tc.attachmenttype,
+        createdAt: tc.createdAt || tc.createdat,
+        updatedAt: tc.updatedAt || tc.updatedat
+      }))
+
       
       const assigneesData = await db.getAll(`
         SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
@@ -89,18 +115,18 @@ export async function GET(request: NextRequest) {
         createdById: t.createdById || t.createdbyid || null,
         createdBy: (t.createdById || t.createdbyid) ? { 
           id: t.createdById || t.createdbyid, 
-          name: t.creatorName, 
-          email: t.creatorEmail, 
-          role: t.creatorRole, 
-          avatar: t.creatorAvatar 
+          name: t.creatorName || t.creatorname, 
+          email: t.creatorEmail || t.creatoremail, 
+          role: t.creatorRole || t.creatorrole, 
+          avatar: t.creatorAvatar || t.creatoravatar 
         } : null,
         delegatedById: t.delegatedById || t.delegatedbyid || null,
         delegatedBy: (t.delegatedById || t.delegatedbyid) ? { 
           id: t.delegatedById || t.delegatedbyid, 
-          name: t.delegatorName, 
-          email: t.delegatorEmail, 
-          role: t.delegatorRole, 
-          avatar: t.delegatorAvatar 
+          name: t.delegatorName || t.delegatorname, 
+          email: t.delegatorEmail || t.delegatoremail, 
+          role: t.delegatorRole || t.delegatorrole, 
+          avatar: t.delegatorAvatar || t.delegatoravatar 
         } : null,
         delegatedAt: t.delegatedAt || t.delegatedat || null,
         createdAt: t.createdAt || t.createdat,
@@ -110,7 +136,18 @@ export async function GET(request: NextRequest) {
         actionSteps: actionStepsWithNotes,
         progressNotes,
         comments,
-        extensionRequests,
+        extensionRequests: extensionRequests.map((er: any) => ({
+          ...er,
+          requestedById: er.requestedById || er.requestedbyid,
+          requestedByName: er.requestedByName || er.requestedbyname,
+          currentDueDate: er.currentDueDate || er.currentduedate,
+          proposedDueDate: er.proposedDueDate || er.proposedduedate,
+          reviewedById: er.reviewedById || er.reviewedbyid,
+          reviewedByName: er.reviewedByName || er.reviewedbyname,
+          reviewerRemark: er.reviewerRemark || er.reviewerremark,
+          reviewedAt: er.reviewedAt || er.reviewedat,
+          createdAt: er.createdAt || er.createdat
+        })),
       }
     }))
 
@@ -193,10 +230,23 @@ export async function POST(request: NextRequest) {
     `, [taskId]) as any[]
 
     const actionStepsData = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [taskId]) as any[]
-    const actionStepsWithNotes = await Promise.all(actionStepsData.map(async (as: any) => ({
-      ...as,
-      notes: await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id])
-    })))
+    const actionStepsWithNotes = await Promise.all(actionStepsData.map(async (as: any) => {
+      const notes = await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[];
+      return {
+        ...as,
+        isActed: as.isActed !== undefined ? as.isActed : as.isacted,
+        completed: as.completed !== undefined ? as.completed : as.completed,
+        notes: notes.map(n => ({
+          ...n,
+          authorName: n.authorName || n.authorname,
+          attachmentUrl: n.attachmentUrl || n.attachmenturl,
+          attachmentName: n.attachmentName || n.attachmentname,
+          attachmentType: n.attachmentType || n.attachmenttype,
+          createdAt: n.createdAt || n.createdat
+        }))
+      };
+    }))
+
 
     const formattedTask = {
       ...task,

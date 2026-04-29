@@ -125,8 +125,21 @@ function EmployeeTaskCard({
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
               {task.description}
             </p>
+            {task.createdBy && (
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                <span className="text-[10px] text-muted-foreground font-medium bg-secondary/50 px-1.5 py-0.5 rounded border border-border/50">
+                  Created by <span className="text-foreground">{task.createdBy.name}</span>
+                </span>
+                {task.delegatedBy && task.delegatedBy.id !== task.createdBy.id && (
+                  <span className="text-[10px] text-primary/80 font-medium bg-primary/5 px-1.5 py-0.5 rounded border border-primary/20">
+                    ↳ Delegated by <span className="text-foreground">{task.delegatedBy.name}</span>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+
         </div>
         <div className="flex items-center gap-2 mt-3">
           <StatusBadge status={task.status} />
@@ -333,9 +346,22 @@ export function EmployeeDashboard() {
                               <PriorityBadge priority={task.priority} />
                             </div>
                             <h3 className="font-bold text-sm mb-1 line-clamp-1">{task.title}</h3>
-                            <p className="text-xs text-muted-foreground line-clamp-2 flex-1 mb-3">
-                              {task.description}
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2 flex-1">
+                              {task.description || "No description provided."}
                             </p>
+                            
+                            {task.createdBy && (
+                              <div className="flex items-center gap-1.5 mb-4 flex-wrap">
+                                <span className="text-[10px] text-muted-foreground font-medium bg-secondary/50 px-1.5 py-0.5 rounded border border-border/50">
+                                  Created by <span className="text-foreground">{task.createdBy.name}</span>
+                                </span>
+                                {task.delegatedBy && task.delegatedBy.id !== task.createdBy.id && (
+                                  <span className="text-[10px] text-primary/80 font-medium bg-primary/5 px-1.5 py-0.5 rounded border border-primary/20">
+                                    ↳ Delegated by <span className="text-foreground">{task.delegatedBy.name}</span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             
                             {/* Team Progress Bar */}
                             <div className="mb-4 space-y-1.5">

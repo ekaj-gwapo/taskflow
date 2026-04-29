@@ -148,6 +148,28 @@ export function ActivityLogView() {
         return <span>Archived the task <strong>{taskName}</strong></span>;
       case "TASK_RESTORED":
         return <span>Restored the task <strong>{taskName}</strong> from archive</span>;
+      case "EXTENSION_REQUESTED":
+        return (
+          <span>
+            Requested a deadline extension for <strong>{taskName}</strong> 
+            {log.details?.proposedDueDate && (
+              <span> to <strong>{new Date(log.details.proposedDueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</strong></span>
+            )}
+          </span>
+        );
+      case "EXTENSION_APPROVED":
+        return <span>Approved the extension request for <strong>{taskName}</strong></span>;
+      case "EXTENSION_REJECTED":
+        return <span>Rejected the extension request for <strong>{taskName}</strong></span>;
+      case "DUE_DATE_UPDATED":
+        return (
+          <span>
+            Adjusted the due date of <strong>{taskName}</strong> 
+            {log.details?.to && (
+              <span> to <strong>{new Date(log.details.to).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</strong></span>
+            )}
+          </span>
+        );
       default:
         return <span>Performed an action on <strong>{taskName}</strong></span>;
     }

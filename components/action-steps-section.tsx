@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ChevronDown, Plus, Trash2, Send, Paperclip, FileIcon, FileText, Loader2, ExternalLink, X } from "lucide-react"
+import { ChevronDown, Plus, Trash2, Send, Paperclip, FileIcon, FileText, Loader2, ExternalLink, X, Check, MessageSquare } from "lucide-react"
+
 import type { ActionStep, UserRole } from "@/lib/store"
 import { formatDistanceToNow } from "date-fns"
 import {
@@ -177,22 +178,19 @@ export function ActionStepsSection({
             <div key={step.id} className="border border-border rounded-lg overflow-hidden bg-secondary/30">
               {/* Step header */}
               <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-secondary/50 transition-colors">
-                {userRole === "employee" && (
-                  <Checkbox
-                    checked={step.completed}
-                    onCheckedChange={(checked) => onUpdateStepStatus(step.id, checked === true)}
-                    className="h-4 w-4"
-                    disabled={taskStatus !== "in-progress"}
-                  />
-                )}
-                {userRole !== "employee" && (
-                  <div
-                    className={`h-4 w-4 rounded border border-border flex items-center justify-center ${step.completed ? "bg-primary" : "bg-secondary"
-                      }`}
-                  >
-                    {step.completed && <span className="text-white text-xs">✓</span>}
-                  </div>
-                )}
+                <Checkbox
+                  checked={step.completed}
+                  onCheckedChange={(checked) => {
+                    onUpdateStepStatus(step.id, checked === true);
+                    if (checked === true && !step.isActed) {
+                      onUpdateStepActed?.(step.id, true);
+                    }
+                  }}
+                  className="h-4 w-4"
+                  disabled={userRole !== "employee"}
+                />
+
+
                 <div className="flex-1 min-w-0 pr-2">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -229,7 +227,13 @@ export function ActionStepsSection({
                           : 'bg-background border-border/50 text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-border'
                         }`}
                     >
-                      {step.isActed ? 'Retract' : 'Mark Acted'}
+                      {step.isActed ? (
+                        <span className="flex items-center gap-1.5">
+                          <Check className="h-3 w-3" />
+                          ACTED
+                        </span>
+                      ) : 'Mark Acted'}
+
                     </Button>
                   )}
                   <button
@@ -366,8 +370,9 @@ export function ActionStepsSection({
                     </div>
                   )}
 
-                  {/* Add note input - Only for assignees (mapped to "employee" role in panel) */}
-                  {userRole === "employee" && (
+                  {/* Add note input - for employees and admin assignees */}
+                  {(userRole === "employee" || userRole === "admin" || userRole === "head_admin") && (
+
                     <div className="space-y-2 pt-2 border-t border-border">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Add Note
@@ -398,7 +403,7 @@ export function ActionStepsSection({
                           id={`file-${step.id}`}
                           className="hidden"
                           onChange={(e) => handleFileChange(step.id, e)}
-                          accept="image/*,application/pdf"
+                          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
                         />
                         <Button
                           variant="outline"

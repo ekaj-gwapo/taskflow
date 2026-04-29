@@ -32,8 +32,10 @@ interface TaskContextType {
   createTask: (task: Omit<Task, "id" | "createdAt" | "completedAt" | "progressNotes" | "assignee" | "assigneeId" | "assigneeName" | "assignees" | "archived"> & { assigneeIds: string[] }, actionSteps?: string[]) => Promise<boolean>
   updateTaskStatus: (taskId: string, status: TaskStatus) => void
   updateTaskAssignees: (taskId: string, assigneeIds: string[]) => void
+  updateTask: (taskId: string, data: Partial<Task>) => Promise<void>
   deleteTask: (taskId: string) => Promise<boolean>
-  addTaskComment: (taskId: string, content: string) => Promise<void>
+  addTaskComment: (taskId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => Promise<void>
+
   addProgressNote: (taskId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => Promise<void>
   toggleArchiveTask: (taskId: string, archived: boolean) => Promise<void>
 
@@ -346,6 +348,39 @@ const url = `/api/tasks/${taskId}`
     []
   )
 
+  const updateTask = useCallback(
+    async (taskId: string, updateData: Partial<Task>) => {
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) return
+        
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updateData),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Failed to update task")
+        }
+
+        const data = await response.json()
+        setTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? data.task : t))
+        )
+        toast.success("Task updated successfully.")
+      } catch (error: any) {
+        console.error("Update task error:", error)
+        toast.error(error.message || "Failed to update task.")
+      }
+    },
+    []
+  )
+
   const deleteTask = useCallback(async (taskId: string) => {
     try {
       const token = localStorage.getItem("token")
@@ -372,7 +407,7 @@ const url = `/api/tasks/${taskId}`
   }, [])
 
   const addTaskComment = useCallback(
-    async (taskId: string, content: string) => {
+    async (taskId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => {
       if (!currentUser) return
       try {
         const token = localStorage.getItem("token")
@@ -383,8 +418,14 @@ const url = `/api/tasks/${taskId}`
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({ 
+            content,
+            attachmentUrl,
+            attachmentName,
+            attachmentType
+          }),
         })
+
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => null)
@@ -762,7 +803,9 @@ const url = `/api/tasks/${taskId}`
               r.id === requestId ? data.extensionRequest : r
             )
             // If approved, also update the task's dueDate
-            const newDueDate = action === "APPROVE" ? data.extensionRequest.proposedDueDate : t.dueDate
+            const newDueDate = action === "APPROVE" 
+              ? (data.extensionRequest.proposedDueDate || data.extensionRequest.proposedduedate) 
+              : t.dueDate
             return { ...t, extensionRequests: updatedRequests, dueDate: newDueDate }
           })
         )
@@ -1014,6 +1057,7 @@ const url = `/api/tasks/${taskId}`
         createTask,
         updateTaskStatus,
         updateTaskAssignees,
+        updateTask,
         deleteTask,
         addTaskComment,
         addProgressNote,

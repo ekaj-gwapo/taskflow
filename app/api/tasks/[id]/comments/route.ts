@@ -14,13 +14,13 @@ export async function POST(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { content } = await request.json()
+    const { content, attachmentUrl, attachmentName, attachmentType } = await request.json()
     const taskId = (await params).id?.toLowerCase()
 
     console.log(`[COMMENTS_API] Adding comment to task ${taskId} by user ${auth.user!.id} (${auth.user!.role})`);
 
-    if (!content || content.trim() === "") {
-      return NextResponse.json({ error: "Content is required" }, { status: 400 })
+    if (!content && !attachmentUrl) {
+      return NextResponse.json({ error: "Content or attachment is required" }, { status: 400 })
     }
 
     // Verify task exists
@@ -50,24 +50,39 @@ export async function POST(
 
     const commentId = uuidv4();
     await db.execute(`
-      INSERT INTO task_comments (id, content, taskId, authorId, authorName, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO task_comments (id, content, taskId, authorId, authorName, createdAt, updatedAt, attachmentUrl, attachmentName, attachmentType)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       commentId, 
-      content, 
+      content || "", 
       taskId, 
       auth.user!.id, 
       auth.user!.name, 
       new Date().toISOString(), 
-      new Date().toISOString()
+      new Date().toISOString(),
+      attachmentUrl || null,
+      attachmentName || null,
+      attachmentType || null
     ]);
 
-    const comment: any = await db.getOne(`
-      SELECT tc.*, u.avatarUrl as authorAvatar, tc.createdAt as \"createdAt\", tc.updatedAt as \"updatedAt\", tc.authorName as \"authorName\"
+    const rawComment: any = await db.getOne(`
+      SELECT tc.*, u.avatarUrl as authorAvatar
       FROM task_comments tc
       LEFT JOIN users u ON tc.authorId = u.id
       WHERE tc.id = ?
     `, [commentId]);
+
+    const comment = {
+      ...rawComment,
+      authorName: rawComment.authorName || rawComment.authorname,
+      authorAvatar: rawComment.authorAvatar || rawComment.authoravatar,
+      attachmentUrl: rawComment.attachmentUrl || rawComment.attachmenturl,
+      attachmentName: rawComment.attachmentName || rawComment.attachmentname,
+      attachmentType: rawComment.attachmentType || rawComment.attachmenttype,
+      createdAt: rawComment.createdAt || rawComment.createdat,
+      updatedAt: rawComment.updatedAt || rawComment.updatedat
+    };
+
 
     await logActivity({
       action: "COMMENT_ADDED",

@@ -61,13 +61,14 @@ export function TaskDetailPanel({
   showNoteInput = false,
   showDeleteButton = false,
 }: TaskDetailPanelProps) {
-  const { currentRole, currentUser, updateTaskStatus, addProgressNote, addTaskComment, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees, requestExtension, reviewExtension, toggleArchiveTask, targetSection, setTargetSection } = useTaskContext()
+  const { currentRole, currentUser, updateTaskStatus, updateTask, addProgressNote, addTaskComment, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees, requestExtension, reviewExtension, toggleArchiveTask, targetSection, setTargetSection } = useTaskContext()
   const discussionRef = useRef<HTMLDivElement>(null)
   const extensionRef = useRef<HTMLDivElement>(null)
   const [noteContent, setNoteContent] = useState("")
   const [commentContent, setCommentContent] = useState("")
   const [isAddingComment, setIsAddingComment] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [commentFile, setCommentFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isUpdatingAssignees, setIsUpdatingAssignees] = useState(false)
   const [isDiscussionExpanded, setIsDiscussionExpanded] = useState(false)
@@ -75,6 +76,8 @@ export function TaskDetailPanel({
   const [lastSeenComments, setLastSeenComments] = useState(0)
   const [lastSeenNotes, setLastSeenNotes] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const commentFileInputRef = useRef<HTMLInputElement>(null)
+
 
   // Extension request state
   const [showExtensionForm, setShowExtensionForm] = useState(false)
@@ -84,17 +87,23 @@ export function TaskDetailPanel({
   const [extensionReviewRemark, setExtensionReviewRemark] = useState("")
   const [isReviewingExtension, setIsReviewingExtension] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
+  const [localDueDate, setLocalDueDate] = useState<string | null>(null)
+  const [isSavingDueDate, setIsSavingDueDate] = useState(false)
   const [localAssigneeIds, setLocalAssigneeIds] = useState<string[]>(task.assignees?.map(a => a.id) || [])
   const [isAssigneePopoverOpen, setIsAssigneePopoverOpen] = useState(false)
+
 
   // Update local assignees when task data changes
   useEffect(() => {
     setLocalAssigneeIds(task.assignees?.map(a => a.id) || [])
   }, [task.assignees])
 
+  const prevStatusRef = useRef<TaskStatus>(task.status)
+
   // Initialize last seen counts from localStorage
   useEffect(() => {
     if (currentUser?.id && task.id) {
+
       const savedComments = localStorage.getItem(`taskflow_comments_others_${task.id}_${currentUser.id}`)
       const savedNotes = localStorage.getItem(`taskflow_notes_others_${task.id}_${currentUser.id}`)
       if (savedComments) setLastSeenComments(parseInt(savedComments))
@@ -102,8 +111,23 @@ export function TaskDetailPanel({
     }
   }, [task.id, currentUser?.id])
 
+  // Trigger confetti when status changes to completed
+  useEffect(() => {
+    if (task.status === "completed" && prevStatusRef.current !== "completed") {
+      // 🎉 Celebration!
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#10b981", "#34d399", "#6ee7b7"]
+      });
+    }
+    prevStatusRef.current = task.status;
+  }, [task.status]);
+
   // Count only comments/notes from other users
   const othersCommentsCount = task.comments?.filter(c => c.authorId !== currentUser?.id).length || 0
+
   const othersNotesCount = task.progressNotes?.filter(n => n.authorId !== currentUser?.id).length || 0
 
   // Update last seen when sections are expanded
@@ -152,7 +176,8 @@ export function TaskDetailPanel({
     ((currentRole === "admin" || currentRole === "head_admin") && isAssignee)
   )
 
-  const isEmployeeLike = currentRole === "employee" || ((currentRole === "admin" || currentRole === "head_admin") && isAssignee)
+  // head_admin is excluded from employee-like behavior — they can view but not add progress/step notes
+  const isEmployeeLike = currentRole === "employee" || (currentRole === "admin" && isAssignee)
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     if (newStatus === "completed") {
@@ -161,17 +186,10 @@ export function TaskDetailPanel({
         toast.error(`Cannot complete task: ${incompleteSteps.length} action required items are still incomplete.`)
         return
       }
-      
-      // 🎉 Celebration!
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ["#10b981", "#34d399", "#6ee7b7"]
-      });
     }
     updateTaskStatus(task.id, newStatus)
   }
+
 
   // Security check: employees can only view their assigned tasks
   const hasAccess = canAccessTask(task.id)
@@ -232,11 +250,37 @@ export function TaskDetailPanel({
   }
 
   const handleAddComment = async () => {
-    if (!commentContent.trim()) return
+    if (!commentContent.trim() && !commentFile) return
     setIsAddingComment(true)
     try {
-      await addTaskComment(task.id, commentContent.trim())
+      let attachmentUrl = undefined
+      let attachmentName = undefined
+      let attachmentType = undefined
+
+      if (commentFile) {
+        const formData = new FormData()
+        formData.append("file", commentFile)
+
+        const token = localStorage.getItem("token")
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token || ""}`,
+          },
+          body: formData,
+        })
+
+        if (!uploadRes.ok) throw new Error("Upload failed")
+
+        const uploadData = await uploadRes.json()
+        attachmentUrl = uploadData.url
+        attachmentName = uploadData.name
+        attachmentType = uploadData.type
+      }
+
+      await addTaskComment(task.id, commentContent.trim(), attachmentUrl, attachmentName, attachmentType)
       setCommentContent("")
+      setCommentFile(null)
     } catch (error) {
       console.error("Failed to add comment:", error)
       toast.error("Failed to post comment.")
@@ -244,6 +288,14 @@ export function TaskDetailPanel({
       setIsAddingComment(false)
     }
   }
+
+  const handleCommentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setCommentFile(e.target.files[0])
+    }
+  }
+
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
@@ -482,7 +534,14 @@ export function TaskDetailPanel({
                         <Avatar className="h-7 w-7 border-2 border-background shadow-sm group-hover:scale-105 transition-transform duration-300">
                           <AvatarFallback className="text-[10px] bg-primary/10 text-primary uppercase font-bold">{a.name[0]}</AvatarFallback>
                         </Avatar>
-                        <span className="text-sm text-foreground font-semibold tracking-tight">{a.name}</span>
+                        <span className="text-sm text-foreground font-semibold tracking-tight flex items-center gap-2">
+                          {a.name}
+                          {task.createdBy?.id === a.id && (
+                            <span className="text-[9px] uppercase tracking-wider font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">
+                              Creator
+                            </span>
+                          )}
+                        </span>
                       </div>
                       <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold bg-primary/10 text-primary shadow-sm border border-primary/20 group-hover:bg-primary/20 transition-colors">
                         ✨ {a.points} Pts
@@ -526,21 +585,99 @@ export function TaskDetailPanel({
                   </div>
                   Due Date
                 </span>
-                <span
-                  className={`text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm border transition-colors ${isOverdue ? "text-destructive bg-destructive/10 border-destructive/20" : "text-foreground bg-background border-border/50 group-hover:border-primary/30"}`}
-                >
-                  {task.dueDate 
-                    ? (task.dueDate.includes("T")
+                {((currentRole === "superadmin" || (task.createdById === currentUser?.id && (currentRole === "admin" || currentRole === "head_admin"))) && task.status !== "completed") ? (
+                  <div className="flex items-center gap-2">
+                    <div className="relative group/input">
+                      <div className={cn(
+                        "text-xs font-bold px-3 py-1.5 rounded-lg border shadow-sm transition-all duration-300 flex items-center gap-2",
+                        isOverdue && !localDueDate ? "text-destructive bg-destructive/10 border-destructive/20" : "text-foreground bg-background border-border/50 group-hover:border-primary/30"
+                      )}>
+                        {localDueDate 
+                          ? new Date(localDueDate).toLocaleString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : task.dueDate 
+                          ? new Date(task.dueDate).toLocaleString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : "Set Due Date"}
+                        {isOverdue && task.dueDate && !localDueDate && " (Overdue)"}
+                        <Calendar className="h-3 w-3 opacity-40 group-hover/input:opacity-100 transition-opacity" />
+                      </div>
+                      <input
+                        type="datetime-local"
+                        value={localDueDate ? localDueDate.substring(0, 16) : task.dueDate ? (task.dueDate.includes("T") ? task.dueDate.substring(0, 16) : new Date(task.dueDate).toISOString().substring(0, 16)) : ""}
+                        onChange={(e) => {
+                          const newDate = e.target.value;
+                          if (newDate) {
+                            setLocalDueDate(new Date(newDate).toISOString());
+                          } else {
+                            setLocalDueDate(null);
+                          }
+                        }}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                    </div>
+                    {localDueDate && localDueDate !== task.dueDate && (
+                      <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
+                        <Button 
+                          size="sm" 
+                          variant="default"
+                          className="h-7 px-2.5 text-[10px] uppercase font-bold tracking-wider"
+                          disabled={isSavingDueDate}
+                          onClick={async () => {
+                            setIsSavingDueDate(true);
+                            try {
+                              await updateTask(task.id, { dueDate: localDueDate });
+                              setLocalDueDate(null);
+                              toast.success("Due date updated");
+                            } catch (e) {
+                              toast.error("Failed to update due date");
+                            } finally {
+                              setIsSavingDueDate(false);
+                            }
+                          }}
+                        >
+                          {isSavingDueDate ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
+                          Save
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                          disabled={isSavingDueDate}
+                          onClick={() => setLocalDueDate(null)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                ) : (
+                  <span
+                    className={cn(
+                      "text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm border transition-colors",
+                      isOverdue ? "text-destructive bg-destructive/10 border-destructive/20" : "text-foreground bg-background border-border/50 group-hover:border-primary/30"
+                    )}
+                  >
+                    {task.dueDate 
                       ? new Date(task.dueDate).toLocaleString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })
-                      : task.dueDate)
-                    : "Due N/A"}
-                  {isOverdue && task.dueDate && " (Overdue)"}
-                </span>
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
+                      : "Due N/A"}
+                    {isOverdue && task.dueDate && " (Overdue)"}
+                  </span>
+                )}
               </div>
               {task.delegatedAt && (
                 <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-500/5 transition-colors group">
@@ -581,7 +718,63 @@ export function TaskDetailPanel({
             </div>
 
             {/* Deadline Extension Section */}
-            {task.status !== "completed" && (() => {
+            {(() => {
+              // Always show extension history for all task statuses so requester can see approval/rejection
+              const extensionRequestsAll = task.extensionRequests || []
+              const resolvedRequests = extensionRequestsAll.filter(r => r.status !== "PENDING")
+
+              // Only show the interactive portion (request/review) when task is not completed
+              if (task.status === "completed" && resolvedRequests.length > 0) {
+                return (
+                  <div className="mt-4 space-y-2">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Extension History</span>
+                    {resolvedRequests.map((r) => (
+                      <div key={r.id} className={`rounded-lg border p-3 text-xs space-y-1 backdrop-blur-sm ${r.status === "APPROVED"
+                          ? "border-emerald-500/30 bg-emerald-500/5"
+                          : "border-red-500/30 bg-red-500/5"
+                        }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 font-bold">
+                            {r.status === "APPROVED" ? (
+                              <><CheckCircle2 className="h-3 w-3 text-emerald-600" /><span className="text-emerald-700">Approved</span></>
+                            ) : (
+                              <><XCircle className="h-3 w-3 text-red-500" /><span className="text-red-600">Rejected</span></>
+                            )}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {r.reviewedAt ? new Date(r.reviewedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}
+                          </span>
+                        </div>
+                        <p className="text-muted-foreground">
+                          <span className="font-semibold text-foreground">{r.requestedByName}</span> → {new Date(r.proposedDueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
+                        <p className="italic text-muted-foreground/80">
+                          <span className="font-semibold not-italic">Reason:</span> &ldquo;{r.reason}&rdquo;
+                        </p>
+                        {r.reviewerRemark && (
+                          <div className="mt-2 p-2.5 rounded-lg bg-background/60 border border-border/40 shadow-sm">
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                              <MessageSquare className="h-2.5 w-2.5" />
+                              Creator&apos;s Message
+                            </p>
+                            <p className="text-foreground font-semibold italic leading-relaxed">
+                              &ldquo;{r.reviewerRemark}&rdquo;
+                            </p>
+                            {r.reviewedByName && (
+                              <p className="text-[9px] text-muted-foreground mt-1 text-right font-medium">
+                                — {r.reviewedByName}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )
+              }
+
+              if (task.status === "completed") return null
+
               const extensionRequests = task.extensionRequests || []
               const pendingRequest = extensionRequests.find(r => r.status === "PENDING")
               const totalRequests = extensionRequests.length
@@ -607,13 +800,20 @@ export function TaskDetailPanel({
                         <div className="p-1 rounded-md bg-amber-500/20 border border-amber-500/30">
                           <CalendarClock className="h-3.5 w-3.5 text-amber-500" />
                         </div>
-                        <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Extension Pending</span>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Extension Pending</span>
+                          {pendingRequest.createdAt && (
+                            <span className="text-[9px] text-amber-600/70 dark:text-amber-400/70 font-medium">
+                              Requested {pendingRequest.createdAt ? new Date(pendingRequest.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : "Recently"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="space-y-1.5 ml-8">
                         <p className="text-xs text-foreground/90">
                           <span className="font-bold text-amber-600 dark:text-amber-400">{pendingRequest.requestedByName}</span> requested to extend to{" "}
                           <span className="font-bold text-foreground">
-                            {new Date(pendingRequest.proposedDueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                            {pendingRequest.proposedDueDate ? new Date(pendingRequest.proposedDueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "TBA"}
                           </span>
                         </p>
                         <p className="text-xs text-muted-foreground italic">"{pendingRequest.reason}"</p>
@@ -759,10 +959,26 @@ export function TaskDetailPanel({
                           <p className="text-muted-foreground">
                             <span className="font-semibold text-foreground">{r.requestedByName}</span> → {new Date(r.proposedDueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                           </p>
-                          <p className="italic text-muted-foreground/80">"{r.reason}"</p>
-                          {r.reviewedByName && (
-                            <p className="text-muted-foreground">Reviewed by <span className="font-semibold text-foreground">{r.reviewedByName}</span>{r.reviewerRemark ? `: "${r.reviewerRemark}"` : ""}</p>
+                          <p className="italic text-muted-foreground/80">
+                            <span className="font-semibold not-italic">Reason:</span> "{r.reason}"
+                          </p>
+                          {r.reviewerRemark && (
+                            <div className="mt-2 p-2.5 rounded-lg bg-background/60 border border-border/40 shadow-sm">
+                              <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                <MessageSquare className="h-2.5 w-2.5" />
+                                Creator's Message
+                              </p>
+                              <p className="text-foreground font-semibold italic leading-relaxed">
+                                "{r.reviewerRemark}"
+                              </p>
+                              {r.reviewedByName && (
+                                <p className="text-[9px] text-muted-foreground mt-1 text-right font-medium">
+                                  — {r.reviewedByName}
+                                </p>
+                              )}
+                            </div>
                           )}
+
                         </div>
                       ))}
                     </div>
@@ -804,36 +1020,54 @@ export function TaskDetailPanel({
             )}
 
             {/* Archive / Unarchive Button (Visible to admins and superadmins) */}
-            {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isArchiving}
-                onClick={async () => {
-                  setIsArchiving(true)
-                  try {
-                    await toggleArchiveTask(task.id, !task.archived)
-                  } finally {
-                    setIsArchiving(false)
-                  }
-                }}
-                className={cn(
-                  "w-full transition-all duration-300 flex items-center justify-center py-5 rounded-xl shadow-sm hover:shadow-md",
-                  !task.archived
-                    ? "text-amber-600 border-amber-200/50 bg-amber-50/30 hover:bg-amber-600 hover:text-white"
-                    : "text-emerald-600 border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-600 hover:text-white"
-                )}
-              >
-                {isArchiving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : !task.archived ? (
-                  <Archive className="h-4 w-4 mr-2" />
-                ) : (
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                )}
-                {!task.archived ? "Archive Task" : "Restore Task"}
-              </Button>
-            )}
+            {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && (() => {
+              // Disable archiving if the task has employee assignees (team task)
+              // Archiving would hide the task from those employees
+              const hasEmployeeAssignees = task.assignees?.some(a => a.role === "employee") || 
+                (task.assignee?.role === "employee" && task.assigneeId !== currentUser?.id)
+              const isTeamTask = (task.assignees && task.assignees.length > 1) || hasEmployeeAssignees
+              const canArchive = !task.archived ? !isTeamTask : true // Always allow restore
+
+              return (
+                <div className="space-y-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isArchiving || !canArchive}
+                    onClick={async () => {
+                      setIsArchiving(true)
+                      try {
+                        await toggleArchiveTask(task.id, !task.archived)
+                      } finally {
+                        setIsArchiving(false)
+                      }
+                    }}
+                    className={cn(
+                      "w-full transition-all duration-300 flex items-center justify-center py-5 rounded-xl shadow-sm hover:shadow-md",
+                      !task.archived
+                        ? canArchive
+                          ? "text-amber-600 border-amber-200/50 bg-amber-50/30 hover:bg-amber-600 hover:text-white"
+                          : "text-muted-foreground border-border/30 bg-muted/20 cursor-not-allowed opacity-50"
+                        : "text-emerald-600 border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-600 hover:text-white"
+                    )}
+                  >
+                    {isArchiving ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : !task.archived ? (
+                      <Archive className="h-4 w-4 mr-2" />
+                    ) : (
+                      <RefreshCcw className="h-4 w-4 mr-2" />
+                    )}
+                    {!task.archived ? "Archive Task" : "Restore Task"}
+                  </Button>
+                  {!task.archived && isTeamTask && (
+                    <p className="text-[10px] text-center text-muted-foreground/70 italic">
+                      Cannot archive — this task has team members assigned.
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
           </div>
 
           {/* Action Required Section */}
@@ -878,30 +1112,75 @@ export function TaskDetailPanel({
 
             {isDiscussionExpanded && (
               <div className="p-5 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="flex gap-3 relative mb-5">
-                  <Textarea
-                    value={commentContent}
-                    onChange={(e) => setCommentContent(e.target.value)}
-                    placeholder="Discuss this task with your team..."
-                    rows={2}
-                    className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-[60px]"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                        handleAddComment()
-                      }
-                    }}
-                  />
-                  <Button
-                    size="icon"
-                    onClick={handleAddComment}
-                    disabled={!commentContent.trim() || isAddingComment}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm self-end h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
-                    title="Post Comment (Ctrl+Enter)"
-                  >
-                    {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
-                    <span className="sr-only">Post comment</span>
-                  </Button>
-                </div>
+                  <div className="flex flex-col flex-1 gap-2">
+                    <div className="flex gap-3 relative">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => commentFileInputRef.current?.click()}
+                        className={cn(
+                          "h-10 w-10 shrink-0 rounded-xl border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-all",
+                          commentFile && "border-primary/50 bg-primary/10 text-primary"
+                        )}
+                        title="Attach file or image"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                      <Textarea
+                        value={commentContent}
+                        onChange={(e) => setCommentContent(e.target.value)}
+                        placeholder="Discuss this task with your team..."
+                        rows={1}
+                        className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-10 py-2"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                            handleAddComment()
+                          }
+                        }}
+                      />
+                      <Button
+                        size="icon"
+                        onClick={handleAddComment}
+                        disabled={(!commentContent.trim() && !commentFile) || isAddingComment}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
+                        title="Post Comment (Ctrl+Enter)"
+                      >
+                        {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
+                        <span className="sr-only">Post comment</span>
+                      </Button>
+                    </div>
+
+                    {commentFile && (
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-bottom-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {commentFile.type.startsWith("image/") ? (
+                            <div className="h-6 w-6 rounded bg-primary/20 flex items-center justify-center overflow-hidden">
+                              <img
+                                src={URL.createObjectURL(commentFile)}
+                                alt="Preview"
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
+                              <FileIcon className="h-3 w-3 text-primary" />
+                            </div>
+                          )}
+                          <span className="text-[10px] font-medium text-foreground truncate max-w-[150px]">
+                            {commentFile.name}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setCommentFile(null)}
+                          className="p-1 hover:bg-primary/10 rounded-full transition-colors"
+                        >
+                          <X className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+
 
                 {!task.comments || task.comments.length === 0 ? (
                   <div className="py-2 text-center bg-secondary/10 rounded-lg border border-dashed border-border/50">
@@ -937,7 +1216,47 @@ export function TaskDetailPanel({
                             </div>
                             <div className="text-sm text-foreground/90 leading-relaxed bg-secondary/30 p-3 rounded-2xl rounded-tl-sm border border-border/30">
                               {comment.content}
+                              {comment.attachmentUrl && (
+                                <div className="mt-2 pt-2 border-t border-border/20">
+                                  {comment.attachmentType?.startsWith("image/") ? (
+                                    <a
+                                      href={comment.attachmentUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="relative inline-block group/img overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 transition-all"
+                                    >
+                                      <img
+                                        src={comment.attachmentUrl}
+                                        alt={comment.attachmentName}
+                                        className="max-w-full h-auto max-h-[200px] object-contain rounded-md"
+                                      />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                                        <ExternalLink className="h-4 w-4 text-white" />
+                                      </div>
+                                    </a>
+                                  ) : (
+                                    <a
+                                      href={comment.attachmentUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2.5 p-2 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-background/80 transition-all group/file max-w-full"
+                                    >
+                                      <div className="p-1.5 rounded-lg bg-primary/10 text-primary group-hover/file:bg-primary group-hover/file:text-white transition-colors">
+                                        <FileText className="h-3.5 w-3.5" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] font-bold text-foreground truncate">{comment.attachmentName}</p>
+                                        <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest leading-none mt-0.5">
+                                          {comment.attachmentType?.split("/")[1] || "FILE"}
+                                        </p>
+                                      </div>
+                                      <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/file:text-primary transition-colors shrink-0" />
+                                    </a>
+                                  )}
+                                </div>
+                              )}
                             </div>
+
                           </div>
                         </div>
                       )
@@ -1069,8 +1388,9 @@ export function TaskDetailPanel({
         </div>
       </div>
 
-      {/* Note Input */}
-      {showNoteInput && task.status === "in-progress" && (
+      {/* Note Input — only for employees (via showNoteInput) and admin assignees. head_admin is excluded even if assigned. */}
+      {task.status === "in-progress" && isAssignee && (showNoteInput || currentRole === "admin") && (
+
         <div className="p-5 border-t border-border/50 bg-background/60 backdrop-blur-md">
           {selectedFile && (
             <div className="mb-3 flex items-center justify-between p-2 rounded-xl bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-bottom-2">
@@ -1099,6 +1419,13 @@ export function TaskDetailPanel({
               ref={fileInputRef}
               className="hidden"
               onChange={handleFileChange}
+              accept="image/*,application/pdf"
+            />
+            <input
+              type="file"
+              ref={commentFileInputRef}
+              className="hidden"
+              onChange={handleCommentFileChange}
               accept="image/*,application/pdf"
             />
             <Button

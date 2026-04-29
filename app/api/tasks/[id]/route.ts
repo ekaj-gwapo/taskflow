@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, requireAdmin } from "@/lib/auth-utils"
 import db from "@/lib/db"
 import { logActivity, ActivityAction } from "@/lib/activity"
+import { v4 as uuidv4 } from "uuid"
 
 export async function GET(
   request: NextRequest,
@@ -45,12 +46,39 @@ export async function GET(
       }
     }
 
-    const actionSteps = await db.getAll("SELECT *, createdAt as \"createdAt\", updatedAt as \"updatedAt\" FROM action_steps WHERE taskId = ?", [taskId])
-    const actionStepsWithNotes = await Promise.all((actionSteps as any[]).map(async (as: any) => ({
-      ...as,
-      notes: await db.getAll("SELECT *, createdAt as \"createdAt\", authorName as \"authorName\" FROM step_notes WHERE stepId = ?", [as.id])
-    })))
-    const progressNotes = await db.getAll("SELECT *, createdAt as \"createdAt\", updatedAt as \"updatedAt\", authorName as \"authorName\" FROM progress_notes WHERE taskId = ?", [taskId])
+    const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [taskId])
+    const actionStepsWithNotes = await Promise.all((actionSteps as any[]).map(async (as: any) => {
+      const notes = await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[];
+      return {
+        ...as,
+        isActed: as.isActed !== undefined ? as.isActed : as.isacted,
+        completed: as.completed !== undefined ? as.completed : as.completed, // completed is already lowercase
+        createdAt: as.createdAt || as.createdat,
+        updatedAt: as.updatedAt || as.updatedat,
+        notes: notes.map(n => ({
+          ...n,
+          authorName: n.authorName || n.authorname,
+          attachmentUrl: n.attachmentUrl || n.attachmenturl,
+          attachmentName: n.attachmentName || n.attachmentname,
+          attachmentType: n.attachmentType || n.attachmenttype,
+          createdAt: n.createdAt || n.createdat
+        }))
+      };
+    }))
+
+
+    const progressNotesRaw = await db.getAll("SELECT * FROM progress_notes WHERE taskId = ?", [taskId])
+    const progressNotes = (progressNotesRaw as any[]).map(n => ({
+      ...n,
+      authorId: n.authorId || n.authorid,
+      authorName: n.authorName || n.authorname,
+      attachmentUrl: n.attachmentUrl || n.attachmenturl,
+      attachmentName: n.attachmentName || n.attachmentname,
+      attachmentType: n.attachmentType || n.attachmenttype,
+      createdAt: n.createdAt || n.createdat,
+      updatedAt: n.updatedAt || n.updatedat
+    }))
+
 
     const assigneesData = await db.getAll(`
       SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
@@ -67,15 +95,40 @@ export async function GET(
         assigneeId: assigneesData[0]?.id || null,
         assigneeName: assigneesData[0]?.name || null,
         assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
-        createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole } : null,
-        delegatedBy: task.delegatedById ? { id: task.delegatedById, name: task.delegatorName, email: task.delegatorEmail, role: task.delegatorRole, avatar: task.delegatorAvatar } : null,
+        createdBy: (task.createdById || task.createdbyid) ? { 
+          id: task.createdById || task.createdbyid, 
+          name: task.creatorName || task.creatorname, 
+          email: task.creatorEmail || task.creatoremail, 
+          role: task.creatorRole || task.creatorrole 
+        } : null,
+        delegatedBy: (task.delegatedById || task.delegatedbyid) ? { 
+          id: task.delegatedById || task.delegatedbyid, 
+          name: task.delegatorName || task.delegatorname, 
+          email: task.delegatorEmail || task.delegatoremail, 
+          role: task.delegatorRole || task.delegatorrole, 
+          avatar: task.delegatorAvatar || task.delegatoravatar 
+        } : null,
         actionSteps: actionStepsWithNotes,
         progressNotes,
         createdAt: task.createdAt || task.createdat,
         updatedAt: task.updatedAt || task.updatedat,
         dueDate: task.dueDate || task.duedate || null,
         completedAt: task.completedAt || task.completedat || null,
-        delegatedAt: task.delegatedAt || task.delegatedat || null,
+        extensionRequests: (await db.getAll(
+          "SELECT * FROM extension_requests WHERE taskId = ? ORDER BY createdAt DESC",
+          [taskId]
+        ) as any[]).map((er: any) => ({
+          ...er,
+          requestedById: er.requestedById || er.requestedbyid,
+          requestedByName: er.requestedByName || er.requestedbyname,
+          currentDueDate: er.currentDueDate || er.currentduedate,
+          proposedDueDate: er.proposedDueDate || er.proposedduedate,
+          reviewedById: er.reviewedById || er.reviewedbyid,
+          reviewedByName: er.reviewedByName || er.reviewedbyname,
+          reviewerRemark: er.reviewerRemark || er.reviewerremark,
+          reviewedAt: er.reviewedAt || er.reviewedat,
+          createdAt: er.createdAt || er.createdat
+        })),
       } 
     }, { status: 200 })
   } catch (error) {
@@ -316,6 +369,50 @@ export async function PUT(
         details: { title: existingTask.title }
       });
     }
+
+    if (dueDate !== undefined) {
+      const oldDueDate = existingTask.dueDate || existingTask.duedate;
+      const newDueDate = new Date(dueDate).toISOString();
+      
+      if (oldDueDate !== newDueDate) {
+        await logActivity({
+          action: "DUE_DATE_UPDATED",
+          entityId: realTaskId,
+          entityType: "TASK",
+          userId: auth.user!.id,
+          userName: auth.user!.name,
+          details: { 
+            title: existingTask.title,
+            from: oldDueDate,
+            to: newDueDate
+          }
+        });
+
+        // Notify all assignees about the due date adjustment
+        const assignees = await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [realTaskId]) as any[];
+        const now = new Date().toISOString();
+
+        for (const assignee of assignees) {
+          const assigneeId = assignee.userId || assignee.userid;
+          // Don't notify the person who made the change
+          if (assigneeId && assigneeId !== auth.user!.id) {
+            await db.execute(
+              "INSERT INTO notifications (id, userId, type, title, message, link, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
+              [
+                uuidv4(),
+                assigneeId,
+                "DUE_DATE_UPDATED",
+                "Due Date Adjusted",
+                `The due date for "${existingTask.title}" has been adjusted by ${auth.user!.name}.`,
+                `/tasks/${realTaskId}`,
+                now
+              ]
+            );
+          }
+        }
+      }
+    }
+
 
 
 

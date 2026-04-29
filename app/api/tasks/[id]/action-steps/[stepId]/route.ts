@@ -23,25 +23,29 @@ export async function PUT(
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
-    // Employee can only update steps for their own tasks
+    // Restriction: Only assigned users (regardless of role) can update steps.
+    // SuperAdmin is exempt.
     const role = auth.user!.role?.toUpperCase()
-    if (role === "EMPLOYEE") {
-      const assignment = await db.getOne(
-        "SELECT 1 FROM task_assignments WHERE taskId = ? AND userId = ?",
-        [taskId, auth.user!.id]
-      )
+    const isAssigned = await db.getOne(
+      "SELECT 1 FROM task_assignments WHERE taskId = ? AND userId = ?",
+      [taskId, auth.user!.id]
+    ) || task.assigneeId?.toLowerCase() === auth.user!.id.toLowerCase();
 
-      if (!assignment && task.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
-        return NextResponse.json(
-          { error: "Access denied" },
-          { status: 403 }
-        )
-      }
+    if (role !== "SUPERADMIN" && !isAssigned) {
+      return NextResponse.json(
+        { error: "Access denied. Only assigned users can update action steps." },
+        { status: 403 }
+      )
     }
 
+
     const currentStep: any = await db.getOne("SELECT completed, isActed FROM action_steps WHERE id = ?", [(await params).stepId]);
-    const newCompleted = completed !== undefined ? !!completed : !!currentStep.completed;
-    let newIsActed = isActed !== undefined ? !!isActed : !!currentStep.isActed;
+    const currentCompleted = currentStep.completed !== undefined ? currentStep.completed : currentStep.completed; // completed is lowercase
+    const currentIsActed = currentStep.isActed !== undefined ? currentStep.isActed : currentStep.isacted;
+
+    const newCompleted = completed !== undefined ? !!completed : !!currentCompleted;
+    let newIsActed = isActed !== undefined ? !!isActed : !!currentIsActed;
+
 
     // Automatically mark as acted if it's being marked completed
     if (newCompleted) {
@@ -72,10 +76,13 @@ export async function PUT(
       }
     });
 
+    const updatedStep: any = await db.getOne("SELECT * FROM action_steps WHERE id = ?", [(await params).stepId]);
     const actionStep = {
-      ...(await db.getOne("SELECT * FROM action_steps WHERE id = ?", [(await params).stepId]) as any),
+      ...updatedStep,
+      isActed: updatedStep.isActed !== undefined ? updatedStep.isActed : updatedStep.isacted,
       notes: await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [(await params).stepId])
     };
+
 
     return NextResponse.json(
       { message: "Action step updated successfully", actionStep },

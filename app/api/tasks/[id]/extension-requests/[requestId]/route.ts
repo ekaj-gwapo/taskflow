@@ -4,7 +4,7 @@ import db from "@/lib/db"
 import { logActivity } from "@/lib/activity"
 import { v4 as uuidv4 } from "uuid"
 
-// PUT — Approve or reject an extension request
+// PUT — Approve or reject an extension request (fixed duplicate declaration)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; requestId: string }> }
@@ -15,7 +15,8 @@ export async function PUT(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { id: taskId, requestId } = await params
+    const taskId = (await params).id?.toLowerCase()
+    const requestId = (await params).requestId
     const user = auth.user!
     const role = user.role.toUpperCase()
 
@@ -38,7 +39,13 @@ export async function PUT(
 
     // Find the extension request and task details
     const extRequest: any = await db.getOne(
-      "SELECT er.*, t.createdById, t.delegatedById, t.title as taskTitle FROM extension_requests er JOIN tasks t ON er.taskId = t.id WHERE er.id = ? AND er.taskId = ?",
+      `SELECT er.*, 
+              t.createdById as "createdById", t.createdbyid, 
+              t.delegatedById as "delegatedById", t.delegatedbyid, 
+              t.title as "taskTitle", t.title
+       FROM extension_requests er 
+       JOIN tasks t ON er.taskId = t.id 
+       WHERE er.id = ? AND er.taskId = ?`,
       [requestId, taskId]
     )
 
@@ -51,9 +58,12 @@ export async function PUT(
 
     // AUTH CHECK: Only the original creator (createdById) OR a SuperAdmin can review
     // A user CANNOT review their own extension request
-    const isCreator = user.id === extRequest.createdById;
+    const creatorId = extRequest.createdById || extRequest.createdbyid;
+    const requestedById = extRequest.requestedById || extRequest.requestedbyid;
+    
+    const isCreator = user.id === creatorId;
     const isSuperAdmin = role === "SUPERADMIN";
-    const isRequester = user.id === extRequest.requestedById;
+    const isRequester = user.id === requestedById;
 
     if ((!isCreator && !isSuperAdmin) || isRequester) {
       return NextResponse.json(
@@ -79,13 +89,19 @@ export async function PUT(
       WHERE id = ?
     `, [newStatus, user.id, user.name, remark?.trim() || null, now, requestId])
 
+    const proposedDueDate = extRequest.proposedDueDate || extRequest.proposedduedate;
+
     // If approved, update the task's due date
-    if (action === "APPROVE") {
+    if (action === "APPROVE" && proposedDueDate) {
       await db.execute(
         "UPDATE tasks SET dueDate = ?, updatedAt = ? WHERE id = ?",
-        [extRequest.proposedDueDate, now, taskId]
+        [proposedDueDate, now, taskId]
       )
     }
+
+    const taskTitle = extRequest.taskTitle || extRequest.tasktitle || extRequest.title || "Task";
+    const requestedByName = extRequest.requestedByName || extRequest.requestedbyname || "Someone";
+    const currentDueDate = extRequest.currentDueDate || extRequest.currentduedate;
 
     await logActivity({
       action: action === "APPROVE" ? "EXTENSION_APPROVED" : "EXTENSION_REJECTED",
@@ -95,10 +111,10 @@ export async function PUT(
       userName: user.name,
       details: {
         requestId,
-        taskTitle: extRequest.taskTitle,
-        requestedBy: extRequest.requestedByName,
-        currentDueDate: extRequest.currentDueDate,
-        proposedDueDate: extRequest.proposedDueDate,
+        taskTitle,
+        requestedBy: requestedByName,
+        currentDueDate,
+        proposedDueDate,
         remark: remark?.trim() || null,
       },
     })
@@ -107,10 +123,8 @@ export async function PUT(
     const notificationId = uuidv4()
     const notificationTitle = action === "APPROVE" ? "Extension Approved" : "Extension Rejected"
     const notificationMessage = action === "APPROVE" 
-      ? `Your extension request for "${extRequest.taskTitle}" has been approved.` 
-      : `Your extension request for "${extRequest.taskTitle}" has been rejected.`
-    
-    const requestedById = extRequest.requestedById || extRequest.requestedbyid;
+      ? `Your extension request for "${taskTitle}" has been approved.` 
+      : `Your extension request for "${taskTitle}" has been rejected.`
     
     await db.execute(
       "INSERT INTO notifications (id, userId, type, title, message, link, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -126,8 +140,21 @@ export async function PUT(
     )
 
     const updated: any = await db.getOne("SELECT * FROM extension_requests WHERE id = ?", [requestId])
+    const formattedUpdated = {
+      ...updated,
+      requestedById: updated.requestedById || updated.requestedbyid,
+      requestedByName: updated.requestedByName || updated.requestedbyname,
+      currentDueDate: updated.currentDueDate || updated.currentduedate,
+      proposedDueDate: updated.proposedDueDate || updated.proposedduedate,
+      reviewedById: updated.reviewedById || updated.reviewedbyid,
+      reviewedByName: updated.reviewedByName || updated.reviewedbyname,
+      reviewerRemark: updated.reviewerRemark || updated.reviewerremark,
+      reviewedAt: updated.reviewedAt || updated.reviewedat,
+      createdAt: updated.createdAt || updated.createdat
+    }
 
-    return NextResponse.json({ extensionRequest: updated }, { status: 200 })
+
+    return NextResponse.json({ extensionRequest: formattedUpdated }, { status: 200 })
   } catch (error) {
     console.error("Review extension request error:", error)
     return NextResponse.json(

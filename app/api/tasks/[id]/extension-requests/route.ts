@@ -15,7 +15,7 @@ export async function POST(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { id: taskId } = await params
+    const taskId = (await params).id?.toLowerCase()
     const user = auth.user!
     const { proposedDueDate, reason } = await request.json()
 
@@ -47,8 +47,19 @@ export async function POST(
       )
     }
 
+    const createdById = task.createdById || task.createdbyid;
+    const delegatedById = task.delegatedById || task.delegatedbyid;
+    const currentDueDate = task.dueDate || task.duedate;
+
+    if (!currentDueDate) {
+      return NextResponse.json(
+        { error: "Task has no current due date. Cannot request extension." },
+        { status: 400 }
+      )
+    }
+
     // ASSIGNER RESTRICTION: You cannot request an extension from yourself
-    if (user.id === task.createdById || user.id === task.delegatedById) {
+    if (user.id === createdById || user.id === delegatedById) {
       return NextResponse.json(
         { error: "As the assigner of this task, you cannot request an extension from yourself" },
         { status: 403 }
@@ -95,10 +106,9 @@ export async function POST(
         { status: 400 }
       )
     }
-
+    
     // Validate proposed date is after current due date
-    const currentDueDate = task.dueDate
-    if (new Date(proposedDueDate) <= new Date(currentDueDate)) {
+    if (currentDueDate && new Date(proposedDueDate) <= new Date(currentDueDate)) {
       return NextResponse.json(
         { error: "Proposed date must be after the current due date" },
         { status: 400 }
@@ -111,7 +121,7 @@ export async function POST(
     await db.execute(`
       INSERT INTO extension_requests (id, taskId, requestedById, requestedByName, currentDueDate, proposedDueDate, reason, status, createdAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
-    `, [id, taskId, user.id, user.name, currentDueDate, new Date(proposedDueDate).toISOString(), reason.trim(), now])
+    `, [id, taskId, user.id, user.name, currentDueDate || null, new Date(proposedDueDate).toISOString(), reason.trim(), now])
 
     await logActivity({
       action: "EXTENSION_REQUESTED",
@@ -129,9 +139,16 @@ export async function POST(
     })
 
     const created: any = await db.getOne("SELECT * FROM extension_requests WHERE id = ?", [id])
+    const formattedCreated = {
+      ...created,
+      requestedById: created.requestedById || created.requestedbyid,
+      requestedByName: created.requestedByName || created.requestedbyname,
+      currentDueDate: created.currentDueDate || created.currentduedate,
+      proposedDueDate: created.proposedDueDate || created.proposedduedate,
+      createdAt: created.createdAt || created.createdat
+    }
 
     // Create Notifications only for the original Creator
-    const createdById = task.createdById || task.createdbyid;
     if (createdById && createdById !== user.id) {
       const notificationId = uuidv4();
       await db.execute(
@@ -141,14 +158,14 @@ export async function POST(
           createdById,
           "EXTENSION_REQUESTED",
           "Extension Requested",
-          `${user.name} requested an extension for "${task.title}".`,
+          `${user.name} requested an extension for "${task.title || task.taskTitle || "Task"}".`,
           `/tasks/${taskId}`,
           now
         ]
       );
     }
 
-    return NextResponse.json({ extensionRequest: created }, { status: 201 })
+    return NextResponse.json({ extensionRequest: formattedCreated }, { status: 201 })
   } catch (error) {
     console.error("Create extension request error:", error)
     return NextResponse.json(
@@ -170,12 +187,26 @@ export async function GET(
     }
 
     const { id: taskId } = await params
-    const requests = await db.getAll(
+    const requests = (await db.getAll(
       "SELECT * FROM extension_requests WHERE taskId = ? ORDER BY createdAt DESC",
       [taskId]
-    )
+    )) as any[]
 
-    return NextResponse.json({ extensionRequests: requests }, { status: 200 })
+    const formattedRequests = requests.map(r => ({
+      ...r,
+      requestedById: r.requestedById || r.requestedbyid,
+      requestedByName: r.requestedByName || r.requestedbyname,
+      currentDueDate: r.currentDueDate || r.currentduedate,
+      proposedDueDate: r.proposedDueDate || r.proposedduedate,
+      reviewedById: r.reviewedById || r.reviewedbyid,
+      reviewedByName: r.reviewedByName || r.reviewedbyname,
+      reviewerRemark: r.reviewerRemark || r.reviewerremark,
+      reviewedAt: r.reviewedAt || r.reviewedat,
+      createdAt: r.createdAt || r.createdat
+    }))
+
+    return NextResponse.json({ extensionRequests: formattedRequests }, { status: 200 })
+
   } catch (error) {
     console.error("Fetch extension requests error:", error)
     return NextResponse.json(
