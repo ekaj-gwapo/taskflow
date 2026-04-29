@@ -1,5 +1,7 @@
 "use client";
 
+// Activity log view component for tracking system actions and team updates
+
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
