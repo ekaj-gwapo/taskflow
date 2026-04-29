@@ -82,15 +82,20 @@ export async function POST(
     try {
       // 1. Get all assignees
       const assignments = await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [taskId]);
-      const assigneeIds = assignments.map(a => a.userId);
-      if (task.assigneeId) assigneeIds.push(task.assigneeId);
+      const assigneeIds = assignments.map(a => a.userId || a.userid);
+      
+      const createdById = task.createdById || task.createdbyid;
+      const delegatedById = task.delegatedById || task.delegatedbyid;
+      const assigneeId = task.assigneeId || task.assigneeid;
+
+      if (assigneeId) assigneeIds.push(assigneeId);
       
       // 2. Add creator and delegator
-      if (task.createdById) assigneeIds.push(task.createdById);
-      if (task.delegatedById) assigneeIds.push(task.delegatedById);
+      if (createdById) assigneeIds.push(createdById);
+      if (delegatedById) assigneeIds.push(delegatedById);
       
-      // 3. Remove duplicates and the author
-      const notifyUserIds = Array.from(new Set(assigneeIds)).filter(id => id !== auth.user!.id);
+      // 3. Remove duplicates, nulls, and the author
+      const notifyUserIds = Array.from(new Set(assigneeIds.filter(id => id && id !== auth.user!.id)));
       
       if (notifyUserIds.length > 0) {
         const now = new Date().toISOString();

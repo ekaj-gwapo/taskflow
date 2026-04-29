@@ -110,11 +110,13 @@ export async function PUT(
       ? `Your extension request for "${extRequest.taskTitle}" has been approved.` 
       : `Your extension request for "${extRequest.taskTitle}" has been rejected.`
     
+    const requestedById = extRequest.requestedById || extRequest.requestedbyid;
+    
     await db.execute(
       "INSERT INTO notifications (id, userId, type, title, message, link, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         notificationId, 
-        extRequest.requestedById, 
+        requestedById, 
         action === "APPROVE" ? "EXTENSION_APPROVED" : "EXTENSION_REJECTED",
         notificationTitle,
         notificationMessage,

@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
       [user.id]
     )).map((n: any) => ({
       ...n,
+      isRead: n.isRead !== undefined ? n.isRead : (n.isread !== undefined ? n.isread : false),
       createdAt: n.createdAt || n.createdat
     }))
 
