@@ -44,6 +44,8 @@ export function ActivityLogView() {
         return { icon: <UserCheck className="h-4 w-4 text-purple-600" />, bg: "bg-purple-50 border-purple-200" };
       case "TEAM_MEMBERS_EDITED":
         return { icon: <Users className="h-4 w-4 text-indigo-600" />, bg: "bg-indigo-50 border-indigo-200" };
+      case "MEMBER_REMOVED":
+        return { icon: <Trash2 className="h-4 w-4 text-red-600" />, bg: "bg-red-50 border-red-200" };
       case "TASK_DELEGATED":
         return { icon: <Share2 className="h-4 w-4 text-blue-500" />, bg: "bg-blue-50 border-blue-100" };
       case "NOTE_ADDED":
@@ -93,13 +95,19 @@ export function ActivityLogView() {
       case "TASK_REASSIGNED":
       case "TEAM_MEMBERS_EDITED":
       case "TASK_DELEGATED":
+      case "MEMBER_REMOVED": {
         const added = log.details?.added || [];
         const removed = log.details?.removed || [];
         const isDelegated = log.action === "TASK_DELEGATED";
         
+        let prefix = "Updated members for ";
+        if (isDelegated) prefix = "Delegated ";
+        else if (removed.length > 0 && added.length === 0) prefix = "Removed member(s) from ";
+        else if (added.length > 0 && removed.length === 0) prefix = "Added member(s) to ";
+        
         return (
           <span>
-            {isDelegated ? "Delegated " : "Updated members for "} 
+            {prefix} 
             <strong>{taskName}</strong>:
             {added.length > 0 && (
               <span> added <strong>{added.join(", ")}</strong></span>
@@ -111,6 +119,7 @@ export function ActivityLogView() {
             {added.length === 0 && removed.length === 0 && <span> re-synced team members</span>}
           </span>
         );
+      }
       case "NOTE_ADDED":
         return <span>Added a progress note to <strong>{taskName}</strong></span>;
       case "COMMENT_ADDED":

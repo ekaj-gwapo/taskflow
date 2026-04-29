@@ -48,13 +48,17 @@ export function EmployeeProfileReport() {
   const stats = useMemo(() => {
     if (!currentUser) return null
 
-    const myTasks = tasks.filter(t => 
-      t.assignees?.some(a => a.id === currentUser.id) || t.assigneeId === currentUser.id
-    )
+    const userRole = currentUser.role?.toLowerCase()
+    const isHeadAdmin = userRole === 'head_admin'
+    const isManagement = userRole === 'admin' || userRole === 'head_admin' || userRole === 'superadmin'
 
-    const completed = myTasks.filter(t => t.status === "completed")
-    const inProgress = myTasks.filter(t => t.status === "in-progress")
-    const overdue = myTasks.filter(t => t.status !== "completed" && new Date(t.dueDate) < new Date())
+    const relevantTasks = isManagement 
+      ? tasks 
+      : tasks.filter(t => t.assignees?.some(a => a.id === currentUser.id) || t.assigneeId === currentUser.id)
+
+    const completed = relevantTasks.filter(t => t.status === "completed")
+    const inProgress = relevantTasks.filter(t => t.status === "in-progress")
+    const overdue = relevantTasks.filter(t => t.status !== "completed" && new Date(t.dueDate) < new Date())
     
     // Calculate On-Time Rate
     const onTimeCompleted = completed.filter(t => {
@@ -67,8 +71,8 @@ export function EmployeeProfileReport() {
       : 0
 
     // Calculate Completion Rate
-    const completionRate = myTasks.length > 0 
-      ? Math.round((completed.length / myTasks.length) * 100) 
+    const completionRate = relevantTasks.length > 0 
+      ? Math.round((completed.length / relevantTasks.length) * 100) 
       : 0
 
     // Calculate Total Points
@@ -86,10 +90,13 @@ export function EmployeeProfileReport() {
     // Admin Specific Stats
     const isAdmin = currentUser.role !== 'employee'
     const createdTasksCount = tasks.filter(t => t.createdById === currentUser.id).length
-    const reassignedTasksCount = logs.filter(l => l.userId === currentUser.id && l.action === 'TASK_REASSIGNED').length
+    const reassignedTasksCount = logs.filter(l => 
+      l.userId === currentUser.id && 
+      (l.action === 'TASK_REASSIGNED' || l.action === 'TASK_DELEGATED')
+    ).length
 
     return {
-      total: myTasks.length,
+      total: relevantTasks.length,
       completed: completed.length,
       inProgress: inProgress.length,
       overdue: overdue.length,
@@ -98,12 +105,42 @@ export function EmployeeProfileReport() {
       totalPoints,
       completedThisWeek: completedThisWeek.length,
       isAdmin,
+      isHeadAdmin,
       createdTasksCount,
       reassignedTasksCount
     }
   }, [tasks, currentUser, logs])
 
   if (!stats) return null
+
+  const metrics = [
+    { 
+      icon: <Target className="h-4 w-4 text-blue-500" />, 
+      label: stats.isAdmin ? "Total Overseen" : "Total Assigned", 
+      value: stats.total, 
+      description: stats.isAdmin ? "Organizational tasks" : "Lifetime tasks", 
+      color: "blue" 
+    },
+  ]
+
+  // Only show individual performance metrics if not a head_admin 
+  // AND either they are an employee OR they actually have personal progress/points
+  const showIndividualStats = !stats.isHeadAdmin && (!stats.isAdmin || stats.totalPoints > 0 || stats.completed > 0)
+
+  if (showIndividualStats) {
+    metrics.push(
+      { icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />, label: "Accomplished", value: stats.completed, description: "Completed tasks", color: "emerald" },
+      { icon: <Zap className="h-4 w-4 text-amber-500" />, label: "Points Earned", value: stats.totalPoints, description: "Performance score", color: "amber" },
+      { icon: <TrendingUp className="h-4 w-4 text-purple-500" />, label: "This Week", value: stats.completedThisWeek, description: "Recent success", color: "purple" }
+    )
+  }
+
+  if (stats.isAdmin) {
+    metrics.push(
+      { icon: <PlusCircle className="h-4 w-4 text-sky-500" />, label: "Tasks Created", value: stats.createdTasksCount, description: "Total initialized", color: "blue" },
+      { icon: <RefreshCw className="h-4 w-4 text-orange-500" />, label: "Reassigned", value: stats.reassignedTasksCount, description: "Tasks delegated", color: "amber" }
+    )
+  }
 
   return (
     <motion.div 
@@ -114,16 +151,7 @@ export function EmployeeProfileReport() {
     >
       {/* Header Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { icon: <Target className="h-4 w-4 text-blue-500" />, label: "Total Assigned", value: stats.total, description: "Lifetime tasks", color: "blue" },
-          { icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />, label: "Accomplished", value: stats.completed, description: "Completed tasks", color: "emerald" },
-          { icon: <Zap className="h-4 w-4 text-amber-500" />, label: "Points Earned", value: stats.totalPoints, description: "Performance score", color: "amber" },
-          { icon: <TrendingUp className="h-4 w-4 text-purple-500" />, label: "This Week", value: stats.completedThisWeek, description: "Recent success", color: "purple" },
-          ...(stats.isAdmin ? [
-            { icon: <PlusCircle className="h-4 w-4 text-sky-500" />, label: "Tasks Created", value: stats.createdTasksCount, description: "Total initialized", color: "blue" },
-            { icon: <RefreshCw className="h-4 w-4 text-orange-500" />, label: "Reassigned", value: stats.reassignedTasksCount, description: "Tasks delegated", color: "amber" }
-          ] : [])
-        ].map((m, i) => (
+        {metrics.map((m, i) => (
           <motion.div
             key={m.label}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -159,7 +187,7 @@ export function EmployeeProfileReport() {
                   </div>
                   <span className="text-lg font-black text-primary">{stats.completionRate}%</span>
                 </div>
-                <Progress value={stats.completionRate} className="h-2 bg-secondary" />
+                <Progress value={stats.completionRate} className="h-2" />
               </div>
 
               <div className="space-y-3">
@@ -170,7 +198,7 @@ export function EmployeeProfileReport() {
                   </div>
                   <span className="text-lg font-black text-emerald-500">{stats.onTimeRate}%</span>
                 </div>
-                <Progress value={stats.onTimeRate} className="h-2 bg-secondary" />
+                <Progress value={stats.onTimeRate} className="h-2" />
               </div>
 
               <div className="pt-4 grid grid-cols-2 gap-4 border-t border-border/50">
@@ -265,11 +293,13 @@ function MetricCard({ icon, label, value, description, color }: { icon: React.Re
     purple: "bg-purple-500/10 text-purple-600"
   }
 
+  const colorClass = colorMap[color] || colorMap.blue
+
   return (
     <Card className="border-border bg-card/40 backdrop-blur-xl shadow-md group hover:shadow-xl transition-all">
       <CardContent className="p-5">
         <div className="flex items-center gap-3 mb-3">
-          <div className={cn("p-2 rounded-lg", colorMap[color])}>
+          <div className={cn("p-2 rounded-lg", colorClass)}>
             {icon}
           </div>
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{label}</span>

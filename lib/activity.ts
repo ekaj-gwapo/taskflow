@@ -23,7 +23,8 @@ export type ActivityAction =
   | "EXTENSION_APPROVED"
   | "EXTENSION_REJECTED"
   | "TASK_ARCHIVED"
-  | "TASK_RESTORED";
+  | "TASK_RESTORED"
+  | "MEMBER_REMOVED";
 
 export interface ActivityLogPayload {
   action: ActivityAction;

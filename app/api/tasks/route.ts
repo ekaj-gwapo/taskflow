@@ -79,18 +79,33 @@ export async function GET(request: NextRequest) {
 
       return {
         ...t,
+        id: t.id,
         status: t.status ? t.status.toLowerCase().replace('_', '-') : 'todo',
         assignees: assigneesData,
         // Keep single assignee keys populated for backwards compatibility
-        assigneeId: assigneesData[0]?.id || null,
-        assigneeName: assigneesData[0]?.name || null,
+        assigneeId: t.assigneeId || t.assigneeid || assigneesData[0]?.id || null,
+        assigneeName: t.assigneeName || t.assigneename || assigneesData[0]?.name || null,
         assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
-        createdBy: t.createdById ? { id: t.createdById, name: t.creatorName, email: t.creatorEmail, role: t.creatorRole, avatar: t.creatorAvatar } : null,
-        delegatedBy: t.delegatedById ? { id: t.delegatedById, name: t.delegatorName, email: t.delegatorEmail, role: t.delegatorRole, avatar: t.delegatorAvatar } : null,
+        createdById: t.createdById || t.createdbyid || null,
+        createdBy: (t.createdById || t.createdbyid) ? { 
+          id: t.createdById || t.createdbyid, 
+          name: t.creatorName, 
+          email: t.creatorEmail, 
+          role: t.creatorRole, 
+          avatar: t.creatorAvatar 
+        } : null,
+        delegatedById: t.delegatedById || t.delegatedbyid || null,
+        delegatedBy: (t.delegatedById || t.delegatedbyid) ? { 
+          id: t.delegatedById || t.delegatedbyid, 
+          name: t.delegatorName, 
+          email: t.delegatorEmail, 
+          role: t.delegatorRole, 
+          avatar: t.delegatorAvatar 
+        } : null,
         delegatedAt: t.delegatedAt || t.delegatedat || null,
         createdAt: t.createdAt || t.createdat,
         updatedAt: t.updatedAt || t.updatedat,
-        dueDate: t.dueDate || t.duedate,
+        dueDate: t.dueDate || t.duedate || null,
         completedAt: t.completedAt || t.completedat || null,
         actionSteps: actionStepsWithNotes,
         progressNotes,
@@ -185,13 +200,32 @@ export async function POST(request: NextRequest) {
 
     const formattedTask = {
       ...task,
+      id: task.id,
       status: task.status ? task.status.toLowerCase().replace('_', '-') : 'todo',
       assignees: assigneesData,
-      assigneeId: assigneesData[0]?.id || null,
-      assigneeName: assigneesData[0]?.name || null,
+      assigneeId: task.assigneeId || task.assigneeid || assigneesData[0]?.id || null,
+      assigneeName: task.assigneeName || task.assigneename || assigneesData[0]?.name || null,
       assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
-      createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole, avatar: task.creatorAvatar } : null,
-      delegatedBy: task.delegatedById ? { id: task.delegatedById, name: task.delegatorName, email: task.delegatorEmail, role: task.delegatorRole, avatar: task.delegatorAvatar } : null,
+      createdById: task.createdById || task.createdbyid || null,
+      createdBy: (task.createdById || task.createdbyid) ? { 
+        id: task.createdById || task.createdbyid, 
+        name: task.creatorName, 
+        email: task.creatorEmail, 
+        role: task.creatorRole, 
+        avatar: task.creatorAvatar 
+      } : null,
+      delegatedById: task.delegatedById || task.delegatedbyid || null,
+      delegatedBy: (task.delegatedById || task.delegatedbyid) ? { 
+        id: task.delegatedById || task.delegatedbyid, 
+        name: task.delegatorName, 
+        email: task.delegatorEmail, 
+        role: task.delegatorRole, 
+        avatar: task.delegatorAvatar 
+      } : null,
+      createdAt: task.createdAt || task.createdat,
+      updatedAt: task.updatedAt || task.updatedat,
+      dueDate: task.dueDate || task.duedate || null,
+      completedAt: task.completedAt || task.completedat || null,
       actionSteps: actionStepsWithNotes,
       progressNotes: [],
       comments: []

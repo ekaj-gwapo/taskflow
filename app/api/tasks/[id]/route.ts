@@ -73,7 +73,7 @@ export async function GET(
         progressNotes,
         createdAt: task.createdAt || task.createdat,
         updatedAt: task.updatedAt || task.updatedat,
-        dueDate: task.dueDate || task.duedate,
+        dueDate: task.dueDate || task.duedate || null,
         completedAt: task.completedAt || task.completedat || null,
         delegatedAt: task.delegatedAt || task.delegatedat || null,
       } 
@@ -201,8 +201,9 @@ export async function PUT(
     // Handle task_assignments if updating assignees
     if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
       // Get current assignees BEFORE deleting them to compare for logging
-      const currentAssigneeIds = (await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [realTaskId]) as any[]).map(r => r.userId);
-      const newAssigneeIds = [...assigneeIds];
+      const currentAssigneeRows = (await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [realTaskId]) as any[]);
+      const currentAssigneeIds = currentAssigneeRows.map(r => (r.userId || r.userid || "").toLowerCase()).filter(Boolean);
+      const newAssigneeIds = (assigneeIds || []).map((id: string) => id.toLowerCase());
       
       const addedIds = newAssigneeIds.filter(id => !currentAssigneeIds.includes(id));
       const removedIds = currentAssigneeIds.filter(id => !newAssigneeIds.includes(id));
@@ -229,7 +230,13 @@ export async function PUT(
         }
 
         let action: ActivityAction = "ASSIGNEE_CHANGED";
-        if (role === "HEAD_ADMIN" || role === "SUPERADMIN") {
+        if (addedIds.length > 0 && removedIds.length > 0) {
+          action = "TEAM_MEMBERS_EDITED";
+        } else if (removedIds.length > 0) {
+          action = "MEMBER_REMOVED";
+        } else if (addedIds.length > 0) {
+          action = "TEAM_MEMBERS_EDITED"; // Will display as "added" in the view
+        } else if (role === "HEAD_ADMIN" || role === "SUPERADMIN") {
           action = "TASK_DELEGATED";
         } else if (newAssigneeIds.length === 1 && currentAssigneeIds.length === 0) {
           action = "TASK_REASSIGNED";
@@ -341,13 +348,33 @@ export async function PUT(
 
     const formattedTask = {
       ...task,
+      id: task.id,
       status: task.status ? task.status.toLowerCase().replace('_', '-') : 'todo',
       assignees: assigneesData,
-      assigneeId: assigneesData[0]?.id || null,
-      assigneeName: assigneesData[0]?.name || null,
+      assigneeId: task.assigneeId || task.assigneeid || assigneesData[0]?.id || null,
+      assigneeName: task.assigneeName || task.assigneename || assigneesData[0]?.name || null,
       assignee: assigneesData[0] ? { ...assigneesData[0], role: assigneesData[0].role?.toLowerCase() } : null,
-      createdBy: task.createdById ? { id: task.createdById, name: task.creatorName, email: task.creatorEmail, role: task.creatorRole } : null,
-      delegatedBy: task.delegatedById ? { id: task.delegatedById, name: task.delegatorName, email: task.delegatorEmail, role: task.delegatorRole, avatar: task.delegatorAvatar } : null,
+      createdById: task.createdById || task.createdbyid || null,
+      createdBy: (task.createdById || task.createdbyid) ? { 
+        id: task.createdById || task.createdbyid, 
+        name: task.creatorName, 
+        email: task.creatorEmail, 
+        role: task.creatorRole, 
+        avatar: task.creatorAvatar 
+      } : null,
+      delegatedById: task.delegatedById || task.delegatedbyid || null,
+      delegatedBy: (task.delegatedById || task.delegatedbyid) ? { 
+        id: task.delegatedById || task.delegatedbyid, 
+        name: task.delegatorName, 
+        email: task.delegatorEmail, 
+        role: task.delegatorRole, 
+        avatar: task.delegatorAvatar 
+      } : null,
+      createdAt: task.createdAt || task.createdat,
+      updatedAt: task.updatedAt || task.updatedat,
+      dueDate: task.dueDate || task.duedate || null,
+      completedAt: task.completedAt || task.completedat || null,
+      delegatedAt: task.delegatedAt || task.delegatedat || null,
       actionSteps: actionStepsWithNotes,
       progressNotes
     }
