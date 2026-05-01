@@ -21,7 +21,10 @@ export function LoginScreen() {
   
   useEffect(() => {
     if (localStorage.getItem("token")) {
-      router.replace("/dashboard")
+      const verified = searchParams?.get("email_verified")
+      const emailError = searchParams?.get("email_error")
+      const target = `/dashboard${verified ? `?email_verified=${verified}` : ""}${emailError ? `${verified ? "&" : "?"}email_error=${emailError}` : ""}`
+      router.replace(target)
       return
     }
 

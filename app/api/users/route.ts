@@ -14,21 +14,22 @@ export async function GET(request: NextRequest) {
     let users;
     if (isMasterAdmin) {
       users = await db.getAll(`
-        SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", u.role, u.avatarUrl as avatar, u.isActive, u.createdAt, u.orgid AS "orgId", o.name as "organizationName"
+        SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", u.role, u.avatarurl as avatar, u.isactive as "isActive", u.createdat as "createdAt", u.orgid AS "orgId", o.name as "organizationName"
         FROM users u
         LEFT JOIN organizations o ON u.orgid = o.id
-        ORDER BY u.createdAt DESC
+        ORDER BY u.createdat DESC
       `);
     } else {
       const orgId = auth.user?.orgId;
+      console.log(`FETCH USERS for orgId: ${orgId}, role: ${auth.user?.role}`);
       if (!orgId) {
         return NextResponse.json({ users: [] });
       }
       users = await db.getAll(`
-        SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, avatarUrl as avatar, isActive, createdAt 
+        SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, avatarurl as avatar, isactive as "isActive", createdat as "createdAt" 
         FROM users
-        WHERE orgid = $1
-        ORDER BY createdAt DESC
+        WHERE orgid = ?
+        ORDER BY createdat DESC
       `, [orgId]);
     }
 

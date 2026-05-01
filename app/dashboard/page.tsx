@@ -41,7 +41,10 @@ function AppContent() {
       if (currentUser) {
         login(currentUser.role, currentUser.id, { ...currentUser, emailVerified: true })
       }
-      router.replace("/dashboard")
+      // Remove query param without triggering full reload
+      const url = new URL(window.location.href)
+      url.searchParams.delete("email_verified")
+      window.history.replaceState({}, "", url.toString())
     } else if (error) {
       const errorMessages: Record<string, string> = {
         missing_token: "Verification link is missing a token.",
@@ -50,7 +53,9 @@ function AppContent() {
         server_error: "An error occurred during verification."
       }
       toast.error(errorMessages[error] || "Failed to verify email.")
-      router.replace("/dashboard")
+      const url = new URL(window.location.href)
+      url.searchParams.delete("email_error")
+      window.history.replaceState({}, "", url.toString())
     }
   }, [searchParams, router, currentUser, login])
 

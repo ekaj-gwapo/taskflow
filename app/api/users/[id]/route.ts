@@ -15,7 +15,7 @@ export async function GET(
     }
 
     const user = await db.getOne(`
-      SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, theme, mode, createdat AS "createdAt"
+      SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, theme, mode, createdat AS "createdAt", orgid AS "orgId"
       FROM users 
       WHERE id = ?
     `, [id]);
@@ -98,7 +98,7 @@ export async function PUT(
     }
 
     const user = await db.getOne(`
-      SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, theme, mode 
+      SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, theme, mode, orgid AS "orgId"
       FROM users 
       WHERE id = ?
     `, [id]);
