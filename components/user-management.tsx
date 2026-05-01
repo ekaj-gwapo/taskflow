@@ -197,11 +197,10 @@ export function UserManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Email Address</label>
+                <label className="text-sm font-medium">Username</label>
                 <Input
                   required
-                  type="email"
-                  placeholder="john@example.com"
+                  placeholder="johndoe"
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                 />

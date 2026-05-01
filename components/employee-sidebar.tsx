@@ -77,15 +77,26 @@ function FlippingLogo({ front, back, alt }: { front: string; back: string; alt: 
 interface EmployeeSidebarProps {
   selectedCategory: "individual" | "team" | "profile" | "activity-log"
   onSelectCategory: (category: "individual" | "team" | "profile" | "activity-log") => void
+  isProfileOpen?: boolean
+  setIsProfileOpen?: (open: boolean) => void
 }
 
 export function EmployeeSidebar({
   selectedCategory,
   onSelectCategory,
+  isProfileOpen,
+  setIsProfileOpen,
 }: EmployeeSidebarProps) {
   const { currentUser, tasks, login, logout, seenTaskIds } = useTaskContext()
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
+
+  useEffect(() => {
+    if (isProfileOpen) {
+      setIsProfileDialogOpen(true)
+      setIsProfileOpen?.(false)
+    }
+  }, [isProfileOpen, setIsProfileOpen])
   const [activeTab, setActiveTab] = useState<"tasks" | "profile">(
     selectedCategory === "profile" ? "profile" : "tasks"
   )

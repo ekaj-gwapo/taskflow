@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user: any = await db.getOne(`
-      SELECT u.id, u.name, u.email, u.password, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 
+      SELECT u.id, u.name, u.email, u.username, u.password, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 
              u.avatarUrl as avatar, u.theme, u.mode, u.orgid AS "orgId", 
              u.createdAt as "createdAt", u.updatedAt as "updatedAt",
              u."emailVerified", u."notifyOnAssign", u."notifyOnDeadline", 
@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
              o.name as "organizationName", o.status as "orgStatus"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id
-      WHERE u.email = ?
-    `, [email]);
+      WHERE u.email = ? OR u.username = ?
+    `, [email, email]);
 
     if (!user) {
       return NextResponse.json(
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!user.emailVerified) {
+    if (user.email && !user.emailVerified) {
       return NextResponse.json(
         { error: "Email not verified. Please check your inbox for the verification link." },
         { status: 403 }
@@ -74,7 +74,8 @@ export async function POST(request: NextRequest) {
         email: user.email, 
         name: user.name, 
         role: user.role,
-        orgId: user.orgId 
+        orgId: user.orgId,
+        username: user.username
       },
       JWT_SECRET,
       { expiresIn: "1d" }

@@ -17,6 +17,7 @@ import { MasterOrgManagement } from "@/components/master-org-management"
 function AppContent() {
   const { currentUser, currentRole, isLoadingSession, login } = useTaskContext()
   const [activeMasterView, setActiveMasterView] = useState("overview")
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -24,7 +25,7 @@ function AppContent() {
     if (!isLoadingSession) {
       console.log("Dashboard Session Check:", { currentRole, orgId: currentUser?.orgId });
       if (!currentUser || !currentRole) {
-        router.replace("/auth/login")
+        router.replace(`/auth/login${window.location.search}`)
       } else if (currentRole !== "master_admin" && !currentUser.orgId) {
         console.log("Redirecting to onboarding because orgId is missing");
         router.replace("/auth/onboarding")
@@ -35,15 +36,23 @@ function AppContent() {
   useEffect(() => {
     const verified = searchParams.get("email_verified")
     const error = searchParams.get("email_error")
+    const openProfile = searchParams.get("open_profile")
     
     if (verified === "1") {
-      toast.success("Email connected successfully!")
-      if (currentUser) {
+      if (currentUser && !currentUser.emailVerified) {
+        toast.success("Email connected successfully!")
         login(currentUser.role, currentUser.id, { ...currentUser, emailVerified: true })
+        setIsProfileOpen(true)
       }
       // Remove query param without triggering full reload
       const url = new URL(window.location.href)
       url.searchParams.delete("email_verified")
+      url.searchParams.delete("open_profile")
+      window.history.replaceState({}, "", url.toString())
+    } else if (openProfile === "1") {
+      setIsProfileOpen(true)
+      const url = new URL(window.location.href)
+      url.searchParams.delete("open_profile")
       window.history.replaceState({}, "", url.toString())
     } else if (error) {
       const errorMessages: Record<string, string> = {
@@ -93,9 +102,9 @@ function AppContent() {
             </div>
           </div>
         ) : (currentRole === "head_admin" || currentRole === "admin") ? (
-          <AdminDashboard />
+          <AdminDashboard isProfileOpen={isProfileOpen} setIsProfileOpen={setIsProfileOpen} />
         ) : (
-          <EmployeeDashboard />
+          <EmployeeDashboard isProfileOpen={isProfileOpen} setIsProfileOpen={setIsProfileOpen} />
         )}
       </main>
     </div>

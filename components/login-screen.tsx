@@ -101,7 +101,7 @@ export function LoginScreen() {
       // Store token and login user
       localStorage.setItem("token", data.token)
       login(data.user.role.toLowerCase(), data.user.id, data.user)
-      router.replace("/dashboard")
+      router.replace(`/dashboard${window.location.search}`)
     } catch (err) {
       setError("An error occurred. Please try again.")
     } finally {
@@ -131,20 +131,21 @@ export function LoginScreen() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-1.5">
-                  Email Address
-                </label>
-                <Input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="you@example.com"
-                  className="bg-secondary border-border text-foreground"
-                  disabled={loading}
-                />
-              </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium ml-1">Username or Email</label>
+                  <div className="relative group/input">
+                    <LogIn className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within/input:text-primary transition-colors" />
+                    <Input
+                      name="email"
+                      type="text"
+                      placeholder="Enter your username or email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="h-12 pl-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                      required
+                    />
+                  </div>
+                </div>
 
               <div>
                 <label className="text-sm font-medium text-foreground block mb-1.5">

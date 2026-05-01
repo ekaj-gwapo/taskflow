@@ -62,6 +62,28 @@ export async function sendVerificationEmail(email: string, name: string, token: 
   })
 }
 
+export async function sendVerificationCodeEmail(email: string, name: string, code: string) {
+  return sendEmail({
+    to: email,
+    subject: "Your TaskFlow Verification Code",
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #059669; margin-top: 0;">Verification Code</h2>
+        <p>Hi ${name},</p>
+        <p>Use the following 6-digit code to verify your email address. This code will expire in 10 minutes.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <div style="background-color: #f8fafc; color: #059669; padding: 20px; font-size: 32px; font-weight: 800; letter-spacing: 10px; border-radius: 12px; border: 2px dashed #059669; display: inline-block;">
+            ${code}
+          </div>
+        </div>
+        <p style="color: #64748b; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+        <p style="color: #94a3b8; font-size: 12px; text-align: center;">This is an automated message. Please do not reply.</p>
+      </div>
+    `
+  })
+}
+
 export async function sendTaskAssignedEmail(opts: {
   to: string
   recipientName: string

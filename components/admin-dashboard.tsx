@@ -313,7 +313,13 @@ function TeamProjectCard({
   )
 }
 
-export function AdminDashboard() {
+export function AdminDashboard({ 
+  isProfileOpen, 
+  setIsProfileOpen 
+}: { 
+  isProfileOpen?: boolean; 
+  setIsProfileOpen?: (open: boolean) => void 
+} = {}) {
   const { tasks, archivedTasks, fetchArchivedTasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen, selectedTaskId, selectTask } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showCharts, setShowCharts] = useState(true)
@@ -486,6 +492,8 @@ export function AdminDashboard() {
     <div className="flex flex-1 min-h-0 overflow-hidden relative">
       <div className="hidden lg:block w-80 shrink-0 border-r border-border">
         <AdminSidebar
+          isProfileOpen={isProfileOpen}
+          setIsProfileOpen={setIsProfileOpen}
           selectedEmployeeId={selectedEmployeeId}
           onSelectEmployee={(id) => {
             setSelectedEmployeeId(id)

@@ -7,35 +7,34 @@ export async function POST(request: NextRequest) {
   try {
     const { name, email, password, phone, location, jobTitle, role, orgId, autoVerify } = await request.json();
 
-    if (!email || !password || !name) {
+    if (!email && !name) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     // Check if user already exists
-    const existingUser = await db.getOne("SELECT id FROM users WHERE email = ?", [email]);
+    const existingUser = await db.getOne("SELECT id FROM users WHERE email = ? OR username = ?", [email, email]);
     if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 });
+      return NextResponse.json({ error: "Username or Email already exists" }, { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userId = uuidv4();
+    // Users start as unverified until they connect an email
+    const isVerified = false;
     const verificationToken = uuidv4();
     const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-    // If autoVerify is true (created by admin), set emailVerified to true immediately
-    const isVerified = autoVerify === true;
 
     // Insert user
     await db.execute(`
       INSERT INTO users (
-        id, name, email, password, role, 
+        id, name, email, username, password, role, 
         phone, location, jobtitle, orgid,
         "emailVerified", "emailVerifyToken", "emailVerifyExpiry",
         createdAt, updatedAt
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      userId, name, email, hashedPassword, role || "creator", 
+      userId, name, isVerified ? null : email, email, hashedPassword, role || "creator", 
       phone || "", location || "", jobTitle || "", orgId || null,
       isVerified, isVerified ? null : verificationToken, isVerified ? null : verificationExpiry,
       new Date().toISOString(), new Date().toISOString()

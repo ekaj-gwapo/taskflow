@@ -85,17 +85,28 @@ interface AdminSidebarProps {
   selectedEmployeeId: string | null
   onSelectEmployee: (employeeId: string | null) => void
   onSelectTask: (task: Task) => void
+  isProfileOpen?: boolean
+  setIsProfileOpen?: (open: boolean) => void
 }
 
 export function AdminSidebar({
   selectedEmployeeId,
   onSelectEmployee,
   onSelectTask,
+  isProfileOpen,
+  setIsProfileOpen,
 }: AdminSidebarProps) {
   const { allEmployees, tasks, currentUser, login, logout, seenTaskIds } = useTaskContext()
   const [activeTab, setActiveTab] = useState<"employees" | "profile">("employees")
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
+
+  useEffect(() => {
+    if (isProfileOpen) {
+      setIsProfileDialogOpen(true)
+      setIsProfileOpen?.(false)
+    }
+  }, [isProfileOpen, setIsProfileOpen])
   const [profileData, setProfileData] = useState({
     name: currentUser?.name || "",
     email: currentUser?.email || "",

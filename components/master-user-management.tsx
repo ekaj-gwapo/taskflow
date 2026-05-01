@@ -290,11 +290,10 @@ export function MasterUserManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-foreground">Email Address</label>
+                <label className="text-sm font-bold text-foreground">Username</label>
                 <Input
                   required
-                  type="email"
-                  placeholder="email@organization.com"
+                  placeholder="username"
                   className="h-11 bg-background"
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}

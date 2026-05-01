@@ -175,7 +175,13 @@ function EmployeeTaskCard({
   )
 }
 
-export function EmployeeDashboard() {
+export function EmployeeDashboard({ 
+  isProfileOpen, 
+  setIsProfileOpen 
+}: { 
+  isProfileOpen?: boolean; 
+  setIsProfileOpen?: (open: boolean) => void 
+} = {}) {
   const { tasks, currentUser, canAccessTask, seenTaskIds, markAsSeen, selectedTaskId, selectTask } = useTaskContext()
   const [selectedCategory, setSelectedCategory] = useState<"individual" | "team" | "profile" | "activity-log">("individual")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -249,6 +255,8 @@ export function EmployeeDashboard() {
         <EmployeeSidebar
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
+          isProfileOpen={isProfileOpen}
+          setIsProfileOpen={setIsProfileOpen}
         />
       </div>
 

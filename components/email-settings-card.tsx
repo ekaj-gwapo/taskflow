@@ -16,8 +16,22 @@ export function EmailSettingsCard() {
   const { currentUser, login } = useTaskContext()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState(currentUser?.email || "")
+  const [verificationCode, setVerificationCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSendingVerify, setIsSendingVerify] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [lastResendTime, setLastResendTime] = useState<number>(0)
+  const [countdown, setCountdown] = useState(0)
+
+  // Handle countdown timer
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setInterval(() => {
+        setCountdown(prev => prev - 1)
+      }, 1000)
+      return () => clearInterval(timer)
+    }
+  }, [countdown])
 
   // Notification Preferences State
   const [prefs, setPrefs] = useState({
@@ -46,6 +60,11 @@ export function EmailSettingsCard() {
       return
     }
 
+    if (countdown > 0) {
+      toast.error(`Please wait ${countdown} seconds before resending`)
+      return
+    }
+
     setIsSendingVerify(true)
     try {
       const token = localStorage.getItem("token")
@@ -64,7 +83,10 @@ export function EmailSettingsCard() {
         throw new Error(data.error || "Failed to connect email")
       }
 
-      toast.success(data.message || "Verification email sent!")
+      toast.success(data.message || "Verification code sent!")
+      setVerificationCode("")
+      setCountdown(300) // 5 minutes cooldown
+      setLastResendTime(Date.now())
       
       // Update local state temporarily
       if (currentUser) {
@@ -75,6 +97,73 @@ export function EmailSettingsCard() {
         })
       }
 
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsSendingVerify(false)
+    }
+  }
+
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      toast.error("Please enter the 6-digit code")
+      return
+    }
+
+    setIsVerifying(true)
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch("/api/users/verify-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ code: verificationCode })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Verification failed")
+      }
+
+      toast.success("Email verified successfully!")
+      
+      if (currentUser && data.user) {
+        login(data.user.role, data.user.id, data.user)
+      }
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsVerifying(false)
+    }
+  }
+
+  const handleDisconnectEmail = async () => {
+    setIsSendingVerify(true)
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch("/api/users/disconnect-email", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to disconnect email")
+      }
+
+      toast.success("Email disconnected")
+      setEmail("")
+      if (currentUser) {
+        login(currentUser.role, currentUser.id, {
+          ...currentUser,
+          email: null as any,
+          emailVerified: false
+        })
+      }
     } catch (error: any) {
       toast.error(error.message)
     } finally {
@@ -116,7 +205,7 @@ export function EmailSettingsCard() {
 
   if (!currentUser) return null
 
-  const isVerified = currentUser.emailVerified
+  const isVerified = !!(currentUser.emailVerified && currentUser.email)
 
   return (
     <div className="space-y-8">
@@ -138,9 +227,19 @@ export function EmailSettingsCard() {
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Notification Channel</p>
               </div>
             </div>
-            {isVerified && (
-              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                Verified
+            {isVerified ? (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleDisconnectEmail}
+                disabled={isSendingVerify}
+                className="h-8 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-widest border border-red-500/20"
+              >
+                Disconnect
+              </Button>
+            ) : currentUser.email && (
+              <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase tracking-widest border border-amber-500/20">
+                Pending
               </span>
             )}
           </div>
@@ -159,7 +258,7 @@ export function EmailSettingsCard() {
                   placeholder="you@example.com" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  disabled={isVerified}
+                  disabled={isVerified || isSendingVerify}
                   className={cn(
                     "h-12 pl-4 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all pr-12",
                     isVerified && "opacity-80"
@@ -180,13 +279,15 @@ export function EmailSettingsCard() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleConnectEmail} 
-                disabled={isSendingVerify || !email || email === currentUser.email}
+                disabled={isSendingVerify || !email || countdown > 0}
                 className="w-full sm:w-auto h-12 px-6 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:bg-primary/90 transition-all disabled:opacity-50 whitespace-nowrap"
               >
                 {isSendingVerify ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
+                ) : countdown > 0 ? (
+                  `Resend in ${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}`
                 ) : currentUser.email ? (
-                  "Resend Link"
+                  "Resend Code"
                 ) : (
                   "Connect Now"
                 )}
@@ -198,13 +299,35 @@ export function EmailSettingsCard() {
             <motion.div 
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              className="flex items-start gap-3 text-sm text-amber-600 bg-amber-500/5 p-4 rounded-2xl border border-amber-500/20"
+              className="space-y-4 pt-4 border-t border-border/50"
             >
-              <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-              <p className="text-xs font-medium leading-relaxed">
-                <span className="font-black uppercase tracking-wider block mb-1">Check your inbox</span>
-                A verification link has been sent to your email. Please click it to activate notifications.
-              </p>
+              <div className="flex items-start gap-3 text-sm text-amber-600 bg-amber-500/5 p-4 rounded-2xl border border-amber-500/20">
+                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <p className="text-xs font-medium leading-relaxed">
+                  <span className="font-black uppercase tracking-wider block mb-1">Enter Verification Code</span>
+                  A 6-digit code has been sent to your email. It will expire in 10 minutes.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 items-end">
+                <div className="space-y-2 flex-1">
+                  <Label htmlFor="verify-code" className="text-[11px] font-black text-muted-foreground ml-1 uppercase tracking-widest">6-Digit Code</Label>
+                  <Input 
+                    id="verify-code"
+                    placeholder="000000" 
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="h-12 text-center text-xl font-black tracking-[0.5em] rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                  />
+                </div>
+                <Button 
+                  onClick={handleVerifyCode}
+                  disabled={isVerifying || verificationCode.length !== 6}
+                  className="h-12 px-8 rounded-2xl bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all"
+                >
+                  {isVerifying ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify Code"}
+                </Button>
+              </div>
             </motion.div>
           )}
         </div>

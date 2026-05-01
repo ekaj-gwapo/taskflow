@@ -46,9 +46,9 @@ export async function GET(request: NextRequest) {
       WHERE id = $1
     `, [user.id]);
 
-    return NextResponse.redirect(new URL("/auth/login?email_verified=1", request.url));
+    return NextResponse.redirect(new URL("/dashboard?email_verified=1&open_profile=1", request.url));
   } catch (error: any) {
     console.error("VERIFY SIGNUP ERROR:", error);
-    return NextResponse.redirect(new URL("/auth/login?email_error=server_error", request.url));
+    return NextResponse.redirect(new URL("/dashboard?email_error=server_error", request.url));
   }
 }

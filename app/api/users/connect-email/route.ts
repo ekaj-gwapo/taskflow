@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
-import { sendVerificationEmail } from "@/lib/email"
+import { sendVerificationCodeEmail } from "@/lib/email"
 import crypto from "crypto"
 
 export async function POST(request: NextRequest) {
@@ -31,18 +31,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This email is already connected to another account" }, { status: 409 })
     }
 
-    // Generate a secure verification token (expires in 24h)
-    const token = crypto.randomBytes(32).toString("hex")
+    // Generate a 6-digit verification code (expires in 24 hours)
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
     const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
     await db.execute(
       `UPDATE users SET email = ?, "emailVerified" = FALSE, "emailVerifyToken" = ?, "emailVerifyExpiry" = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-      [email, token, expiry, auth.user!.id]
+      [email, code, expiry, auth.user!.id]
     )
 
     // Send verification email
     try {
-      await sendVerificationEmail(email, auth.user!.name, token)
+      await sendVerificationCodeEmail(email, auth.user!.name, code)
     } catch (emailErr) {
       console.error("Failed to send verification email:", emailErr)
       // Don't fail the request — email service may be down temporarily
