@@ -23,6 +23,7 @@ import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail,
 import { OfficeAccomplishmentReport } from "@/components/office-accomplishment-report"
 import { TopCompletersChart } from "@/components/top-completers-chart"
 import { WorkloadDistribution } from "@/components/workload-distribution"
+import { Button } from "@/components/ui/button"
 import { RecentlyCompletedTasks } from "@/components/recently-completed-tasks"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
 import { ActivityLogView } from "@/components/activity-log-view"
@@ -342,6 +343,9 @@ export function AdminDashboard() {
     }
   }, [visibleCharts, showCharts])
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const tasksPerPage = 10
+
   // Sync selectedTask with selectedTaskId
   useEffect(() => {
     if (selectedTaskId) {
@@ -462,6 +466,17 @@ export function AdminDashboard() {
     console.log(`[AdminDashboard] Pool: ${currentTasksPool.length}, Result: ${result.length}, Status: ${currentStatus}`);
     return result;
   }, [tasks, filterStatus, filterPriority, searchQuery, teamFilterStatus, teamFilterPriority, teamSearchQuery, selectedEmployeeId, myTaskTab, currentUser])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filteredTasks])
+
+  const paginatedTasks = useMemo(() => {
+    const startIndex = (currentPage - 1) * tasksPerPage
+    return filteredTasks.slice(startIndex, startIndex + tasksPerPage)
+  }, [filteredTasks, currentPage])
+
+  const totalPages = Math.ceil(filteredTasks.length / tasksPerPage)
 
   const selectedEmployee = selectedEmployeeId
     ? allEmployees.find((e) => e.id === selectedEmployeeId) ?? null
@@ -588,7 +603,7 @@ export function AdminDashboard() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="relative"
+                  className="sticky -top-6 z-30 bg-background/80 backdrop-blur-xl pb-4 pt-7 -mx-6 px-6 border-b border-border/50"
                 >
                   <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center py-2">
                     <div className="w-full flex flex-col sm:flex-row gap-3 items-center flex-1 min-w-0">
@@ -722,36 +737,68 @@ export function AdminDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4"
+                  className="flex flex-col gap-4 min-h-[600px]"
                 >
-                  <AnimatePresence>
-                    {filteredTasks.length > 0 ? (
-                      filteredTasks.map(task => (
-                        <TeamProjectCard
-                          key={task.id}
-                          task={task}
-                          onSelect={() => {
-                            selectTask(selectedTaskId === task.id ? null : task.id);
-                            markAsSeen(task.id);
-                          }}
-                          isSelected={selectedTask?.id === task.id}
-                          isNew={!seenTaskIds.has(task.id)}
-                        />
-                      ))
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="col-span-full flex flex-col items-center justify-center p-8 text-center min-h-[300px] border border-border rounded-lg bg-card"
-                      >
-                        <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                        <p className="text-lg font-medium text-foreground">No team projects found</p>
-                        <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-                          Team projects are collaborative tasks involving 2 or more assignees.
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                    <AnimatePresence>
+                      {paginatedTasks.length > 0 ? (
+                        paginatedTasks.map(task => (
+                          <TeamProjectCard
+                            key={task.id}
+                            task={task}
+                            onSelect={() => {
+                              selectTask(selectedTaskId === task.id ? null : task.id);
+                              markAsSeen(task.id);
+                            }}
+                            isSelected={selectedTask?.id === task.id}
+                            isNew={!seenTaskIds.has(task.id)}
+                          />
+                        ))
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="col-span-full flex flex-col items-center justify-center p-8 text-center min-h-[300px] border border-border rounded-lg bg-card"
+                        >
+                          <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                          <p className="text-lg font-medium text-foreground">No team projects found</p>
+                          <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                            Team projects are collaborative tasks involving 2 or more assignees.
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-2 py-3 mt-auto border-t border-border/50 pt-4">
+                      <span className="text-xs text-muted-foreground">
+                        Showing {(currentPage - 1) * tasksPerPage + 1} - {Math.min(currentPage * tasksPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-3"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-xs font-medium px-2">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-3"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ) : (
                 <motion.div
@@ -760,10 +807,10 @@ export function AdminDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl min-h-[500px] overflow-hidden"
+                  className="rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl min-h-[600px] overflow-hidden"
                 >
                   {/* Header / Search Area */}
-                  <div className="flex flex-col w-full h-full">
+                  <div className="flex flex-col w-full flex-1">
                     <div className="flex items-center px-4 py-2.5 border-b bg-muted shrink-0">
                       <span className="flex-1 text-xs uppercase text-muted-foreground font-semibold">Task</span>
 
@@ -784,8 +831,8 @@ export function AdminDashboard() {
                     {/* ROWS */}
                     <div className="flex flex-col flex-1">
                       <AnimatePresence>
-                        {filteredTasks.length > 0 ? (
-                          filteredTasks.map((task) => (
+                        {paginatedTasks.length > 0 ? (
+                          paginatedTasks.map((task) => (
                             <TaskRow
                               key={task.id}
                               task={task}
@@ -822,6 +869,36 @@ export function AdminDashboard() {
                         )}
                       </AnimatePresence>
                     </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/30 shrink-0 mt-auto">
+                        <span className="text-xs text-muted-foreground">
+                          Showing {(currentPage - 1) * tasksPerPage + 1} - {Math.min(currentPage * tasksPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-3"
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <span className="text-xs font-medium px-2">
+                            Page {currentPage} of {totalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-3"
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -837,7 +914,7 @@ export function AdminDashboard() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
-                className="w-[380px] shrink-0 absolute lg:sticky top-[108px] right-0 lg:right-auto h-[calc(100vh-15rem)] z-10 filter drop-shadow-xl lg:drop-shadow-none"
+                className="w-[380px] shrink-0 absolute lg:sticky top-[5.8rem] right-0 lg:right-auto self-start h-[calc(100vh-12rem)] z-20 filter drop-shadow-xl lg:drop-shadow-none"
               >
                 <TaskDetailPanel
                   task={liveSelectedTask}

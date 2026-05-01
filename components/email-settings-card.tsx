@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch"
 import { Mail, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { useSearchParams } from "next/navigation"
+import { motion } from "framer-motion"
+import { cn } from "@/lib/utils"
 
 export function EmailSettingsCard() {
   const { currentUser, login } = useTaskContext()
@@ -24,23 +26,6 @@ export function EmailSettingsCard() {
     notifyOnDiscussion: currentUser?.notifyOnDiscussion ?? true,
     notifyOnExtension: currentUser?.notifyOnExtension ?? true,
   })
-
-  // Handle email verification redirect
-  useEffect(() => {
-    if (searchParams.get("email_verified") === "1") {
-      toast.success("Email verified successfully!")
-      // In a real app we'd want to refresh the user session here
-      if (currentUser) {
-        login(currentUser.role, currentUser.id, { ...currentUser, emailVerified: true })
-      }
-      // Clean up URL
-      window.history.replaceState({}, '', '/dashboard')
-    } else if (searchParams.get("email_error")) {
-      const error = searchParams.get("email_error")
-      toast.error(`Email verification failed: ${error}`)
-      window.history.replaceState({}, '', '/dashboard')
-    }
-  }, [searchParams, currentUser, login])
 
   // Sync preferences with current user on load
   useEffect(() => {
@@ -134,122 +119,139 @@ export function EmailSettingsCard() {
   const isVerified = currentUser.emailVerified
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col space-y-4 rounded-xl border p-5 bg-card">
-        <div>
-          <h3 className="font-semibold text-lg flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
-            Email Connection
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Connect your email to receive task updates and deadline reminders.
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 items-end">
-          <div className="space-y-2 w-full">
-            <Label htmlFor="connect-email">Email Address</Label>
-            <div className="relative">
-              <Input 
-                id="connect-email"
-                placeholder="you@example.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isVerified}
-                className={isVerified ? "bg-muted/50 pr-10" : ""}
-              />
-              {isVerified && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" title="Email Verified">
-                  <CheckCircle2 className="h-4 w-4" />
-                </div>
-              )}
+    <div className="space-y-8">
+      {/* Connection Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative group"
+      >
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/10 to-emerald-500/10 rounded-3xl blur-md opacity-50 group-hover:opacity-100 transition-opacity" />
+        <div className="relative flex flex-col space-y-6 rounded-3xl border border-white/20 dark:border-white/5 p-6 bg-background/40 backdrop-blur-xl shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                <Mail className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-black text-lg tracking-tight">Email Connection</h3>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Notification Channel</p>
+              </div>
             </div>
-          </div>
-          
-          {!isVerified && (
-            <Button 
-              onClick={handleConnectEmail} 
-              disabled={isSendingVerify || !email || email === currentUser.email}
-              className="w-full sm:w-auto"
-            >
-              {isSendingVerify ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</>
-              ) : currentUser.email ? (
-                "Resend Verification"
-              ) : (
-                "Connect Email"
-              )}
-            </Button>
-          )}
-        </div>
-
-        {!isVerified && currentUser.email && (
-          <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-            <p>Verification pending. Please check your inbox for a verification link.</p>
-          </div>
-        )}
-      </div>
-
-      {isVerified && (
-        <div className="space-y-4 rounded-xl border p-5 bg-card">
-          <div>
-            <h3 className="font-semibold text-lg">Notification Preferences</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Choose what events you want to be notified about via email.
-            </p>
+            {isVerified && (
+              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
+                Verified
+              </span>
+            )}
           </div>
 
-          <div className="space-y-4 mt-4">
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="notify-assign" className="flex flex-col space-y-1 cursor-pointer">
-                <span>Task Assignments</span>
-                <span className="font-normal text-[12px] text-muted-foreground">When you are assigned a new task or a task is completed.</span>
-              </Label>
-              <Switch 
-                id="notify-assign" 
-                checked={prefs.notifyOnAssign} 
-                onCheckedChange={(c) => handlePrefChange("notifyOnAssign", c)}
-              />
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Connect your organizational email to receive automated task updates, 
+            deadline reminders, and team activity notifications.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="space-y-2 w-full">
+              <Label htmlFor="connect-email" className="text-[11px] font-black text-muted-foreground ml-1 uppercase tracking-widest">Target Email Address</Label>
+              <div className="relative group/input">
+                <Input 
+                  id="connect-email"
+                  placeholder="you@example.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isVerified}
+                  className={cn(
+                    "h-12 pl-4 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all pr-12",
+                    isVerified && "opacity-80"
+                  )}
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  {isVerified ? (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500 drop-shadow-sm" />
+                  ) : (
+                    <Mail className="h-5 w-5 text-muted-foreground/30 group-focus-within/input:text-primary transition-colors" />
+                  )}
+                </div>
+              </div>
             </div>
             
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="notify-deadline" className="flex flex-col space-y-1 cursor-pointer">
-                <span>Deadline Reminders</span>
-                <span className="font-normal text-[12px] text-muted-foreground">Daily reminder for tasks due the next day.</span>
-              </Label>
-              <Switch 
-                id="notify-deadline" 
-                checked={prefs.notifyOnDeadline} 
-                onCheckedChange={(c) => handlePrefChange("notifyOnDeadline", c)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="notify-discussion" className="flex flex-col space-y-1 cursor-pointer">
-                <span>Task Discussions</span>
-                <span className="font-normal text-[12px] text-muted-foreground">When someone comments on a task you are involved in.</span>
-              </Label>
-              <Switch 
-                id="notify-discussion" 
-                checked={prefs.notifyOnDiscussion} 
-                onCheckedChange={(c) => handlePrefChange("notifyOnDiscussion", c)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="notify-extension" className="flex flex-col space-y-1 cursor-pointer">
-                <span>Extension Requests</span>
-                <span className="font-normal text-[12px] text-muted-foreground">When an extension request is approved or rejected.</span>
-              </Label>
-              <Switch 
-                id="notify-extension" 
-                checked={prefs.notifyOnExtension} 
-                onCheckedChange={(c) => handlePrefChange("notifyOnExtension", c)}
-              />
-            </div>
+            {!isVerified && (
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleConnectEmail} 
+                disabled={isSendingVerify || !email || email === currentUser.email}
+                className="w-full sm:w-auto h-12 px-6 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:bg-primary/90 transition-all disabled:opacity-50 whitespace-nowrap"
+              >
+                {isSendingVerify ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : currentUser.email ? (
+                  "Resend Link"
+                ) : (
+                  "Connect Now"
+                )}
+              </motion.button>
+            )}
           </div>
+
+          {!isVerified && currentUser.email && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="flex items-start gap-3 text-sm text-amber-600 bg-amber-500/5 p-4 rounded-2xl border border-amber-500/20"
+            >
+              <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+              <p className="text-xs font-medium leading-relaxed">
+                <span className="font-black uppercase tracking-wider block mb-1">Check your inbox</span>
+                A verification link has been sent to your email. Please click it to activate notifications.
+              </p>
+            </motion.div>
+          )}
         </div>
+      </motion.div>
+
+      {/* Preferences Section */}
+      {isVerified && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-2 px-1">
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Notification Filters</span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {[
+              { id: "notify-assign", key: "notifyOnAssign", label: "Task Assignments", desc: "Get notified for new tasks or completion updates." },
+              { id: "notify-deadline", key: "notifyOnDeadline", label: "Deadline Alerts", desc: "Daily reminders for tasks due within 24 hours." },
+              { id: "notify-discussion", key: "notifyOnDiscussion", label: "Team Activity", desc: "Notifications for comments and task discussions." },
+              { id: "notify-extension", key: "notifyOnExtension", label: "Extension Status", desc: "Alerts when due date requests are reviewed." },
+            ].map((pref) => (
+              <div 
+                key={pref.id}
+                className="flex items-center justify-between p-5 rounded-3xl bg-secondary/20 border border-border/50 hover:bg-secondary/30 transition-all group/pref"
+              >
+                <div className="flex flex-col gap-1 pr-4">
+                  <Label htmlFor={pref.id} className="text-sm font-black text-foreground cursor-pointer group-hover/pref:text-primary transition-colors">
+                    {pref.label}
+                  </Label>
+                  <span className="text-[11px] font-medium text-muted-foreground leading-tight">
+                    {pref.desc}
+                  </span>
+                </div>
+                <Switch 
+                  id={pref.id} 
+                  checked={prefs[pref.key as keyof typeof prefs]} 
+                  onCheckedChange={(c) => handlePrefChange(pref.key as keyof typeof prefs, c)}
+                  className="data-[state=checked]:bg-primary"
+                />
+              </div>
+            ))}
+          </div>
+        </motion.div>
       )}
     </div>
   )

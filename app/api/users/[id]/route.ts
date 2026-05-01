@@ -15,7 +15,7 @@ export async function GET(
     }
 
     const user = await db.getOne(`
-      SELECT id, name, email, phone, location, role, theme, mode, createdAt 
+      SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, theme, mode, createdat AS "createdAt"
       FROM users 
       WHERE id = ?
     `, [id]);
@@ -57,46 +57,34 @@ export async function PUT(
       )
     }
 
-    const { name, email, phone, location, theme, mode } = await request.json()
-    console.log(`[API] Updating user ${id}:`, { name, email, phone, location, theme, mode })
+    const { name, email, phone, location, jobTitle, theme, mode } = await request.json()
+    console.log(`[API] Updating user ${id}:`, { name, email, phone, location, jobTitle, theme, mode })
 
     // Get current data to check if we should log activity
     const currentUserData = await db.getOne(`
-      SELECT name, email, phone, location FROM users WHERE id = ?
+      SELECT name, email, phone, location, jobtitle AS "jobTitle" FROM users WHERE id = ?
     `, [id]);
 
-    if (role === "EMPLOYEE") {
-      await db.execute(`
-        UPDATE users 
-        SET name = COALESCE(?, name),
-            email = COALESCE(?, email),
-            phone = COALESCE(?, phone),
-            location = COALESCE(?, location),
-            theme = COALESCE(?, theme),
-            mode = COALESCE(?, mode),
-            updatedAt = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `, [name, email, phone, location, theme, mode, id]);
-    } else {
-      await db.execute(`
-        UPDATE users 
-        SET name = COALESCE(?, name),
-            email = COALESCE(?, email),
-            phone = COALESCE(?, phone),
-            location = COALESCE(?, location),
-            theme = COALESCE(?, theme),
-            mode = COALESCE(?, mode),
-            updatedAt = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `, [name, email, phone, location, theme, mode, id]);
-    }
+    await db.execute(`
+      UPDATE users 
+      SET name = COALESCE(?, name),
+          email = COALESCE(?, email),
+          phone = COALESCE(?, phone),
+          location = COALESCE(?, location),
+          jobtitle = COALESCE(?, jobtitle),
+          theme = COALESCE(?, theme),
+          mode = COALESCE(?, mode),
+          updatedAt = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [name, email, phone, location, jobTitle, theme, mode, id]);
 
     // Only log if core profile info changed (not just theme/mode)
     const profileInfoChanged = 
       (name && name !== currentUserData.name) || 
       (email && email !== currentUserData.email) ||
       (phone !== undefined && phone !== currentUserData.phone) ||
-      (location !== undefined && location !== currentUserData.location);
+      (location !== undefined && location !== currentUserData.location) ||
+      (jobTitle !== undefined && jobTitle !== currentUserData.jobTitle);
 
     if (profileInfoChanged) {
       await logActivity({
@@ -110,7 +98,7 @@ export async function PUT(
     }
 
     const user = await db.getOne(`
-      SELECT id, name, email, phone, location, role, theme, mode 
+      SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, theme, mode 
       FROM users 
       WHERE id = ?
     `, [id]);

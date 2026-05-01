@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, X, Crop as CropIcon, Save, Sun, Moon, Palette, Check } from "lucide-react"
+import { Upload, X, Crop as CropIcon, Save, Sun, Moon, Palette, Check, User, Mail, Phone, MapPin, Camera, Loader2, Building2 } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import Cropper, { Point, Area } from "react-easy-crop"
 import { toast } from "sonner"
+import { motion, AnimatePresence } from "framer-motion"
 import { EmailSettingsCard } from "./email-settings-card"
 
 interface ProfileDialogProps {
@@ -32,12 +33,14 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [location, setLocation] = useState("")
+  const [jobTitle, setJobTitle] = useState("")
 
   useEffect(() => {
     if (currentUser) {
       setName(currentUser.name || "")
       setPhone(currentUser.phone || "")
       setLocation(currentUser.location || "")
+      setJobTitle(currentUser.jobTitle || "")
     }
   }, [currentUser, open])
 
@@ -64,7 +67,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     canvas.width = 200
     canvas.height = 200
     const ctx = canvas.getContext("2d")
-    
+
     if (!ctx) return ""
 
     ctx.drawImage(
@@ -109,7 +112,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ name, phone, location })
+        body: JSON.stringify({ name, phone, location, jobTitle })
       })
 
       if (response.ok) {
@@ -142,124 +145,248 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
       }
       onOpenChange(val)
     }}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
-          <DialogDescription>
-            Update your personal details and profile picture
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto p-0 border-none bg-transparent shadow-none [&>button]:hidden">
+        <div className="relative w-full h-full p-1 bg-gradient-to-br from-primary/20 via-transparent to-primary/10 rounded-[2.5rem]">
+          <div className="relative bg-background/80 backdrop-blur-3xl border border-white/20 dark:border-white/5 rounded-[2.4rem] overflow-hidden shadow-2xl">
+            {/* Custom Close Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="absolute right-6 top-6 z-50 rounded-full hover:bg-foreground/5 transition-colors"
+            >
+              <X className="h-5 w-5 text-muted-foreground" />
+            </Button>
 
-        <div className="flex flex-col items-center gap-6 py-4">
-          {!imageSrc ? (
-            <div className="w-full flex flex-col gap-6">
-              <div className="flex flex-col items-center gap-4">
-                <Avatar className="h-24 w-24">
-                  {currentUser?.avatar ? (
-                    <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                  ) : (
-                    <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                      {initials}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Change Photo
-                </Button>
-              </div>
-
-              <div className="space-y-4 w-full">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input 
-                    id="name" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    placeholder="John Doe" 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input 
-                    id="phone" 
-                    value={phone} 
-                    onChange={(e) => setPhone(e.target.value)} 
-                    placeholder="+1 234 567 890" 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location / Initial Assignment</Label>
-                  <Input 
-                    id="location" 
-                    value={location} 
-                    onChange={(e) => setLocation(e.target.value)} 
-                    placeholder="MOPH Office" 
-                  />
-                </div>
-
-                </div>
-
-                <Button onClick={handleSave} disabled={loading} className="w-full mt-2">
-                  <Save className="h-4 w-4 mr-2" />
-                  {loading ? "Saving..." : "Save Changes"}
-                </Button>
-
-                <div className="w-full h-px bg-border my-2" />
-
-                <div className="w-full">
-                  <EmailSettingsCard />
+            <DialogHeader className="p-8 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle className="text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+                    My Profile
+                  </DialogTitle>
+                  <DialogDescription className="text-sm font-medium text-muted-foreground mt-1">
+                    Manage your identity and notification settings
+                  </DialogDescription>
                 </div>
               </div>
-            ) : (
-            <div className="w-full flex flex-col gap-4">
-              <div className="relative h-64 w-full bg-secondary rounded-md overflow-hidden">
-                <Cropper
-                  image={imageSrc}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={1}
-                  onCropChange={setCrop}
-                  onCropComplete={onCropComplete}
-                  onZoomChange={setZoom}
-                  cropShape="round"
-                  showGrid={false}
-                />
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-muted-foreground w-8">Zoom</span>
-                <Slider
-                  value={[zoom]}
-                  min={1}
-                  max={3}
-                  step={0.1}
-                  onValueChange={(v) => setZoom(v[0])}
-                  className="flex-1"
-                />
-              </div>
-              <div className="flex justify-end gap-2 mt-2">
-                <Button variant="ghost" onClick={() => setImageSrc(null)}>
-                  <X className="h-4 w-4 mr-2" />
-                  Discard Photo
-                </Button>
-                <Button onClick={() => {
-                  // Don't fully save yet, just accept crop and show form again. 
-                  // But for simplicity, let's keep the existing logic where Crop & Save performs the API call to save everything.
-                  handleSave();
-                }} disabled={loading}>
-                  <CropIcon className="h-4 w-4 mr-2" />
-                  {loading ? "Saving..." : "Crop & Save All"}
-                </Button>
-              </div>
+            </DialogHeader>
+
+            <div className="p-8 pt-2">
+              {!imageSrc ? (
+                <div className="space-y-8">
+                  {/* Avatar Section */}
+                  <div className="flex flex-col items-center gap-6 py-4">
+                    <div className="relative group">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        className="relative"
+                      >
+                        <div className="h-32 w-32 rounded-[2.5rem] overflow-hidden border-4 border-background shadow-2xl relative z-10">
+                          <Avatar className="h-full w-full">
+                            {currentUser?.avatar ? (
+                              <AvatarImage src={currentUser.avatar} alt={currentUser.name} className="object-cover" />
+                            ) : (
+                              <AvatarFallback className="text-4xl font-black bg-gradient-to-br from-primary to-emerald-600 text-white">
+                                {initials}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                        </div>
+
+                        {/* Status Ring */}
+                        <div className="absolute -inset-2 bg-gradient-to-tr from-primary/40 to-emerald-500/40 rounded-[3rem] blur-sm opacity-50 group-hover:opacity-100 transition-opacity" />
+
+                        {/* Edit Overlay */}
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => fileInputRef.current?.click()}
+                          className="absolute -bottom-2 -right-2 h-12 w-12 rounded-2xl bg-primary text-white shadow-xl flex items-center justify-center z-20 border-4 border-background hover:bg-primary/90 transition-colors"
+                        >
+                          <Camera className="h-5 w-5" />
+                        </motion.button>
+                      </motion.div>
+
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-1">Account Role</p>
+                      <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold border border-primary/20">
+                        {currentUser?.role === 'head_admin' ? 'HEAD ADMIN' : currentUser?.role?.replace('_', ' ').toUpperCase()}
+                      </span>
+                      {currentUser?.organizationName && (
+                        <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-secondary/50 px-4 py-1.5 rounded-xl border border-border">
+                          <Building2 className="h-3.5 w-3.5 text-primary" />
+                          {currentUser.organizationName}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Identity Group */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <User className="h-4 w-4 text-primary" />
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Personal Info</span>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="name" className="text-[11px] font-bold text-muted-foreground ml-1">Display Name</Label>
+                          <Input
+                            id="name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="h-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                            placeholder="Your Name"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="jobTitle" className="text-[11px] font-bold text-muted-foreground ml-1">Job Title / Position</Label>
+                          <Input
+                            id="jobTitle"
+                            value={jobTitle}
+                            onChange={(e) => setJobTitle(e.target.value)}
+                            className="h-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                            placeholder="e.g. Senior Manager"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="phone" className="text-[11px] font-bold text-muted-foreground ml-1">Phone Number</Label>
+                          <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                            <Input
+                              id="phone"
+                              value={phone}
+                              onChange={(e) => setPhone(e.target.value)}
+                              className="h-12 pl-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                              placeholder="+1 234 567 890"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Workplace Group */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="h-4 w-4 text-emerald-500" />
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assignment</span>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="location" className="text-[11px] font-bold text-muted-foreground ml-1">Location</Label>
+                          <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                            <Input
+                              id="location"
+                              value={location}
+                              onChange={(e) => setLocation(e.target.value)}
+                              className="h-12 pl-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                              placeholder="Location"
+                            />
+                          </div>
+                        </div>
+                        <div className="pt-2">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleSave}
+                            disabled={loading}
+                            className="w-full h-12 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:bg-primary/90 transition-all disabled:opacity-50"
+                          >
+                            {loading ? (
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <>
+                                <Save className="h-4 w-4" />
+                                Save Profile
+                              </>
+                            )}
+                          </motion.button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent my-8" />
+
+                  <div className="w-full">
+                    <EmailSettingsCard />
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full space-y-6">
+                  <div className="relative h-80 w-full bg-secondary/50 rounded-[2rem] overflow-hidden border-2 border-dashed border-primary/20">
+                    <Cropper
+                      image={imageSrc}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                      cropShape="round"
+                      showGrid={false}
+                    />
+                  </div>
+                  <div className="space-y-4 px-4">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Camera className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Adjust Zoom</span>
+                          <span className="text-xs font-black text-primary">{Math.round(zoom * 100)}%</span>
+                        </div>
+                        <Slider
+                          value={[zoom]}
+                          min={1}
+                          max={3}
+                          step={0.1}
+                          onValueChange={(v) => setZoom(v[0])}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3 pt-4 border-t border-border/50">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setImageSrc(null)}
+                      className="rounded-2xl h-12 px-6 font-bold"
+                    >
+                      Discard
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      disabled={loading}
+                      className="rounded-2xl h-12 px-8 font-bold shadow-xl"
+                    >
+                      {loading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <CropIcon className="h-4 w-4 mr-2" />
+                          Apply & Save
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -92,7 +92,7 @@ export function EmployeeProfileReport() {
     const createdTasksCount = tasks.filter(t => t.createdById === currentUser.id).length
     const reassignedTasksCount = logs.filter(l => 
       l.userId === currentUser.id && 
-      (l.action === 'TASK_REASSIGNED' || l.action === 'TASK_DELEGATED')
+      (l.action === 'TASK_REASSIGNED' || l.action === 'TASK_DELEGATED' || l.action === 'TEAM_MEMBERS_EDITED' || l.action === 'ASSIGNEE_CHANGED')
     ).length
 
     return {

@@ -15,6 +15,7 @@ import { cn, formatDate, formatDateTime, calculateTaskProgress } from "@/lib/uti
 import { EmployeeProfileReport } from "@/components/employee-profile-report"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { motion, AnimatePresence } from "framer-motion"
+import { Button } from "@/components/ui/button"
 import type { Task, User } from "@/lib/store"
 
 function NoteReminder({ task }: { task: Task }) {
@@ -226,6 +227,20 @@ export function EmployeeDashboard() {
     (t) => t.status?.toLowerCase() !== "completed" && new Date(t.dueDate) < new Date()
   ).length
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const tasksPerPage = 10
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filteredTasks])
+
+  const paginatedTasks = useMemo(() => {
+    const startIndex = (currentPage - 1) * tasksPerPage
+    return filteredTasks.slice(startIndex, startIndex + tasksPerPage)
+  }, [filteredTasks, currentPage])
+
+  const totalPages = Math.ceil(filteredTasks.length / tasksPerPage)
+
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden relative">
@@ -277,7 +292,7 @@ export function EmployeeDashboard() {
               <div className="flex-1 min-w-0 rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl overflow-hidden min-h-[400px]">
               <Tabs value={filterStatus} onValueChange={setFilterStatus} className="flex flex-col h-full">
               {selectedCategory !== "profile" && (
-                <div className="flex items-center px-5 py-3 border-b border-border/50 bg-muted/30 shrink-0">
+                <div className="sticky top-0 z-30 flex items-center px-5 py-3 border-b border-border/50 bg-background/80 backdrop-blur-xl shrink-0">
                   <TabsList className="bg-transparent border-0 h-auto p-0 gap-1">
                     <TabsTrigger value="all" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md px-3 py-1.5">
                       All ({currentCategoryTasks.length})
@@ -298,14 +313,14 @@ export function EmployeeDashboard() {
               <div className="flex-1 overflow-y-auto">
               <TabsContent value={filterStatus} className="mt-0 p-4">
                 <AnimatePresence mode="wait">
-                  <motion.div
-                    key={selectedCategory + filterStatus}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-0"
-                  >
+                    <motion.div
+                      key={selectedCategory + filterStatus}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-0 flex flex-col min-h-[500px]"
+                    >
                     {selectedCategory === "profile" ? (
                       <EmployeeProfileReport />
                     ) : filteredTasks.length === 0 ? (
@@ -313,104 +328,168 @@ export function EmployeeDashboard() {
                         No tasks in this category.
                       </div>
                     ) : selectedCategory === "team" ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                        <AnimatePresence mode="popLayout">
-                          {filteredTasks.map((task) => (
-                            <motion.div
-                              layout
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
-                              key={task.id}
-                              className={cn(
-                                "flex flex-col p-5 rounded-[2rem] border-2 cursor-pointer",
-                                (task.status !== "completed" && new Date(task.dueDate) < new Date()) ? "border-destructive/50 shadow-[0_0_15px_-5px_rgba(239,68,68,0.2)]" :
-                                task.status === "completed" ? "border-emerald-500/50 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]" :
-                                task.status === "in-progress" ? "border-orange-500/50 shadow-[0_0_15px_-5px_rgba(249,115,22,0.2)]" :
-                                "border-muted-foreground/20",
-                                selectedTask?.id === task.id ? "ring-4 ring-primary/20 border-primary" : "",
-                                task.status === "completed" ? "opacity-90" : ""
+                      <div className="flex flex-col gap-4 mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <AnimatePresence mode="popLayout">
+                            {paginatedTasks.map((task) => (
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
+                                key={task.id}
+                                className={cn(
+                                  "flex flex-col p-5 rounded-[2rem] border-2 cursor-pointer",
+                                  (task.status !== "completed" && new Date(task.dueDate) < new Date()) ? "border-destructive/50 shadow-[0_0_15px_-5px_rgba(239,68,68,0.2)]" :
+                                  task.status === "completed" ? "border-emerald-500/50 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]" :
+                                  task.status === "in-progress" ? "border-orange-500/50 shadow-[0_0_15px_-5px_rgba(249,115,22,0.2)]" :
+                                  "border-muted-foreground/20",
+                                  selectedTask?.id === task.id ? "ring-4 ring-primary/20 border-primary" : "",
+                                  task.status === "completed" ? "opacity-90" : ""
+                                )}
+                                onClick={() => {
+                                  selectTask(selectedTask?.id === task.id ? null : task.id);
+                                  markAsSeen(task.id);
+                                }}
+                              >
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex flex-col gap-1.5">
+                                  <StatusBadge status={task.status} />
+                                  {!seenTaskIds.has(task.id) && (
+                                    <span className="w-max text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">
+                                      NEW
+                                    </span>
+                                  )}
+                                </div>
+                                <PriorityBadge priority={task.priority} />
+                              </div>
+                              <h3 className="font-bold text-sm mb-1 line-clamp-1">{task.title}</h3>
+                              <p className="text-xs text-muted-foreground line-clamp-2 mb-2 flex-1">
+                                {task.description || "No description provided."}
+                              </p>
+                              
+                              {task.createdBy && (
+                                <div className="flex items-center gap-1.5 mb-4 flex-wrap">
+                                  <span className="text-[10px] text-muted-foreground font-medium bg-secondary/50 px-1.5 py-0.5 rounded border border-border/50">
+                                    Created by <span className="text-foreground">{task.createdBy.name}</span>
+                                  </span>
+                                  {task.delegatedBy && task.delegatedBy.id !== task.createdBy.id && (
+                                    <span className="text-[10px] text-primary/80 font-medium bg-primary/5 px-1.5 py-0.5 rounded border border-primary/20">
+                                      ↳ Delegated by <span className="text-foreground">{task.delegatedBy.name}</span>
+                                    </span>
+                                  )}
+                                </div>
                               )}
-                              onClick={() => {
-                                selectTask(selectedTask?.id === task.id ? null : task.id);
-                                markAsSeen(task.id);
-                              }}
-                            >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex flex-col gap-1.5">
-                                <StatusBadge status={task.status} />
-                                {!seenTaskIds.has(task.id) && (
-                                  <span className="w-max text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">
-                                    NEW
-                                  </span>
-                                )}
+                              
+                              {/* Team Progress Bar */}
+                              <div className="mb-4 space-y-1.5">
+                                <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+                                  <span>Progress</span>
+                                  <span>{calculateTaskProgress(task)}%</span>
+                                </div>
+                                <Progress 
+                                  value={calculateTaskProgress(task)} 
+                                  className="h-1 bg-secondary"
+                                />
                               </div>
-                              <PriorityBadge priority={task.priority} />
-                            </div>
-                            <h3 className="font-bold text-sm mb-1 line-clamp-1">{task.title}</h3>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2 flex-1">
-                              {task.description || "No description provided."}
-                            </p>
-                            
-                            {task.createdBy && (
-                              <div className="flex items-center gap-1.5 mb-4 flex-wrap">
-                                <span className="text-[10px] text-muted-foreground font-medium bg-secondary/50 px-1.5 py-0.5 rounded border border-border/50">
-                                  Created by <span className="text-foreground">{task.createdBy.name}</span>
-                                </span>
-                                {task.delegatedBy && task.delegatedBy.id !== task.createdBy.id && (
-                                  <span className="text-[10px] text-primary/80 font-medium bg-primary/5 px-1.5 py-0.5 rounded border border-primary/20">
-                                    ↳ Delegated by <span className="text-foreground">{task.delegatedBy.name}</span>
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                            
-                            {/* Team Progress Bar */}
-                            <div className="mb-4 space-y-1.5">
-                              <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
-                                <span>Progress</span>
-                                <span>{calculateTaskProgress(task)}%</span>
-                              </div>
-                              <Progress 
-                                value={calculateTaskProgress(task)} 
-                                className="h-1 bg-secondary"
-                              />
-                            </div>
 
-                            <div className="flex items-center justify-between mt-auto">
-                              <div className="flex -space-x-2 overflow-hidden">
-                                {task.assignees?.map((a) => (
-                                  <Avatar key={a.id} className="h-6 w-6 border-2 border-background">
-                                    <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
-                                      {a.name[0]}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                ))}
+                              <div className="flex items-center justify-between mt-auto">
+                                <div className="flex -space-x-2 overflow-hidden">
+                                  {task.assignees?.map((a) => (
+                                    <Avatar key={a.id} className="h-6 w-6 border-2 border-background">
+                                      <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
+                                        {a.name[0]}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  ))}
+                                </div>
+                                <span className="text-[10px] text-muted-foreground font-medium">
+                                  Due {formatDate(task.dueDate)}
+                                </span>
                               </div>
-                              <span className="text-[10px] text-muted-foreground font-medium">
-                                Due {formatDate(task.dueDate)}
+                            </motion.div>
+                          ))}
+                          </AnimatePresence>
+                        </div>
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-between py-4 mt-auto border-t border-border/50 pt-4">
+                            <span className="text-xs text-muted-foreground">
+                              Showing {(currentPage - 1) * tasksPerPage + 1} - {Math.min(currentPage * tasksPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                              >
+                                Previous
+                              </Button>
+                              <span className="text-xs font-medium px-2">
+                                Page {currentPage} of {totalPages}
                               </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                              >
+                                Next
+                              </Button>
                             </div>
-                          </motion.div>
-                        ))}
-                        </AnimatePresence>
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      <div className="grid gap-3 mt-4">
-                        {filteredTasks.map((task) => (
-                          <EmployeeTaskCard
-                            key={task.id}
-                            task={task}
-                            onSelect={() => {
-                              selectTask(selectedTaskId === task.id ? null : task.id);
-                              markAsSeen(task.id);
-                            }}
-                            isSelected={selectedTask?.id === task.id}
-                            currentUser={currentUser}
-                            isNew={!seenTaskIds.has(task.id)}
-                          />
-                        ))}
+                      <div className="flex flex-col gap-4 mt-4">
+                        <div className="grid gap-3">
+                          {paginatedTasks.map((task) => (
+                            <EmployeeTaskCard
+                              key={task.id}
+                              task={task}
+                              onSelect={() => {
+                                selectTask(selectedTaskId === task.id ? null : task.id);
+                                markAsSeen(task.id);
+                              }}
+                              isSelected={selectedTask?.id === task.id}
+                              currentUser={currentUser}
+                              isNew={!seenTaskIds.has(task.id)}
+                            />
+                          ))}
+                        </div>
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-between py-4 mt-auto border-t border-border/50 pt-4">
+                            <span className="text-xs text-muted-foreground">
+                              Showing {(currentPage - 1) * tasksPerPage + 1} - {Math.min(currentPage * tasksPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                              >
+                                Previous
+                              </Button>
+                              <span className="text-xs font-medium px-2">
+                                Page {currentPage} of {totalPages}
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                              >
+                                Next
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </motion.div>
@@ -428,7 +507,7 @@ export function EmployeeDashboard() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.2 }}
-                    className="hidden lg:block w-[380px] shrink-0 sticky top-[108px] self-start h-[calc(100vh-14rem)] filter drop-shadow-xl lg:drop-shadow-none"
+                    className="hidden lg:block w-[380px] shrink-0 sticky top-[3.8rem] self-start h-[calc(100vh-14rem)] filter drop-shadow-xl lg:drop-shadow-none z-20"
                   >
                     <TaskDetailPanel
                       task={tasks.find((t) => t.id === selectedTask.id) || selectedTask}

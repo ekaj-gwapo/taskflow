@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { PlusCircle, Zap, CheckCircle2 } from 'lucide-react'
 import './landing.css'
 
 export default function Home() {
@@ -221,6 +222,108 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ROLES & TUTORIALS */}
+      <div className="lp-roles-section">
+        <div className="lp-roles-head lp-reveal">
+          <div className="lp-section-label">Role Architecture</div>
+          <h2 className="lp-h2">Designed for clear<br />accountability</h2>
+          <p className="lp-section-sub">TaskFlow maps to your organization's existing structure with precise permission tiers.</p>
+        </div>
+        
+        <div className="lp-roles-grid">
+          {[
+            { 
+              role: 'Super Admin', 
+              icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5', 
+              desc: 'System owner with absolute control over configurations, user roles, and global audit logs.',
+              features: ['Manage User Roles', 'System Configuration', 'Global Audit Trail']
+            },
+            { 
+              role: 'Head Admin', 
+              icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75', 
+              desc: 'Organization lead. Responsible for initializing high-level tasks and reviewing all due date extension requests.',
+              features: ['Assign Primary Tasks', 'Review Due Extensions', 'Office-wide Reporting']
+            },
+            { 
+              role: 'Admin', 
+              icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', 
+              desc: 'Mid-level management. Delegates tasks from Head Admin to Employees and monitors extension requests.',
+              features: ['Delegate Management', 'Assign to Casuals', 'Monitor Extensions']
+            },
+            { 
+              role: 'Employee', 
+              icon: 'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 7a4 4 0 100 8 4 4 0 000-8z', 
+              desc: 'Casual staff focused on task execution, providing real-time updates, and maintaining personal performance.',
+              features: ['Execute Assignments', 'Request Extensions', 'Point Achievement']
+            }
+          ].map((r, i) => (
+            <div key={i} className={`lp-role-card lp-reveal lp-reveal-d${i % 4}`}>
+              <div className="lp-role-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={r.icon} />
+                </svg>
+              </div>
+              <div className="lp-role-name">{r.role}</div>
+              <p className="lp-role-desc">{r.desc}</p>
+              <ul className="lp-role-features">
+                {r.features.map(f => <li key={f}>{f}</li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* TASK FLOW TUTORIAL */}
+        <div className="lp-tutorial-wrap lp-reveal">
+          <div className="lp-tutorial-inner">
+            <div className="lp-tutorial-info">
+              <div className="lp-section-label">The Flow</div>
+              <h3 className="lp-h3">How work moves through TaskFlow</h3>
+              <p className="lp-step-desc">A unified workflow ensures nothing falls through the cracks, from the first draft to the final approval.</p>
+              
+              <div className="lp-flow-steps">
+                {[
+                  { title: 'Initialization', desc: 'Admin creates a task with specific targets and assignees.' },
+                  { title: 'Collaboration', desc: 'Employees update progress and collaborate via action steps.' },
+                  { title: 'Verification', desc: 'Completed work is reviewed by the designated Head Admin.' },
+                  { title: 'Resolution', desc: 'Tasks are archived into searchable reports for future audit.' }
+                ].map((s, i) => (
+                  <div key={i} className="lp-flow-item">
+                    <div className="lp-flow-dot" />
+                    <div>
+                      <div className="lp-flow-title">{s.title}</div>
+                      <div className="lp-flow-desc">{s.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="lp-tutorial-visual">
+              <div className="lp-flow-card">
+                <div className="lp-flow-card-header">
+                  <div className="lp-badge-pill lp-badge-inprogress">Live Flow</div>
+                </div>
+                <div className="lp-flow-card-body">
+                  <div className="lp-flow-node active">
+                    <div className="lp-node-icon bg-blue-500/20 text-blue-500"><PlusCircle size={14} /></div>
+                    <span>Drafting</span>
+                  </div>
+                  <div className="lp-flow-line" />
+                  <div className="lp-flow-node">
+                    <div className="lp-node-icon bg-amber-500/20 text-amber-500"><Zap size={14} /></div>
+                    <span>In Progress</span>
+                  </div>
+                  <div className="lp-flow-line" />
+                  <div className="lp-flow-node">
+                    <div className="lp-node-icon bg-emerald-500/20 text-emerald-500"><CheckCircle2 size={14} /></div>
+                    <span>Completed</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

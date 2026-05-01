@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive, Palette, Check, Sun, Moon, LogOut, ExternalLink } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive, Palette, Check, Sun, Moon, LogOut, ExternalLink, Camera } from "lucide-react"
 import { ProfileDialog } from "@/components/profile-dialog"
 import {
   Popover,
@@ -101,12 +101,29 @@ export function AdminSidebar({
     email: currentUser?.email || "",
     phone: currentUser?.phone || "",
     location: currentUser?.location || "",
+    jobTitle: currentUser?.jobTitle || "",
   })
   const [theme, setTheme] = useState(currentUser?.theme || "emerald")
   const [mode, setMode] = useState<"light" | "dark">(currentUser?.mode || "light")
   const [tempProfileData, setTempProfileData] = useState(profileData)
   const [isEmployeesExpanded, setIsEmployeesExpanded] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+ 
+  useEffect(() => {
+    if (currentUser) {
+      const newData = {
+        name: currentUser.name || "",
+        email: currentUser.email || "",
+        phone: currentUser.phone || "",
+        location: currentUser.location || "",
+        jobTitle: currentUser.jobTitle || "",
+      }
+      setProfileData(newData)
+      setTempProfileData(newData)
+      setTheme(currentUser.theme || "emerald")
+      setMode(currentUser.mode || "light")
+    }
+  }, [currentUser])
 
   const handleEditProfile = () => {
     setTempProfileData(profileData)
@@ -192,7 +209,9 @@ export function AdminSidebar({
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-foreground tracking-tight">TaskFlow</span>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none">Admin Panel</span>
+            <span className="text-[10px] font-medium text-primary uppercase tracking-widest leading-none mt-0.5">
+              {currentUser?.organizationName || "Admin Panel"}
+            </span>
           </div>
         </div>
       </div>
@@ -515,55 +534,84 @@ export function AdminSidebar({
               transition={{ duration: 0.2 }}
               className="p-4 space-y-6"
             >
-              <div className="flex flex-col items-center text-center p-6 rounded-xl bg-secondary/30 border border-border/50 shadow-inner">
-                <div className="relative group">
-                  <Avatar className="h-20 w-20 border-4 border-background shadow-xl mb-4 transition-transform hover:scale-105 cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
-                    {currentUser?.avatar ? (
-                      <AvatarImage src={currentUser.avatar} />
-                    ) : (
-                      <AvatarFallback className="text-xl font-bold bg-primary/10 text-primary uppercase">
-                        {initials}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <p className="text-[10px] text-muted-foreground -mt-2 mb-2 cursor-pointer hover:underline text-center" onClick={() => setIsProfileDialogOpen(true)}>Change photo</p>
+              <div className="relative group p-1 rounded-[2rem] bg-gradient-to-br from-primary/10 to-emerald-500/5 mb-2">
+                <div className="flex flex-col items-center text-center p-6 rounded-[1.9rem] bg-background/40 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-xl">
+                  <div className="relative group/avatar mb-4">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      className="relative"
+                    >
+                      <Avatar className="h-24 w-24 border-4 border-background shadow-2xl transition-transform cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
+                        {currentUser?.avatar ? (
+                          <AvatarImage src={currentUser.avatar} className="object-cover" />
+                        ) : (
+                          <AvatarFallback className="text-2xl font-black bg-gradient-to-br from-primary to-emerald-500 text-white">
+                            {initials}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        whileHover={{ opacity: 1 }}
+                        className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white cursor-pointer transition-opacity"
+                        onClick={() => setIsProfileDialogOpen(true)}
+                      >
+                        <Camera className="h-6 w-6" />
+                      </motion.div>
+                    </motion.div>
+                    <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-lg bg-emerald-500 border-2 border-background shadow-lg shadow-emerald-500/20" title="Online" />
+                  </div>
+                  
+                  <h3 className="text-xl font-black text-foreground tracking-tight">{profileData.name}</h3>
+                  <div className="mt-1 flex flex-col gap-1">
+                    <span className="px-3 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] border border-primary/20">
+                      {currentUser?.role === 'head_admin' ? 'HEAD ADMIN' : currentUser?.role?.replace('_', ' ').toUpperCase()}
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-foreground">{profileData.name}</h3>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{currentUser?.role?.toUpperCase() === "SUPERADMIN" ? "Super Admin" : currentUser?.role?.toUpperCase() === "HEAD_ADMIN" ? "Provincial Treasurer" : currentUser?.role?.toUpperCase() === "ADMIN" ? "Acting Assistant Provincial Treasurer" : "Casual Employee"}</p>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Personal Details</h4>
+              <div className="space-y-4 px-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Account Details</span>
+                  </div>
                   {!isEditingProfile ? (
-                    <button 
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
                       onClick={handleEditProfile}
-                      className="text-[11px] font-bold text-primary hover:underline transition-all"
+                      className="h-7 px-2 text-[10px] font-black text-primary hover:bg-primary/5 rounded-lg"
                     >
                       EDIT
-                    </button>
+                    </Button>
                   ) : (
-                    <div className="flex gap-3">
-                       <button 
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
                         onClick={() => setIsEditingProfile(false)}
-                        className="text-[11px] font-bold text-muted-foreground hover:text-foreground"
+                        className="h-7 px-2 text-[10px] font-black text-muted-foreground"
                       >
                         CANCEL
-                      </button>
-                      <button 
+                      </Button>
+                      <Button 
+                        size="sm" 
                         onClick={handleSaveProfile}
-                        className="text-[11px] font-bold text-primary hover:text-primary/80 transition-colors"
+                        className="h-7 px-2 text-[10px] font-black bg-primary text-white rounded-lg"
                       >
                         SAVE
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-2">
                   <ProfileItem icon={<Mail className="h-3.5 w-3.5" />} label="Email" value={profileData.email} isEditing={isEditingProfile} onChange={(v) => handleInputChange('email', v)} />
-                  <ProfileItem icon={<Phone className="h-3.5 w-3.5" />} label="Phone" value={profileData.phone} isEditing={isEditingProfile} onChange={(v) => handleInputChange('phone', v)} placeholder="Add phone..." />
-                  <ProfileItem icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value={profileData.location} isEditing={isEditingProfile} onChange={(v) => handleInputChange('location', v)} placeholder="Add location..." />
+                  <ProfileItem icon={<ClipboardList className="h-3.5 w-3.5" />} label="Position" value={profileData.jobTitle} isEditing={isEditingProfile} onChange={(v) => handleInputChange('jobTitle', v)} placeholder="Add job title..." />
+                  <ProfileItem icon={<Phone className="h-3.5 w-3.5" />} label="Phone" value={profileData.phone} isEditing={isEditingProfile} onChange={(v) => handleInputChange('phone', v)} placeholder="Add contact..." />
+                  <ProfileItem icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value={profileData.location} isEditing={isEditingProfile} onChange={(v) => handleInputChange('location', v)} placeholder="Add workplace..." />
                 </div>
               </div>
 

@@ -6,19 +6,25 @@ export interface JWTPayload {
   email: string
   name: string
   role: string
+  orgId?: string
 }
 
-export function verifyJWT(token: string): JWTPayload | null {
+const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
+
+export function verifyToken(token: string): JWTPayload | null {
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || "default_secret"
+      JWT_SECRET
     ) as JWTPayload
     return decoded
   } catch (error) {
     return null
   }
 }
+
+// Alias for compatibility
+export const verifyJWT = verifyToken;
 
 export function getTokenFromRequest(request: NextRequest): string | null {
   const authHeader = request.headers.get("authorization")
@@ -34,7 +40,7 @@ export function requireAuth(request: NextRequest) {
     return { error: "Unauthorized", status: 401, user: null }
   }
 
-  const user = verifyJWT(token)
+  const user = verifyToken(token)
   if (!user) {
     return { error: "Invalid token", status: 401, user: null }
   }
@@ -44,17 +50,29 @@ export function requireAuth(request: NextRequest) {
 
 export function requireAdmin(request: NextRequest) {
   const auth = requireAuth(request)
-  const role = auth.user?.role?.toUpperCase()
-  if (auth.error || (role !== "ADMIN" && role !== "SUPERADMIN" && role !== "HEAD_ADMIN")) {
+  const role = auth.user?.role?.toLowerCase()
+  const allowedRoles = ["admin", "head_admin", "creator", "master_admin"];
+  
+  if (auth.error || !allowedRoles.includes(role || "")) {
     return { error: "Admin access required", status: 403, user: null }
   }
   return auth
 }
 
-export function requireSuperAdmin(request: NextRequest) {
+export function requireHeadAdmin(request: NextRequest) {
   const auth = requireAuth(request)
-  if (auth.error || auth.user?.role !== "SUPERADMIN") {
-    return { error: "Super Admin access required", status: 403, user: null }
+  const role = auth.user?.role?.toLowerCase()
+  const allowedRoles = ["head_admin", "creator", "master_admin"];
+  if (auth.error || !allowedRoles.includes(role || "")) {
+    return { error: "Head Admin access required", status: 403, user: null }
+  }
+  return auth
+}
+
+export function requireMasterAdmin(request: NextRequest) {
+  const auth = requireAuth(request)
+  if (auth.error || auth.user?.role?.toLowerCase() !== "master_admin") {
+    return { error: "Master Admin access required", status: 403, user: null }
   }
   return auth
 }

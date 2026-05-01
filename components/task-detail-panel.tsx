@@ -784,8 +784,10 @@ export function TaskDetailPanel({
               const canRequestRole = currentRole === "employee" || currentRole === "admin"
               // 2. You cannot request from yourself (if you are the creator or delegator)
               const isAssigner = currentUser?.id === task.createdById || currentUser?.id === task.delegatedById
+              // 3. Only assigned users can request
+              const isTaskAssignee = task.assignees?.some(a => a.id === currentUser?.id) || task.assigneeId === currentUser?.id
 
-              const canRequest = !pendingRequest && totalRequests < 2 && canRequestRole && !isAssigner
+              const canRequest = !pendingRequest && totalRequests < 2 && canRequestRole && !isAssigner && isTaskAssignee
 
               // 3. Only the original creator (createdById) OR superadmin can review
               // 4. BUT, you cannot review your own request

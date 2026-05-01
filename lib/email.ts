@@ -1,13 +1,22 @@
 import nodemailer from "nodemailer"
+import dotenv from "dotenv"
 
-// Gmail SMTP configuration
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS, // Your 16-character App Password
-  },
-})
+dotenv.config()
+
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // Use STARTTLS
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false, // This fixes the "self-signed certificate" error
+    },
+  })
+}
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://taskflow-olive-omega.vercel.app"
 const FROM_NAME = "TaskFlow"
@@ -17,6 +26,7 @@ const FROM_NAME = "TaskFlow"
  */
 async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   try {
+    const transporter = getTransporter();
     const info = await transporter.sendMail({
       from: `"${FROM_NAME}" <${process.env.SMTP_USER}>`,
       to,
@@ -25,13 +35,13 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
     })
     return { success: true, id: info.messageId }
   } catch (error) {
-    console.error("Nodemailer error:", error)
+    console.error(`NODEMAILER ERROR (TO: ${to}):`, error)
     throw error
   }
 }
 
 export async function sendVerificationEmail(email: string, name: string, token: string) {
-  const verifyUrl = `${APP_URL}/api/users/verify-email?token=${token}`
+  const verifyUrl = `${APP_URL}/api/auth/verify-signup?token=${token}`
   
   return sendEmail({
     to: email,

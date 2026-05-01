@@ -23,7 +23,7 @@ interface User {
 }
 
 export function UserManagement() {
-  const { refreshUsers } = useTaskContext()
+  const { refreshUsers, currentUser } = useTaskContext()
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
@@ -125,7 +125,11 @@ export function UserManagement() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser)
+        body: JSON.stringify({
+          ...newUser,
+          orgId: currentUser?.orgId,
+          autoVerify: true // Admins bypass email verification for users they add
+        })
       })
       const data = await res.json()
 
@@ -155,10 +159,10 @@ export function UserManagement() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Shield className="h-8 w-8 text-primary" />
-            Super Admin Control
+            <Users className="h-8 w-8 text-primary" />
+            Organization Team
           </h1>
-          <p className="text-muted-foreground mt-1">Manage system users and access levels.</p>
+          <p className="text-muted-foreground mt-1">Manage your organization&apos;s administrators and employees.</p>
         </div>
         <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -177,9 +181,9 @@ export function UserManagement() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-primary" />
-              Create New User
+              Add Team Member
             </CardTitle>
-            <CardDescription>Add a new employee or administrator.</CardDescription>
+            <CardDescription>Invite a new administrator or employee to your organization.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreateUser} className="space-y-4">
@@ -219,10 +223,9 @@ export function UserManagement() {
                   value={newUser.role}
                   onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                 >
-                  <option value="EMPLOYEE">Casual Employee</option>
-                  <option value="ADMIN">Acting Assistant Provincial Treasurer</option>
-                  <option value="HEAD_ADMIN">Provincial Treasurer</option>
-                  <option value="SUPERADMIN">Super Admin</option>
+                  <option value="EMPLOYEE">Employee</option>
+                  <option value="ADMIN">Admin</option>
+                  {currentUser?.role?.toLowerCase() === "creator" && <option value="head_admin">Head Admin</option>}
                 </select>
               </div>
               <div className="space-y-2">
@@ -308,8 +311,8 @@ export function UserManagement() {
                           </div>
                         </td>
                         <td className="py-4 px-4">
-                          <Badge variant={user.role === "SUPERADMIN" ? "destructive" : user.role === "HEAD_ADMIN" ? "default" : user.role === "ADMIN" ? "secondary" : "outline"}>
-                            {user.role === "SUPERADMIN" ? "Super Admin" : user.role === "HEAD_ADMIN" ? "Provincial Treasurer" : user.role === "ADMIN" ? "Acting Assistant Provincial Treasurer" : "Casual Employee"}
+                          <Badge variant={user.role?.toLowerCase() === "master_admin" ? "destructive" : user.role?.toLowerCase() === "creator" ? "default" : user.role?.toLowerCase() === "head_admin" ? "secondary" : "outline"}>
+                            {user.role?.toLowerCase() === "master_admin" ? "Master Admin" : user.role?.toLowerCase() === "creator" ? "Creator" : user.role?.toLowerCase() === "head_admin" ? "Head Admin" : user.role?.toLowerCase() === "admin" ? "Admin" : "Employee"}
                           </Badge>
                         </td>
                         <td className="py-4 px-4 text-xs text-muted-foreground">

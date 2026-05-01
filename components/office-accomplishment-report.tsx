@@ -34,23 +34,25 @@ export function OfficeAccomplishmentReport() {
     documentTitle: "",
   })
 
-  // Get current week range
+  // Get current week range (Sunday to Saturday)
   const weekRange = useMemo(() => {
     const now = new Date()
-    const first = now.getDate() - now.getDay()
-    const last = first + 6
-    const start = new Date(now.setDate(first))
-    const end = new Date(now.setDate(last))
+    const start = new Date(now)
+    start.setDate(now.getDate() - now.getDay())
+    start.setHours(0, 0, 0, 0)
+
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+    end.setHours(23, 59, 59, 999)
+
     return { start, end }
   }, [])
 
-  // Filter tasks for this week (created or completed this week)
+  // Filter tasks for the report
   const weeklyTasks = useMemo(() => {
-    const start = weekRange.start
-    const end = weekRange.end
+    const { start, end } = weekRange
 
     return tasks.filter(t => {
-      // Date filter
       const createdDate = new Date(t.createdAt)
       const isCreatedThisWeek = createdDate >= start && createdDate <= end
 
@@ -60,8 +62,11 @@ export function OfficeAccomplishmentReport() {
         isCompletedThisWeek = completedDate >= start && completedDate <= end
       }
 
-      const dateMatch = isCreatedThisWeek || isCompletedThisWeek
-      return dateMatch
+      // Include:
+      // 1. Tasks completed this week
+      // 2. Tasks created this week
+      // 3. Ongoing tasks (In Progress or Todo) regardless of creation date
+      return isCompletedThisWeek || isCreatedThisWeek || t.status === "in-progress" || t.status === "todo"
     })
   }, [tasks, weekRange])
 
@@ -249,7 +254,9 @@ export function OfficeAccomplishmentReport() {
                               <div className="p-4 border-l border-r border-slate-200 text-center font-medium text-slate-500">{index + 1}</div>
                               <div className="p-4 border-r border-slate-200">
                                 <p className="font-bold text-slate-900">{emp.name}</p>
-                                <p className="text-slate-500 text-[10px] uppercase tracking-tight">{emp.role || "Team Member"}</p>
+                                <p className="text-slate-500 text-[10px] uppercase tracking-tight">
+                                  {emp.jobTitle || (emp.role === "head_admin" ? "Head Admin" : emp.role === "admin" ? "Admin" : "Employee")}
+                                </p>
                               </div>
                               <div className="p-4 border-r border-slate-200 text-center font-bold text-slate-700">{emp.total}</div>
                               <div className="p-4 border-r border-slate-200 text-center text-emerald-600 font-bold">{emp.completed}</div>
@@ -286,8 +293,8 @@ export function OfficeAccomplishmentReport() {
                       <div className="text-center">
                         <p className="text-[10px] uppercase font-bold text-slate-400 mb-10">Approved by:</p>
                         <div className="border-b border-slate-900 w-full mb-1" />
-                        <p className="text-xs font-bold text-slate-900 uppercase">Imelda I. Macanes</p>
-                        <p className="text-[11px] font-medium text-slate-500">Provincial Treasurer</p>
+                        <p className="text-xs font-bold text-slate-900 uppercase">AUTHORIZED OFFICIAL</p>
+                        <p className="text-[11px] font-medium text-slate-500">Head Admin</p>
                       </div>
                     </div>
                   </td>

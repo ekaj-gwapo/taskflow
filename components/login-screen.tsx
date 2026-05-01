@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { LayoutDashboard, LogIn } from "lucide-react"
+import Link from "next/link"
+import { toast } from "sonner"
 
 export function LoginScreen() {
   const { login } = useTaskContext()
@@ -15,11 +17,32 @@ export function LoginScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  
   useEffect(() => {
     if (localStorage.getItem("token")) {
       router.replace("/dashboard")
+      return
     }
-  }, [router])
+
+    if (searchParams) {
+      const verified = searchParams.get("email_verified")
+      const emailError = searchParams.get("email_error")
+      
+      if (verified === "1") {
+        toast.success("Email verified! You can now sign in.")
+      } else if (emailError) {
+        const errorMessages: Record<string, string> = {
+          missing_token: "Verification link is missing a token.",
+          invalid_token: "Invalid or expired verification token.",
+          expired_token: "Verification link has expired.",
+          server_error: "An error occurred during verification."
+        }
+        setError(errorMessages[emailError] || "Failed to verify email.")
+        toast.error(errorMessages[emailError] || "Failed to verify email.")
+      }
+    }
+  }, [router, searchParams])
   
   const [formData, setFormData] = useState({
     email: "",
@@ -198,6 +221,17 @@ export function LoginScreen() {
                 <span>Gmail Login</span>
               </Button>
             </form>
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href="/auth/signup"
+                  className="text-primary font-semibold hover:underline underline-offset-4 transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </p>
+            </div>
           </CardContent>
         </Card>
 

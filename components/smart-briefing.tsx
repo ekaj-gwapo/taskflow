@@ -302,22 +302,22 @@ export function SmartBriefing() {
           <p className="text-muted-foreground mt-4 text-sm md:text-lg font-medium leading-relaxed max-w-lg">
             {isManagement ? (
               <>
-                You are currently overseeing <span className="text-foreground font-bold">{totalTasks} tasks</span> across the organization. 
+                You are currently overseeing <span className="text-foreground font-bold">{totalTasks} tasks</span>. 
                 {pendingExtensions > 0 && (
                   <span className="block mt-2 text-primary font-bold">
-                    🔔 There are {pendingExtensions} pending extension requests awaiting your review.
+                    🔔 {pendingExtensions} pending extensions await review.
                   </span>
                 )}
                 {overdueTasks > 0 && (
                   <span className="block mt-1">
-                    <span className="text-destructive font-bold">{overdueTasks} critical items</span> require immediate attention.
+                    <span className="text-destructive font-bold">{overdueTasks} critical items</span> require attention.
                   </span>
                 )}
               </>
             ) : (
               <>
                 You have <span className="text-foreground font-bold">{tasksDueToday} tasks</span> due today. 
-                {overdueTasks > 0 && <span className="block mt-1"> Heads up! <span className="text-destructive font-bold">{overdueTasks} tasks</span> are currently overdue.</span>}
+                {overdueTasks > 0 && <span className="block mt-1"> Heads up! <span className="text-destructive font-bold">{overdueTasks} tasks</span> are overdue.</span>}
               </>
             )}
           </p>

@@ -16,7 +16,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user: any = await db.getOne('SELECT id, name, email, password, role, phone, location, avatarUrl as avatar, theme, mode, "emailVerified", "notifyOnAssign", "notifyOnDeadline", "notifyOnDiscussion", "notifyOnExtension", isActive as "isActive", createdAt as "createdAt", updatedAt as "updatedAt" FROM users WHERE email = ?', [email]);
+    const user: any = await db.getOne(`
+      SELECT u.id, u.name, u.email, u.password, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 
+             u.avatarUrl as avatar, u.theme, u.mode, u.orgid AS "orgId", 
+             u.createdAt as "createdAt", u.updatedAt as "updatedAt",
+             u."emailVerified", u."notifyOnAssign", u."notifyOnDeadline", 
+             u."notifyOnDiscussion", u."notifyOnExtension", u.isActive as "isActive",
+             o.name as "organizationName"
+      FROM users u
+      LEFT JOIN organizations o ON u.orgid = o.id
+      WHERE u.email = ?
+    `, [email]);
 
     if (!user) {
       return NextResponse.json(
@@ -28,6 +38,13 @@ export async function POST(request: NextRequest) {
     if (!user.isActive) {
       return NextResponse.json(
         { error: "Account deactivated. Contact the superadmin." },
+        { status: 403 }
+      );
+    }
+
+    if (!user.emailVerified) {
+      return NextResponse.json(
+        { error: "Email not verified. Please check your inbox for the verification link." },
         { status: 403 }
       );
     }
@@ -45,7 +62,13 @@ export async function POST(request: NextRequest) {
     const { password: _, ...userWithoutPassword } = user;
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.name, role: user.role },
+      { 
+        id: user.id, 
+        email: user.email, 
+        name: user.name, 
+        role: user.role,
+        orgId: user.orgId 
+      },
       JWT_SECRET,
       { expiresIn: "1d" }
     );

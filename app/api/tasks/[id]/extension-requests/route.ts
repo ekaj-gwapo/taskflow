@@ -39,7 +39,7 @@ export async function POST(
       )
     }
 
-    // ROLE RESTRICTION: Head Admin (Provincial Treasurer) cannot request extensions
+    // ROLE RESTRICTION: Head Admin cannot request extensions
     if (user.role.toUpperCase() === "HEAD_ADMIN") {
       return NextResponse.json(
         { error: "Head Admins are not permitted to request extensions" },

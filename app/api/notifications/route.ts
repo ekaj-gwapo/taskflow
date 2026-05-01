@@ -40,12 +40,18 @@ export async function PUT(request: NextRequest) {
     }
 
     const user = auth.user!
-    const { id } = await request.json()
+    const { id, taskId } = await request.json()
 
     if (id) {
       await db.execute(
         "UPDATE notifications SET isRead = true WHERE id = ? AND userId = ?",
         [id, user.id]
+      )
+    } else if (taskId) {
+      // Mark all notifications for this task as read
+      await db.execute(
+        "UPDATE notifications SET isRead = true WHERE userId = ? AND link LIKE ?",
+        [user.id, `%${taskId}%`]
       )
     } else {
       await db.execute(

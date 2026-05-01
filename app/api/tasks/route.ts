@@ -19,8 +19,25 @@ export async function GET(request: NextRequest) {
     const showArchived = searchParams.get("showArchived") === "true"
     const archivedValue = showArchived ? true : false
 
+    const isMasterAdmin = user.role.toLowerCase() === "master_admin";
+    const orgId = user.orgId;
+
     let tasks: any[]
-    if (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN") {
+    if (isMasterAdmin) {
+      tasks = await db.getAll(`
+        SELECT t.*, 
+               u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar,
+               u3.name as delegatorName, u3.email as delegatorEmail, u3.role as delegatorRole, u3.avatarUrl as delegatorAvatar,
+               o.name as organizationName
+        FROM tasks t
+        LEFT JOIN users u2 ON t.createdById = u2.id
+        LEFT JOIN users u3 ON t.delegatedById = u3.id
+        LEFT JOIN organizations o ON t.orgid = o.id
+        WHERE t.archived = ?
+        ORDER BY t.createdAt DESC
+      `, [archivedValue]) as any[]
+    } else if (role === "ADMIN" || role === "HEAD_ADMIN") {
+      if (!orgId) return NextResponse.json({ tasks: [] });
       tasks = await db.getAll(`
         SELECT t.*, 
                u2.name as creatorName, u2.email as creatorEmail, u2.role as creatorRole, u2.avatarUrl as creatorAvatar,
@@ -28,9 +45,9 @@ export async function GET(request: NextRequest) {
         FROM tasks t
         LEFT JOIN users u2 ON t.createdById = u2.id
         LEFT JOIN users u3 ON t.delegatedById = u3.id
-        WHERE t.archived = ?
+        WHERE t.archived = ? AND t.orgid = ?
         ORDER BY t.createdAt DESC
-      `, [archivedValue]) as any[]
+      `, [archivedValue, orgId]) as any[]
     } else {
       tasks = await db.getAll(`
         SELECT t.*, 
@@ -190,9 +207,9 @@ export async function POST(request: NextRequest) {
     
     // Insert task
     await db.execute(`
-      INSERT INTO tasks (id, title, description, priority, dueDate, assigneeId, createdById, delegatedById, status, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [taskId, title, description, taskPriority, new Date(dueDate).toISOString(), uIds[0] || null, auth.user!.id, null, "TODO", new Date().toISOString(), new Date().toISOString()])
+      INSERT INTO tasks (id, title, description, priority, dueDate, assigneeId, createdById, delegatedById, status, orgid, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [taskId, title, description, taskPriority, new Date(dueDate).toISOString(), uIds[0] || null, auth.user!.id, null, "TODO", auth.user!.orgId || null, new Date().toISOString(), new Date().toISOString()])
 
     // Insert task assignees
     for (const uId of uIds) {

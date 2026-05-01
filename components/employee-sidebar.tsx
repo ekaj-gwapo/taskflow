@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -94,10 +94,27 @@ export function EmployeeSidebar({
     email: currentUser?.email || "",
     phone: currentUser?.phone || "",
     location: currentUser?.location || "",
+    jobTitle: currentUser?.jobTitle || "",
   })
   const [theme, setTheme] = useState(currentUser?.theme || "emerald")
   const [mode, setMode] = useState<"light" | "dark">(currentUser?.mode || "light")
   const [tempProfileData, setTempProfileData] = useState(profileData)
+ 
+  useEffect(() => {
+    if (currentUser) {
+      const newData = {
+        name: currentUser.name || "",
+        email: currentUser.email || "",
+        phone: currentUser.phone || "",
+        location: currentUser.location || "",
+        jobTitle: currentUser.jobTitle || "",
+      }
+      setProfileData(newData)
+      setTempProfileData(newData)
+      setTheme(currentUser.theme || "emerald")
+      setMode(currentUser.mode || "light")
+    }
+  }, [currentUser])
 
   const individualTasks = tasks.filter((t) =>
     (t.assignees?.length === 1 && t.assignees[0].id === currentUser?.id) ||
@@ -335,7 +352,9 @@ export function EmployeeSidebar({
                   <p className="text-[10px] text-muted-foreground -mt-2 mb-2 cursor-pointer hover:underline text-center" onClick={() => setIsProfileDialogOpen(true)}>Change photo</p>
                 </div>
                 <h3 className="text-lg font-bold text-foreground">{profileData.name}</h3>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{currentUser?.role?.toUpperCase() === "SUPERADMIN" ? "Super Admin" : currentUser?.role?.toUpperCase() === "HEAD_ADMIN" ? "Provincial Treasurer" : currentUser?.role?.toUpperCase() === "ADMIN" ? "Acting Assistant Provincial Treasurer" : "Casual Employee"}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  {currentUser?.role?.toUpperCase() === "SUPERADMIN" ? "Super Admin" : currentUser?.role?.toUpperCase() === "HEAD_ADMIN" ? "Head Admin" : currentUser?.role?.toUpperCase() === "ADMIN" ? "Admin" : "Employee"}
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -368,6 +387,7 @@ export function EmployeeSidebar({
 
                 <div className="space-y-3">
                   <ProfileItem icon={<Mail className="h-3.5 w-3.5" />} label="Email" value={isEditingProfile ? tempProfileData.email : profileData.email} isEditing={isEditingProfile} onChange={(v) => handleInputChange('email', v)} />
+                  <ProfileItem icon={<ClipboardList className="h-3.5 w-3.5" />} label="Position" value={isEditingProfile ? tempProfileData.jobTitle : profileData.jobTitle} isEditing={isEditingProfile} onChange={(v) => handleInputChange('jobTitle', v)} placeholder="Add job title..." />
                   <ProfileItem icon={<Phone className="h-3.5 w-3.5" />} label="Phone" value={isEditingProfile ? tempProfileData.phone : profileData.phone} isEditing={isEditingProfile} onChange={(v) => handleInputChange('phone', v)} placeholder="Not set" />
                   <ProfileItem icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value={isEditingProfile ? tempProfileData.location : profileData.location} isEditing={isEditingProfile} onChange={(v) => handleInputChange('location', v)} placeholder="Not set" />
                 </div>

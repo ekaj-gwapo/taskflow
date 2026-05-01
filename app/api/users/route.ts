@@ -9,10 +9,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const users = await db.getAll(`
-      SELECT id, name, email, phone, location, role, avatarUrl as avatar, isActive, createdAt 
-      FROM users
-    `)
+    const isMasterAdmin = auth.user?.role?.toLowerCase() === "master_admin";
+    
+    let users;
+    if (isMasterAdmin) {
+      users = await db.getAll(`
+        SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", u.role, u.avatarUrl as avatar, u.isActive, u.createdAt, o.name as "organizationName"
+        FROM users u
+        LEFT JOIN organizations o ON u.orgid = o.id
+        ORDER BY u.createdAt DESC
+      `);
+    } else {
+      const orgId = auth.user?.orgId;
+      if (!orgId) {
+        return NextResponse.json({ users: [] });
+      }
+      users = await db.getAll(`
+        SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, avatarUrl as avatar, isActive, createdAt 
+        FROM users
+        WHERE orgid = $1
+        ORDER BY createdAt DESC
+      `, [orgId]);
+    }
 
     return NextResponse.json({ users }, { status: 200 })
   } catch (error) {

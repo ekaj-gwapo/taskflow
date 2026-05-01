@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "employee" | "superadmin" | "head_admin"
+export type UserRole = "master_admin" | "creator" | "head_admin" | "admin" | "employee"
 
 export interface User {
   id: string
@@ -10,7 +10,10 @@ export interface User {
   location?: string
   theme?: string
   mode?: "light" | "dark"
+  jobTitle?: string
   emailVerified?: boolean
+  orgId?: string
+  organizationName?: string
   notifyOnAssign?: boolean
   notifyOnDeadline?: boolean
   notifyOnDiscussion?: boolean

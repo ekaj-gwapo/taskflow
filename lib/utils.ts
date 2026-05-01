@@ -45,14 +45,12 @@ export function isDateInCurrentWeek(date: string | Date | null | undefined) {
   if (isNaN(d.getTime())) return false;
 
   const now = new Date();
-  const day = now.getDay();
-  // Monday is start of week
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const startOfWeek = new Date(now.setDate(diff));
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday as start
   startOfWeek.setHours(0, 0, 0, 0);
 
   const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(endOfWeek.getDate() + 6);
+  endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday as end
   endOfWeek.setHours(23, 59, 59, 999);
 
   return d >= startOfWeek && d <= endOfWeek;

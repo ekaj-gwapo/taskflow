@@ -83,7 +83,7 @@ interface TaskContextType {
   // Notifications
   notifications: Notification[]
   fetchNotifications: () => Promise<void>
-  markNotificationAsRead: (id?: string) => Promise<void>
+  markNotificationAsRead: (options?: { id?: string; taskId?: string }) => Promise<void>
 }
 
 const TaskContext = createContext<TaskContextType | null>(null)
@@ -100,6 +100,47 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [seenCompletedTaskIds, setSeenCompletedTaskIds] = useState<Set<string>>(new Set())
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  
+  const markNotificationAsRead = useCallback(async (options?: { id?: string; taskId?: string }) => {
+    if (!currentUser) return
+    const id = options?.id
+    const taskId = options?.taskId
+    
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch("/api/notifications", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id, taskId }),
+      })
+      if (response.ok) {
+        if (id) {
+          setNotifications((prev) =>
+            prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+          )
+        } else if (taskId) {
+          setNotifications((prev) =>
+            prev.map((n) => (n.link?.includes(taskId) ? { ...n, isRead: true } : n))
+          )
+        } else {
+          setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+        }
+      }
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error)
+    }
+  }, [currentUser])
+
+  const selectTask = useCallback((taskId: string | null) => {
+    setSelectedTaskId(taskId)
+    if (taskId) {
+      markNotificationAsRead({ taskId })
+    }
+  }, [markNotificationAsRead])
+
   const [targetSection, setTargetSection] = useState<string | null>(null)
 
   const login = useCallback((role: UserRole, userId?: string, userData?: any) => {
@@ -114,11 +155,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         avatar: userData.avatar || userData.avatarUrl,
         theme: userData.theme || "emerald",
         mode: userData.mode || "light",
+        jobTitle: userData.jobTitle,
         emailVerified: userData.emailVerified || userData.emailverified || false,
         notifyOnAssign: userData.notifyOnAssign ?? userData.notifyonassign ?? true,
         notifyOnDeadline: userData.notifyOnDeadline ?? userData.notifyondeadline ?? true,
         notifyOnDiscussion: userData.notifyOnDiscussion ?? userData.notifyondiscussion ?? true,
         notifyOnExtension: userData.notifyOnExtension ?? userData.notifyonextension ?? true,
+        orgId: userData.orgId || userData.orgid,
+        organizationName: userData.organizationName || userData.organizationname,
       }
       setCurrentUser(user)
       setCurrentRole(userData.role.toLowerCase() as UserRole)
@@ -815,11 +859,13 @@ const url = `/api/tasks/${taskId}`
           })
         )
         toast.success(action === "APPROVE" ? "Extension approved! Due date updated." : "Extension request rejected.")
+        // Automate marking relevant notifications as read
+        markNotificationAsRead({ taskId })
       } catch (error) {
         console.error("Review extension error:", error)
       }
     },
-    []
+    [markNotificationAsRead]
   )
 
   const createReport = useCallback(
@@ -933,31 +979,7 @@ const url = `/api/tasks/${taskId}`
     }
   }, [currentUser])
 
-  const markNotificationAsRead = useCallback(async (id?: string) => {
-    if (!currentUser) return
-    try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("/api/notifications", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ id }),
-      })
-      if (response.ok) {
-        if (id) {
-          setNotifications((prev) =>
-            prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-          )
-        } else {
-          setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
-        }
-      }
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error)
-    }
-  }, [currentUser])
+  // Move markNotificationAsRead above selectTask for dependency usage
 
   // Session restoration
   useEffect(() => {
@@ -975,8 +997,14 @@ const url = `/api/tasks/${taskId}`
 
         if (response.ok) {
           const data = await response.json()
-          setCurrentUser(data.user)
-          setCurrentRole(data.user.role.toLowerCase() as UserRole)
+          const normalizedUser = {
+            ...data.user,
+            role: data.user.role.toLowerCase() as UserRole,
+            orgId: data.user.orgId || data.user.orgid,
+            organizationName: data.user.organizationName || data.user.organizationname,
+          }
+          setCurrentUser(normalizedUser)
+          setCurrentRole(normalizedUser.role)
         } else {
           // Token expired or invalid
           localStorage.removeItem("token")
@@ -992,17 +1020,17 @@ const url = `/api/tasks/${taskId}`
   }, [])
 
   const refreshUsers = useCallback(async () => {
-    if (!currentUser || (currentRole !== 'admin' && currentRole !== 'superadmin' && currentRole !== 'head_admin')) return;
+    if (!currentUser || (currentRole !== 'admin' && currentRole !== 'master_admin' && currentRole !== 'head_admin' && currentRole !== 'creator')) return;
     try {
       const token = localStorage.getItem('token');
       const headers = { 'Authorization': `Bearer ${token}` };
       const usersRes = await fetch('/api/users', { headers });
       if (usersRes.ok) {
         const data = await usersRes.json();
-        if (currentRole === 'superadmin') {
-          setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() !== 'superadmin'));
-        } else if (currentRole === 'head_admin') {
-          setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee' || u.role.toLowerCase() === 'admin'));
+        if (currentRole === 'master_admin') {
+          setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() !== 'master_admin'));
+        } else if (currentRole === 'creator' || currentRole === 'head_admin') {
+          setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() !== 'creator'));
         } else {
           setAllEmployees(data.users.filter((u: any) => u.role.toLowerCase() === 'employee' || u.role.toLowerCase() === 'admin'));
         }
@@ -1089,7 +1117,7 @@ const url = `/api/tasks/${taskId}`
         fetchNotifications,
         markNotificationAsRead,
         selectedTaskId,
-        selectTask: setSelectedTaskId,
+        selectTask,
         targetSection,
         setTargetSection,
       }}
