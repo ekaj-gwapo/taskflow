@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     // Get all organizations with owner info and user count
     const organizations = await db.getAll(`
-      SELECT o.*, 
+      SELECT o.*, o.status,
              u.name as "ownerName", 
              u.email as "ownerEmail",
              (SELECT COUNT(*) FROM users WHERE orgid = o.id) as "userCount"

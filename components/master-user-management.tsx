@@ -6,20 +6,33 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { UserPlus, Users, Mail, Shield, Building2, Search, Power, KeyRound, Globe } from "lucide-react"
+import { UserPlus, Users, Mail, Shield, Building2, Search, Power, KeyRound, Globe, ArrowLeft, ClipboardList, Clock } from "lucide-react"
 import { toast } from "sonner"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface User {
   id: string
   name: string
   email: string
   role: string
+  orgId?: string
   organizationName?: string
   avatar?: string
   isActive?: boolean
   createdAt: string
+}
+
+interface OrgDetails {
+  organization: {
+    id: string
+    name: string
+    status: string
+    createdat: string
+    ownerName: string
+    ownerEmail: string
+  }
+  users: any[]
+  tasks: any[]
 }
 
 export function MasterUserManagement() {
@@ -27,6 +40,10 @@ export function MasterUserManagement() {
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
+  const [details, setDetails] = useState<OrgDetails | null>(null)
+  const [loadingDetails, setLoadingDetails] = useState(false)
 
   const [newUser, setNewUser] = useState({
     name: "",
@@ -48,14 +65,35 @@ export function MasterUserManagement() {
       })
       const data = await res.json()
       if (res.ok && data.users) {
-        setUsers(data.users)
+        // ONLY SHOW CREATORS
+        const creators = data.users.filter((u: any) => u.role.toLowerCase() === 'creator')
+        setUsers(creators)
       } else {
-        toast.error(data.error || "Failed to load users")
+        toast.error(data.error || "Failed to load creators")
       }
     } catch (error) {
-      toast.error("Failed to load users")
+      toast.error("Failed to load creators")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchOrgDetails = async (orgId: string) => {
+    try {
+      setLoadingDetails(true)
+      setSelectedOrgId(orgId)
+      const token = localStorage.getItem("token")
+      const res = await fetch(`/api/master/organizations/${orgId}/details`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setDetails(data)
+      }
+    } catch (err) {
+      toast.error("Failed to load organization details")
+    } finally {
+      setLoadingDetails(false)
     }
   }
 
@@ -71,7 +109,7 @@ export function MasterUserManagement() {
       const data = await res.json()
 
       if (res.ok) {
-        toast.success("Creator account created! They can now log in and set up their organization.")
+        toast.success("Creator account created!")
         setNewUser({ name: "", email: "", password: "", role: "creator" })
         fetchUsers()
       } else {
@@ -89,6 +127,121 @@ export function MasterUserManagement() {
     u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.organizationName?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  if (selectedOrgId && details) {
+    return (
+      <div className="p-8 space-y-8 max-w-7xl mx-auto">
+        <Button 
+          variant="ghost" 
+          onClick={() => { setSelectedOrgId(null); setDetails(null); }}
+          className="group font-bold text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Directory
+        </Button>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="lg:w-80 space-y-6">
+            <Card className="border-border bg-card/40 backdrop-blur-md shadow-xl overflow-hidden">
+              <div className="h-32 bg-primary/10 flex items-center justify-center">
+                <Building2 className="h-16 w-16 text-primary" />
+              </div>
+              <CardContent className="p-6">
+                <h2 className="text-2xl font-black text-foreground">{details.organization.name}</h2>
+                <Badge className="mt-2">READ ONLY</Badge>
+                
+                <div className="mt-8 space-y-4">
+                  <div>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Creator</p>
+                    <p className="text-sm font-bold text-foreground mt-1">{details.organization.ownerName}</p>
+                    <p className="text-xs text-muted-foreground">{details.organization.ownerEmail}</p>
+                  </div>
+                  <div className="pt-4 border-t border-border">
+                    <p className="text-xs font-medium text-amber-600 flex items-center gap-2">
+                      <Shield className="h-3.5 w-3.5" />
+                      Master Admin View Mode
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="p-4 border-border bg-card/40 text-center">
+                <Users className="h-5 w-5 text-primary mx-auto mb-2" />
+                <div className="text-2xl font-black">{details.users.length}</div>
+                <div className="text-[10px] font-bold text-muted-foreground uppercase">Users</div>
+              </Card>
+              <Card className="p-4 border-border bg-card/40 text-center">
+                <ClipboardList className="h-5 w-5 text-primary mx-auto mb-2" />
+                <div className="text-2xl font-black">{details.tasks.length}</div>
+                <div className="text-[10px] font-bold text-muted-foreground uppercase">Tasks</div>
+              </Card>
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-8">
+            <Card className="border-border bg-card/40 backdrop-blur-md shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Team Directory (Read-Only)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {details.users.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-border/50">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                            {user.name?.[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="text-sm font-bold text-foreground">{user.name}</div>
+                          <div className="text-xs text-muted-foreground">{user.email}</div>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="font-bold uppercase text-[10px]">
+                        {user.role}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border bg-card/40 backdrop-blur-md shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5 text-primary" />
+                  Task Overview (Read-Only)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {details.tasks.length === 0 ? (
+                    <div className="p-10 text-center text-muted-foreground italic">No tasks found.</div>
+                  ) : (
+                    details.tasks.map((task) => (
+                      <div key={task.id} className="p-4 rounded-2xl bg-secondary/30 border border-border/50 flex items-center justify-between">
+                        <div>
+                          <div className="text-sm font-bold text-foreground">{task.title}</div>
+                          <div className="text-[10px] text-muted-foreground mt-1 uppercase font-black">Assignee: {task.assigneeName || "System"}</div>
+                        </div>
+                        <Badge className="text-[9px] font-bold uppercase">{task.status}</Badge>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
@@ -116,7 +269,6 @@ export function MasterUserManagement() {
       </motion.div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-        {/* Create Creator Form */}
         <Card className="xl:col-span-1 border-border bg-card/40 backdrop-blur-md shadow-xl self-start sticky top-8">
           <CardHeader>
             <CardTitle className="text-xl flex items-center gap-2 text-primary">
@@ -166,7 +318,6 @@ export function MasterUserManagement() {
           </CardContent>
         </Card>
 
-        {/* Creator & Org List */}
         <Card className="xl:col-span-3 border-border bg-card/40 backdrop-blur-md shadow-2xl overflow-hidden">
           <CardHeader className="bg-secondary/20 border-b border-border">
             <CardTitle className="text-xl flex items-center gap-2">
@@ -183,7 +334,7 @@ export function MasterUserManagement() {
             ) : filteredUsers.length === 0 ? (
               <div className="p-20 text-center text-muted-foreground">
                 <Users className="h-20 w-20 mx-auto mb-6 opacity-10" />
-                <p className="text-xl">No creators or organizations registered yet.</p>
+                <p className="text-xl">No creators found.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -226,9 +377,17 @@ export function MasterUserManagement() {
                           )}
                         </td>
                         <td className="py-5 px-6 text-right">
-                          <Button variant="ghost" size="sm" className="font-bold text-primary hover:bg-primary/10">
-                            View Org
-                          </Button>
+                          {user.orgId && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="font-bold text-primary hover:bg-primary/10"
+                              onClick={() => fetchOrgDetails(user.orgId!)}
+                              disabled={loadingDetails}
+                            >
+                              {loadingDetails && selectedOrgId === user.orgId ? <Loader2 className="h-4 w-4 animate-spin" /> : "View Org"}
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -260,7 +419,7 @@ function Loader2(props: any) {
       <path d="M12 2v4" />
       <path d="m16.2 7.8 2.9-2.9" />
       <path d="M18 12h4" />
-      <path d="m16.2 16.2 2.9 2.9" />
+      <path d="m16.2 16.2 2.9-2.9" />
       <path d="M12 18v4" />
       <path d="m4.9 19.1 2.9-2.9" />
       <path d="M2 12h4" />

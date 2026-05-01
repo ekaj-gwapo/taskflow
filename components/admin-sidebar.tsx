@@ -92,7 +92,7 @@ export function AdminSidebar({
   onSelectEmployee,
   onSelectTask,
 }: AdminSidebarProps) {
-  const { allEmployees, tasks, currentUser, login, seenTaskIds } = useTaskContext()
+  const { allEmployees, tasks, currentUser, login, logout, seenTaskIds } = useTaskContext()
   const [activeTab, setActiveTab] = useState<"employees" | "profile">("employees")
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
@@ -753,10 +753,7 @@ export function AdminSidebar({
                 Stay
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => {
-                  localStorage.removeItem("token")
-                  window.location.href = "/"
-                }}
+                onClick={logout}
                 className="rounded-xl bg-destructive text-white hover:bg-destructive/90 flex-1"
               >
                 Sign Out

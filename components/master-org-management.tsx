@@ -44,7 +44,8 @@ export function MasterOrgManagement() {
       setLoading(true)
       const token = localStorage.getItem("token")
       const res = await fetch("/api/master/organizations", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store'
       })
       const data = await res.json()
       if (res.ok) {
@@ -73,6 +74,36 @@ export function MasterOrgManagement() {
       toast.error("Failed to load organization details")
     } finally {
       setLoadingDetails(false)
+    }
+  }
+
+  const handleToggleStatus = async (orgId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
+      const token = localStorage.getItem("token")
+      const res = await fetch(`/api/master/organizations/${orgId}/status`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      if (res.ok) {
+        toast.success(`Organization ${newStatus === 'ACTIVE' ? 'activated' : 'suspended'}!`)
+        // Optimistic update
+        setOrgs(prev => prev.map(o => o.id === orgId ? { ...o, status: newStatus as any } : o))
+        
+        await fetchOrgs() // Re-fetch to sync fully with DB
+        if (details?.organization.id === orgId) {
+          setDetails({ ...details, organization: { ...details.organization, status: newStatus as any } })
+        }
+      } else {
+        toast.error("Failed to update status")
+      }
+    } catch (err) {
+      toast.error("An error occurred")
     }
   }
 
@@ -273,9 +304,22 @@ export function MasterOrgManagement() {
 
                   {/* Right Section: Actions */}
                   <div className="bg-secondary/20 p-6 flex items-center gap-3 justify-end lg:w-80">
-                    <Button variant="outline" className="font-bold gap-2 hover:bg-red-500/10 hover:text-red-600 border-red-500/20">
-                      <Ban className="h-4 w-4" />
-                      Suspend
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleToggleStatus(org.id, org.status)}
+                      className={`font-bold gap-2 ${org.status === 'ACTIVE' ? 'hover:bg-red-500/10 hover:text-red-600 border-red-500/20' : 'hover:bg-emerald-500/10 hover:text-emerald-600 border-emerald-500/20'}`}
+                    >
+                      {org.status === 'ACTIVE' ? (
+                        <>
+                          <Ban className="h-4 w-4" />
+                          Suspend
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-4 w-4" />
+                          Activate
+                        </>
+                      )}
                     </Button>
                     <Button variant="destructive" size="icon" className="h-10 w-10 shadow-lg shadow-red-500/20">
                       <Trash2 className="h-5 w-5" />

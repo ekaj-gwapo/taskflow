@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       SELECT u.id, u.name, u.email, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 
              u.avatarUrl as avatar, u.theme, u.mode, u.orgid AS "orgId", 
              u.createdAt as "createdAt", u.updatedAt as "updatedAt",
-             o.name as "organizationName"
+             o.name as "organizationName", o.status as "orgStatus"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id
       WHERE u.id = ?
@@ -22,6 +22,10 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (user.orgStatus === 'SUSPENDED' && user.role !== 'master_admin') {
+       return NextResponse.json({ error: "ORGANIZATION_SUSPENDED" }, { status: 403 });
     }
 
     return NextResponse.json({ user });

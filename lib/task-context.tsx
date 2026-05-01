@@ -176,6 +176,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setSeenTaskIds(new Set())
     setSeenCompletedTaskIds(new Set())
     localStorage.removeItem("token")
+    window.location.href = "/auth/login"
   }, [])
 
   // Seen tasks tracking
@@ -1005,6 +1006,12 @@ const url = `/api/tasks/${taskId}`
           }
           setCurrentUser(normalizedUser)
           setCurrentRole(normalizedUser.role)
+        } else if (response.status === 403) {
+          const data = await response.json();
+          if (data.error === "ORGANIZATION_SUSPENDED") {
+            toast.error("Your organization has been suspended. Please contact support.", { duration: 10000 });
+            localStorage.removeItem("token");
+          }
         } else {
           // Token expired or invalid
           localStorage.removeItem("token")

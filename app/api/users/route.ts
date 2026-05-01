@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     let users;
     if (isMasterAdmin) {
       users = await db.getAll(`
-        SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", u.role, u.avatarUrl as avatar, u.isActive, u.createdAt, o.name as "organizationName"
+        SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", u.role, u.avatarUrl as avatar, u.isActive, u.createdAt, u.orgid AS "orgId", o.name as "organizationName"
         FROM users u
         LEFT JOIN organizations o ON u.orgid = o.id
         ORDER BY u.createdAt DESC

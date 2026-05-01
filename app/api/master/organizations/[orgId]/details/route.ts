@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireMasterAdmin } from "@/lib/auth-utils";
 import db from "@/lib/db";
 
-export async function GET(request: NextRequest, { params }: { params: { orgId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ orgId: string }> }) {
   try {
     const auth = requireMasterAdmin(request);
     if (auth.error) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    const { orgId } = params;
+    const { orgId } = await params;
 
     // 1. Get Organization basic info
     const organization = await db.getOne('SELECT * FROM organizations WHERE id = ?', [orgId]);
