@@ -180,7 +180,6 @@ export function EmployeeSidebar({
 
   return (
     <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg">
-      {/* Sidebar Header */}
       <div className="p-6 border-b border-border bg-primary/5">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
@@ -188,7 +187,9 @@ export function EmployeeSidebar({
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-foreground tracking-tight">TaskFlow</span>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none">Employee Portal</span>
+            <span className="text-[10px] font-medium text-primary uppercase tracking-widest leading-none mt-0.5">
+              {currentUser?.organizationName || "Employee Portal"}
+            </span>
           </div>
         </div>
       </div>

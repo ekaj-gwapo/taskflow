@@ -53,10 +53,10 @@ export async function GET(
       return {
         ...as,
         isActed: as.isActed !== undefined ? as.isActed : as.isacted,
-        completed: as.completed !== undefined ? as.completed : as.completed, // completed is already lowercase
+        completed: as.completed !== undefined ? as.completed : as.completed, 
         createdAt: as.createdAt || as.createdat,
         updatedAt: as.updatedAt || as.updatedat,
-        notes: notes.map(n => ({
+        notes: (notes || []).map(n => ({
           ...n,
           authorName: n.authorName || n.authorname,
           attachmentUrl: n.attachmentUrl || n.attachmenturl,
@@ -158,7 +158,7 @@ export async function PUT(
     console.debug("PUT /api/tasks/:id", { id: taskId, body: { status, priority, assigneeIds, archived, dueDate }, user: auth.user })
 
     // Fetch task using case-insensitive search but keep track of the REAL ID from the database
-    const existingTask: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId])
+    const existingTask: any = await db.getOne("SELECT * FROM tasks WHERE id = ? OR LOWER(id) = LOWER(?)", [taskId, taskId])
     if (!existingTask) {
       console.warn("Task not found in DB", { id: taskId })
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
@@ -253,14 +253,14 @@ export async function PUT(
     ])
 
     // Handle task_assignments if updating assignees
-    if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
+    if (assigneeIds !== undefined && Array.isArray(assigneeIds) && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
       // Get current assignees BEFORE deleting them to compare for logging
-      const currentAssigneeRows = (await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [realTaskId]) as any[]);
-      const currentAssigneeIds = currentAssigneeRows.map(r => (r.userId || r.userid || "").toLowerCase()).filter(Boolean);
-      const newAssigneeIds = (assigneeIds || []).map((id: string) => id.toLowerCase());
+      const currentAssigneeRows = (await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [realTaskId]) as any[]) || [];
+      const currentAssigneeIds: string[] = currentAssigneeRows.map(r => String(r.userId || r.userid || "").toLowerCase()).filter(Boolean);
+      const newAssigneeIds: string[] = assigneeIds.map((aId: any) => String(aId || "").toLowerCase()).filter(Boolean);
       
-      const addedIds = newAssigneeIds.filter(id => !currentAssigneeIds.includes(id));
-      const removedIds = currentAssigneeIds.filter(id => !newAssigneeIds.includes(id));
+      const addedIds = newAssigneeIds.filter(aId => !currentAssigneeIds.includes(aId));
+      const removedIds = currentAssigneeIds.filter(aId => !newAssigneeIds.includes(aId));
 
       if (addedIds.length > 0 || removedIds.length > 0) {
         // Fetch names for logging
@@ -268,18 +268,20 @@ export async function PUT(
         let removedNames: string[] = [];
 
         if (addedIds.length > 0) {
-          const addedUsers = await db.getAll(`SELECT name FROM users WHERE id IN (${addedIds.map(() => '?').join(',')})`, addedIds) as any[];
+          const placeholders = addedIds.map(() => '?').join(',');
+          const addedUsers = await db.getAll(`SELECT name FROM users WHERE id IN (${placeholders})`, addedIds) as any[];
           addedNames = addedUsers.map(u => u.name);
         }
 
         if (removedIds.length > 0) {
-          const removedUsers = await db.getAll(`SELECT name FROM users WHERE id IN (${removedIds.map(() => '?').join(',')})`, removedIds) as any[];
+          const placeholders = removedIds.map(() => '?').join(',');
+          const removedUsers = await db.getAll(`SELECT name FROM users WHERE id IN (${placeholders})`, removedIds) as any[];
           removedNames = removedUsers.map(u => u.name);
         }
 
         // Update assignments
         await db.execute("DELETE FROM task_assignments WHERE taskId = ?", [realTaskId]);
-        for (const uId of assigneeIds) {
+        for (const uId of newAssigneeIds) {
           await db.execute("INSERT INTO task_assignments (taskId, userId, points) VALUES (?, ?, ?) ON CONFLICT (taskId, userId) DO UPDATE SET points = EXCLUDED.points", [realTaskId, uId, 0]);
         }
 
@@ -440,11 +442,35 @@ export async function PUT(
     `, [realTaskId])
 
     const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [realTaskId])
-    const actionStepsWithNotes = await Promise.all((actionSteps as any[]).map(async (as: any) => ({
-      ...as,
-      notes: await db.getAll("SELECT *, createdAt as \"createdAt\", authorName as \"authorName\" FROM step_notes WHERE stepId = ?", [as.id])
-    })))
-    const progressNotes = await db.getAll("SELECT *, createdAt as \"createdAt\", updatedAt as \"updatedAt\", authorName as \"authorName\" FROM progress_notes WHERE taskId = ?", [realTaskId])
+    const actionStepsWithNotes = await Promise.all((actionSteps as any[]).map(async (as: any) => {
+      const notes = await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[];
+      return {
+        ...as,
+        isActed: as.isActed !== undefined ? as.isActed : as.isacted,
+        completed: as.completed !== undefined ? as.completed : as.completed,
+        createdAt: as.createdAt || as.createdat,
+        updatedAt: as.updatedAt || as.updatedat,
+        notes: (notes || []).map(n => ({
+          ...n,
+          authorName: n.authorName || n.authorname,
+          attachmentUrl: n.attachmentUrl || n.attachmenturl,
+          attachmentName: n.attachmentName || n.attachmentname,
+          attachmentType: n.attachmentType || n.attachmenttype,
+          createdAt: n.createdAt || n.createdat
+        }))
+      };
+    }))
+    const progressNotesRaw = await db.getAll("SELECT * FROM progress_notes WHERE taskId = ?", [realTaskId])
+    const progressNotes = (progressNotesRaw as any[]).map(n => ({
+      ...n,
+      authorId: n.authorId || n.authorid,
+      authorName: n.authorName || n.authorname,
+      attachmentUrl: n.attachmentUrl || n.attachmenturl,
+      attachmentName: n.attachmentName || n.attachmentname,
+      attachmentType: n.attachmentType || n.attachmenttype,
+      createdAt: n.createdAt || n.createdat,
+      updatedAt: n.updatedAt || n.updatedat
+    }))
 
     const assigneesData = await db.getAll(`
       SELECT u.id, u.name, u.email, u.role, u.avatarUrl as avatar, ta.points
@@ -512,7 +538,7 @@ export async function DELETE(
     const taskId = (await params).id?.toLowerCase()
     
     // Explicitly check if task is completed
-    const existingTask: any = await db.getOne("SELECT status, title FROM tasks WHERE id = ?", [taskId])
+    const existingTask: any = await db.getOne("SELECT status, title FROM tasks WHERE id = ? OR LOWER(id) = LOWER(?)", [taskId, taskId])
     if (existingTask && existingTask.status === "COMPLETED") {
       return NextResponse.json(
         { error: "Completed tasks cannot be deleted" },

@@ -13,24 +13,34 @@ export async function GET(request: NextRequest) {
     let logs: any[] = [];
 
     if (role === "EMPLOYEE") {
-      // Employees only see activity logs for tasks they are assigned to
-      // or tasks they created
+      // Employees only see activity logs for:
+      // 1. Tasks they are assigned to, created, or are part of the team
+      // 2. Their own user profile updates
+      // 3. Actions they performed themselves
       const query = `
         SELECT al.*, t.title as taskTitle
         FROM activity_logs al
         LEFT JOIN tasks t ON t.id::text = al.entityid
-        WHERE (al.entitytype != 'TASK' OR (
-          t.assigneeid = $1::uuid 
-          OR t.createdbyid = $2::uuid
-          OR EXISTS (
-            SELECT 1 FROM task_assignments ta 
-            WHERE ta.taskid = t.id AND ta.userid = $3::uuid
-          )
-        ))
+        WHERE 
+          -- Task-related logs they are involved in
+          (al.entitytype = 'TASK' AND (
+            t.assigneeid = $1::uuid 
+            OR t.createdbyid = $2::uuid
+            OR EXISTS (
+              SELECT 1 FROM task_assignments ta 
+              WHERE ta.taskid = t.id AND ta.userid = $3::uuid
+            )
+          ))
+          OR
+          -- Their own user profile logs
+          (al.entitytype = 'USER' AND al.entityid = $4::text)
+          OR
+          -- Any action they performed themselves
+          (al.userid = $5::uuid)
         ORDER BY al.createdat DESC
         LIMIT 100
       `;
-      logs = await db.getAll(query, [auth.user!.id, auth.user!.id, auth.user!.id]) as any[];
+      logs = await db.getAll(query, [auth.user!.id, auth.user!.id, auth.user!.id, auth.user!.id, auth.user!.id]) as any[];
     } else {
       // Admins see all logs
       const query = `

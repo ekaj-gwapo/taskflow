@@ -48,6 +48,11 @@ export function OnboardingScreen() {
       if (response.ok) {
         toast.success("Organization created! Welcome to TaskFlow.")
         
+        // Save the fresh token that includes the new orgId and role
+        if (data.token) {
+          localStorage.setItem("token", data.token)
+        }
+        
         // Refresh the user context to include the new orgid/role
         if (currentUser) {
           login("creator", currentUser.id, { 

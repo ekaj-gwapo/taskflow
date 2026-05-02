@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 import { verifyToken } from "@/lib/auth-utils";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
 
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 0o1 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const token = authHeader.split(" ")[1];
@@ -41,10 +44,25 @@ export async function POST(request: NextRequest) {
       UPDATE users SET orgid = $1, role = 'creator' WHERE id = $2
     `, [orgId, decoded.id]);
 
+    // Generate a fresh token with the new orgId and role
+    const newToken = jwt.sign(
+      { 
+        id: decoded.id, 
+        email: decoded.email, 
+        name: decoded.name, 
+        role: "creator",
+        orgId: orgId,
+        username: (decoded as any).username
+      },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
     return NextResponse.json({ 
       message: "Organization created successfully", 
       orgId, 
-      role: 'creator' 
+      role: 'creator',
+      token: newToken
     });
   } catch (error: any) {
     console.error("ORG CREATE ERROR:", error);

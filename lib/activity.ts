@@ -24,6 +24,7 @@ export type ActivityAction =
   | "EXTENSION_REJECTED"
   | "TASK_ARCHIVED"
   | "TASK_RESTORED"
+  | "DUE_DATE_UPDATED"
   | "MEMBER_REMOVED";
 
 export interface ActivityLogPayload {

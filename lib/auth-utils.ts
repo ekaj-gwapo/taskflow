@@ -51,7 +51,7 @@ export function requireAuth(request: NextRequest) {
 export function requireAdmin(request: NextRequest) {
   const auth = requireAuth(request)
   const role = auth.user?.role?.toLowerCase()
-  const allowedRoles = ["admin", "head_admin", "creator", "master_admin"];
+  const allowedRoles = ["admin", "head_admin", "creator", "master_admin", "superadmin"];
   
   if (auth.error || !allowedRoles.includes(role || "")) {
     return { error: "Admin access required", status: 403, user: null }
@@ -62,7 +62,7 @@ export function requireAdmin(request: NextRequest) {
 export function requireHeadAdmin(request: NextRequest) {
   const auth = requireAuth(request)
   const role = auth.user?.role?.toLowerCase()
-  const allowedRoles = ["head_admin", "creator", "master_admin"];
+  const allowedRoles = ["head_admin", "creator", "master_admin", "superadmin"];
   if (auth.error || !allowedRoles.includes(role || "")) {
     return { error: "Head Admin access required", status: 403, user: null }
   }
@@ -71,7 +71,8 @@ export function requireHeadAdmin(request: NextRequest) {
 
 export function requireMasterAdmin(request: NextRequest) {
   const auth = requireAuth(request)
-  if (auth.error || auth.user?.role?.toLowerCase() !== "master_admin") {
+  const role = auth.user?.role?.toLowerCase()
+  if (auth.error || (role !== "master_admin" && role !== "superadmin")) {
     return { error: "Master Admin access required", status: 403, user: null }
   }
   return auth

@@ -115,3 +115,78 @@ export async function PUT(
     )
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> | { id: string } }
+) {
+  try {
+    const { id } = await params
+    const auth = requireAuth(request)
+    if (auth.error) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const currentUser = auth.user!
+    const role = currentUser.role?.toUpperCase()
+
+    // Permission check: Only SUPERADMIN, MASTER_ADMIN, or CREATOR of the same org can delete
+    if (role !== "SUPERADMIN" && role !== "MASTER_ADMIN" && role !== "CREATOR") {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 })
+    }
+
+    if (currentUser.id === id) {
+      return NextResponse.json({ error: "You cannot delete yourself" }, { status: 400 })
+    }
+
+    // Verify user exists and belongs to the same org (if not superadmin)
+    const targetUser = await db.getOne("SELECT orgid FROM users WHERE id = ?", [id]);
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    if (role !== "SUPERADMIN" && role !== "MASTER_ADMIN" && targetUser.orgid !== currentUser.orgId) {
+      return NextResponse.json({ error: "Access denied. User belongs to another organization." }, { status: 403 })
+    }
+
+    // Clean up related data to avoid foreign key violations
+    // 1. Remove assignments (though schema might have cascade, manual is safer)
+    await db.execute("DELETE FROM task_assignments WHERE userId = ?", [id]);
+    
+    // 2. Clear references in tasks
+    await db.execute("UPDATE tasks SET assigneeId = NULL WHERE assigneeId = ?", [id]);
+    await db.execute("UPDATE tasks SET createdById = NULL WHERE createdById = ?", [id]);
+    await db.execute("UPDATE tasks SET delegatedById = NULL WHERE delegatedById = ?", [id]);
+
+    // 3. Clear references in comments and notes
+    await db.execute("UPDATE task_comments SET authorId = NULL WHERE authorId = ?", [id]);
+    await db.execute("UPDATE progress_notes SET authorId = NULL WHERE authorId = ?", [id]);
+
+    // 4. Handle extension requests
+    await db.execute("DELETE FROM extension_requests WHERE requestedById = ?", [id]);
+    await db.execute("UPDATE extension_requests SET reviewedById = NULL WHERE reviewedById = ?", [id]);
+
+    // 5. Clear notifications
+    await db.execute("DELETE FROM notifications WHERE userId = ?", [id]);
+
+    // 6. Finally delete the user
+    await db.execute("DELETE FROM users WHERE id = ?", [id]);
+
+    await logActivity({
+      action: "USER_STATUS_UPDATED",
+      entityId: id,
+      entityType: "USER",
+      userId: currentUser.id,
+      userName: currentUser.name,
+      details: { deletedUserId: id, action: "DELETED" }
+    });
+
+    return NextResponse.json({ message: "User deleted successfully" }, { status: 200 })
+  } catch (error: any) {
+    console.error("Delete user error:", error)
+    return NextResponse.json(
+      { error: "Failed to delete user", details: error.message },
+      { status: 500 }
+    )
+  }
+}

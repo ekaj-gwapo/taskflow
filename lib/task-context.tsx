@@ -353,7 +353,7 @@ const url = `/api/tasks/${taskId}`
 
         const data = await response.json()
         setTasks((prev) =>
-          prev.map((t) => (t.id === taskId ? data.task : t))
+          prev.map((t) => (t.id.toLowerCase() === taskId.toLowerCase() ? data.task : t))
         )
         toast.success("Task status updated successfully.")
       } catch (error) {
@@ -387,7 +387,7 @@ const url = `/api/tasks/${taskId}`
 
         const data = await response.json()
         setTasks((prev) =>
-          prev.map((t) => (t.id === taskId ? data.task : t))
+          prev.map((t) => (t.id.toLowerCase() === taskId.toLowerCase() ? data.task : t))
         )
         toast.success("Task assignees updated successfully.")
       } catch (error) {
@@ -420,7 +420,7 @@ const url = `/api/tasks/${taskId}`
 
         const data = await response.json()
         setTasks((prev) =>
-          prev.map((t) => (t.id === taskId ? data.task : t))
+          prev.map((t) => (t.id.toLowerCase() === taskId.toLowerCase() ? data.task : t))
         )
         toast.success("Task updated successfully.")
       } catch (error: any) {
@@ -446,7 +446,7 @@ const url = `/api/tasks/${taskId}`
         throw new Error(errorData?.error || "Failed to delete task")
       }
 
-      setTasks((prev) => prev.filter((t) => t.id !== taskId))
+      setTasks((prev) => prev.filter((t) => t.id.toLowerCase() !== taskId.toLowerCase()))
       toast.success("Task deleted successfully.")
       return true
     } catch (error: any) {
@@ -557,7 +557,7 @@ const url = `/api/tasks/${taskId}`
       const data = await response.json()
       setTasks((prev) =>
         prev.map((t) =>
-          t.id === taskId
+          t.id.toLowerCase() === taskId.toLowerCase()
             ? {
                 ...t,
                 actionSteps: [...(t.actionSteps || []), data.actionStep],
@@ -593,11 +593,11 @@ const url = `/api/tasks/${taskId}`
         const data = await response.json()
         setTasks((prev) =>
           prev.map((t) =>
-            t.id === taskId
+            t.id.toLowerCase() === taskId.toLowerCase()
               ? {
                   ...t,
                   actionSteps: (t.actionSteps || []).map((step) =>
-                    step.id === stepId ? data.actionStep : step
+                    step.id.toLowerCase() === stepId.toLowerCase() ? data.actionStep : step
                   ),
                 }
               : t
@@ -634,11 +634,11 @@ const url = `/api/tasks/${taskId}`
         const data = await response.json()
         setTasks((prev) =>
           prev.map((t) =>
-            t.id === taskId
+            t.id.toLowerCase() === taskId.toLowerCase()
               ? {
                   ...t,
                   actionSteps: (t.actionSteps || []).map((step) =>
-                    step.id === stepId ? data.actionStep : step
+                    step.id.toLowerCase() === stepId.toLowerCase() ? data.actionStep : step
                   ),
                 }
               : t
@@ -654,8 +654,9 @@ const url = `/api/tasks/${taskId}`
   const deleteActionStep = useCallback(
     async (taskId: string, stepId: string) => {
       // Only admin can delete action steps
-      if (currentRole !== "admin") {
-        console.warn("[v0] Only admin can delete action steps")
+      const allowedRoles = ["admin", "head_admin", "superadmin", "master_admin"];
+      if (!allowedRoles.includes(currentRole || "")) {
+        console.warn("[v0] Unauthorized to delete action steps")
         return
       }
 
@@ -674,10 +675,10 @@ const url = `/api/tasks/${taskId}`
 
         setTasks((prev) =>
           prev.map((t) =>
-            t.id === taskId
+            t.id.toLowerCase() === taskId.toLowerCase()
               ? {
                   ...t,
-                  actionSteps: (t.actionSteps || []).filter((step) => step.id !== stepId),
+                  actionSteps: (t.actionSteps || []).filter((step) => step.id.toLowerCase() !== stepId.toLowerCase()),
                 }
               : t
           )
@@ -710,11 +711,11 @@ const url = `/api/tasks/${taskId}`
         const data = await response.json()
         setTasks((prev) =>
           prev.map((t) =>
-            t.id === taskId
+            t.id.toLowerCase() === taskId.toLowerCase()
               ? {
                   ...t,
                   actionSteps: (t.actionSteps || []).map((step) =>
-                    step.id === stepId
+                    step.id.toLowerCase() === stepId.toLowerCase()
                       ? {
                           ...step,
                           notes: [...(step.notes || []), data.note],

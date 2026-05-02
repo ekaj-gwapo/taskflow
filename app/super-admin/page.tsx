@@ -13,7 +13,8 @@ function SuperAdminContent() {
   const router = useRouter()
 
   useEffect(() => {
-    if (currentUser && currentRole !== "superadmin") {
+    const isSuper = currentRole === "superadmin" || currentRole === "master_admin"
+    if (currentUser && !isSuper) {
       router.push("/")
     }
   }, [currentUser, currentRole, router])
@@ -22,7 +23,8 @@ function SuperAdminContent() {
     return <LoginScreen />
   }
 
-  if (currentRole !== "superadmin") {
+  const isSuper = currentRole === "superadmin" || currentRole === "master_admin"
+  if (!isSuper) {
     return null
   }
 

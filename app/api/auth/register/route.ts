@@ -19,10 +19,13 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userId = uuidv4();
-    // Users start as unverified until they connect an email
-    const isVerified = false;
+    // Use autoVerify if provided (e.g. when an admin adds a user)
+    const isVerified = autoVerify === true;
     const verificationToken = uuidv4();
     const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    // Default to 'employee' for admin-created users, 'creator' for public signups
+    const defaultRole = isVerified ? "employee" : "creator";
 
     // Insert user
     await db.execute(`
@@ -34,7 +37,7 @@ export async function POST(request: NextRequest) {
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      userId, name, isVerified ? null : email, email, hashedPassword, role || "creator", 
+      userId, name, email, email, hashedPassword, role || defaultRole, 
       phone || "", location || "", jobTitle || "", orgId || null,
       isVerified, isVerified ? null : verificationToken, isVerified ? null : verificationExpiry,
       new Date().toISOString(), new Date().toISOString()
@@ -50,7 +53,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ message: "Registration successful. Please check your email to verify your account." }, { status: 201 });
+    const message = isVerified 
+      ? "User created successfully." 
+      : "Registration successful. Please check your email to verify your account.";
+
+    return NextResponse.json({ message }, { status: 201 });
   } catch (error: any) {
     console.error("REGISTER ERROR:", error);
     return NextResponse.json({ error: "Failed to register", details: error.message }, { status: 500 });

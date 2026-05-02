@@ -49,12 +49,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Skip strict email verification check to allow users to login with credentials
+    // and connect their email/verify it from within the dashboard.
+    /*
     if (user.email && !user.emailVerified) {
       return NextResponse.json(
         { error: "Email not verified. Please check your inbox for the verification link." },
         { status: 403 }
       );
     }
+    */
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 

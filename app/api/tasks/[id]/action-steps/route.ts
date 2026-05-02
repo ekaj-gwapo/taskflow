@@ -34,7 +34,8 @@ export async function POST(
     // Only ADMIN or SUPERADMIN can add steps.
     // However, if an ADMIN or HEAD_ADMIN is assigned to the task, they act as a worker and cannot add steps.
     const role = auth.user!.role?.toUpperCase();
-    if (role !== "ADMIN" && role !== "SUPERADMIN" && role !== "HEAD_ADMIN") {
+    const isAdminLike = role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN" || role === "MASTER_ADMIN";
+    if (!isAdminLike) {
       return NextResponse.json(
         { error: "Only administrators can add action steps" },
         { status: 403 }
@@ -69,8 +70,13 @@ export async function POST(
       details: { stepId, title }
     });
 
+    const newStep = await db.getOne("SELECT * FROM action_steps WHERE id = ?", [stepId]) as any;
     const actionStep = {
-      ...(await db.getOne("SELECT * FROM action_steps WHERE id = ?", [stepId]) as any),
+      ...newStep,
+      isActed: newStep.isActed !== undefined ? newStep.isActed : newStep.isacted,
+      completed: newStep.completed !== undefined ? newStep.completed : newStep.completed,
+      createdAt: newStep.createdAt || newStep.createdat,
+      updatedAt: newStep.updatedAt || newStep.updatedat,
       notes: []
     };
 

@@ -31,7 +31,8 @@ export async function PUT(
       [taskId, auth.user!.id]
     ) || task.assigneeId?.toLowerCase() === auth.user!.id.toLowerCase();
 
-    if (role !== "SUPERADMIN" && !isAssigned) {
+    const isSuper = role === "SUPERADMIN" || role === "MASTER_ADMIN";
+    if (!isSuper && !isAssigned) {
       return NextResponse.json(
         { error: "Access denied. Only assigned users can update action steps." },
         { status: 403 }
@@ -39,8 +40,8 @@ export async function PUT(
     }
 
 
-    const currentStep: any = await db.getOne("SELECT completed, isActed FROM action_steps WHERE id = ?", [(await params).stepId]);
-    const currentCompleted = currentStep.completed !== undefined ? currentStep.completed : currentStep.completed; // completed is lowercase
+    const currentStep: any = await db.getOne("SELECT completed, isacted, isActed FROM action_steps WHERE id = ?", [(await params).stepId]);
+    const currentCompleted = currentStep.completed; 
     const currentIsActed = currentStep.isActed !== undefined ? currentStep.isActed : currentStep.isacted;
 
     const newCompleted = completed !== undefined ? !!completed : !!currentCompleted;
@@ -80,6 +81,9 @@ export async function PUT(
     const actionStep = {
       ...updatedStep,
       isActed: updatedStep.isActed !== undefined ? updatedStep.isActed : updatedStep.isacted,
+      completed: updatedStep.completed !== undefined ? updatedStep.completed : updatedStep.completed,
+      createdAt: updatedStep.createdAt || updatedStep.createdat,
+      updatedAt: updatedStep.updatedAt || updatedStep.updatedat,
       notes: await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [(await params).stepId])
     };
 
@@ -118,7 +122,8 @@ export async function DELETE(
     // Only administrators can delete action steps.
     // However, if an ADMIN or HEAD_ADMIN is assigned to the task, they act as a worker and cannot delete steps.
     const role = auth.user!.role?.toUpperCase();
-    if (role !== "ADMIN" && role !== "SUPERADMIN" && role !== "HEAD_ADMIN") {
+    const isAdminLike = role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN" || role === "MASTER_ADMIN";
+    if (!isAdminLike) {
       return NextResponse.json(
         { error: "Only administrators can delete action steps" },
         { status: 403 }

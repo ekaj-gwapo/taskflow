@@ -41,6 +41,33 @@ export function UserManagement() {
   const [resetPasswordId, setResetPasswordId] = useState<string | null>(null)
   const [newPassword, setNewPassword] = useState("")
   const [isResetting, setIsResetting] = useState(false)
+  
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDeleteUser = async (id: string) => {
+    try {
+      setIsDeleting(true)
+      const res = await fetch(`/api/users/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      })
+      if (res.ok) {
+        toast.success("User deleted successfully")
+        setDeleteUserId(null)
+        fetchUsers()
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Failed to delete user")
+      }
+    } catch (e) {
+      toast.error("An error occurred")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -352,6 +379,19 @@ export function UserManagement() {
                             >
                               <Power className="h-4 w-4" />
                             </Button>
+                            
+                            {(currentUser?.role?.toLowerCase() === "creator" || currentUser?.role?.toLowerCase() === "superadmin" || currentUser?.role?.toLowerCase() === "master_admin") && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeleteUserId(user.id)}
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                title="Delete User"
+                                disabled={user.id === currentUser?.id}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -391,6 +431,33 @@ export function UserManagement() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteUserId} onOpenChange={(open) => !open && setDeleteUserId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              Delete User Account
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this user? This action is permanent and will remove all their access. Their previous activity logs and notes will be preserved but they will be unassigned from all tasks.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button type="button" variant="outline" onClick={() => setDeleteUserId(null)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={() => deleteUserId && handleDeleteUser(deleteUserId)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete Permanently"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
