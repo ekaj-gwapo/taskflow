@@ -47,7 +47,7 @@ export async function GET(
       }
     }
 
-    const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [taskId])
+    const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ? ORDER BY createdAt ASC", [taskId])
     const actionStepsWithNotes = await Promise.all((actionSteps as any[]).map(async (as: any) => {
       const notes = await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[];
       return {
@@ -157,8 +157,8 @@ export async function PUT(
     const { status, priority, assigneeIds, archived, dueDate } = await request.json()
     console.debug("PUT /api/tasks/:id", { id: taskId, body: { status, priority, assigneeIds, archived, dueDate }, user: auth.user })
 
-    // Fetch task using case-insensitive search but keep track of the REAL ID from the database
-    const existingTask: any = await db.getOne("SELECT * FROM tasks WHERE id = ? OR LOWER(id) = LOWER(?)", [taskId, taskId])
+    // Fetch task using the ID
+    const existingTask: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId])
     if (!existingTask) {
       console.warn("Task not found in DB", { id: taskId })
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
@@ -199,8 +199,10 @@ export async function PUT(
           [realTaskId, auth.user!.id]
         )
         
-        if (!assignment && existingTask.assigneeId?.toLowerCase() !== auth.user!.id.toLowerCase()) {
-          return NextResponse.json({ error: "Admins are restricted from updating status of tasks not assigned to them" }, { status: 403 })
+        const isAssignee = assignment || existingTask.assigneeid?.toLowerCase() === auth.user!.id.toLowerCase() || existingTask.assigneeId?.toLowerCase() === auth.user!.id.toLowerCase()
+
+        if (!isAssignee) {
+          return NextResponse.json({ error: "Only the assigned user can update the task status" }, { status: 403 })
         }
       }
     }

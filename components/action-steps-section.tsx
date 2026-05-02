@@ -246,7 +246,7 @@ export function ActionStepsSection({
                     />
                   </button>
                 </div>
-                {(userRole === "admin" || userRole === "superadmin") && (
+                {(userRole === "admin" || userRole === "superadmin") && taskStatus !== "completed" && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button

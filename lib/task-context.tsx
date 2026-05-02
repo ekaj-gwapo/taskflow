@@ -670,7 +670,8 @@ const url = `/api/tasks/${taskId}`
         })
 
         if (!response.ok) {
-          throw new Error("Failed to delete action step")
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || "Failed to delete action step")
         }
 
         setTasks((prev) =>
@@ -683,8 +684,10 @@ const url = `/api/tasks/${taskId}`
               : t
           )
         )
-      } catch (error) {
+        toast.success("Action step deleted successfully.")
+      } catch (error: any) {
         console.error("Delete action step error:", error)
+        toast.error(error.message || "Failed to delete action step.")
       }
     },
     [currentRole]

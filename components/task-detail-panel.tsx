@@ -479,7 +479,7 @@ export function TaskDetailPanel({
                           <CommandList className="max-h-[250px]">
                             <CommandEmpty>No employee found.</CommandEmpty>
                             <CommandGroup className="p-1.5">
-                              {allEmployees.map((emp) => {
+                              {allEmployees.filter(emp => emp.id !== currentUser?.id).map((emp) => {
                                 const isSelected = localAssigneeIds.includes(emp.id)
                                 return (
                                   <CommandItem

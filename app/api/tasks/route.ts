@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     // Format tasks to match expected structure
     const formattedTasks = await Promise.all(tasks.map(async (t) => {
-      const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [t.id]) as any[]
+      const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ? ORDER BY createdAt ASC", [t.id]) as any[]
       const actionStepsWithNotes = await Promise.all(actionSteps.map(async (as: any) => {
         const notes = await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[];
         return {
@@ -84,12 +84,22 @@ export async function GET(request: NextRequest) {
         };
       }))
 
-      const progressNotes = await db.getAll(`
+      const progressNotesRaw = await db.getAll(`
         SELECT pn.*, u.avatarUrl as authorAvatar, pn.createdAt as "createdAt", pn.updatedAt as "updatedAt", pn.authorName as "authorName"
         FROM progress_notes pn 
         LEFT JOIN users u ON pn.authorId = u.id 
         WHERE pn.taskId = ?
       `, [t.id]) as any[]
+      const progressNotes = progressNotesRaw.map(n => ({
+        ...n,
+        authorId: n.authorId || n.authorid,
+        authorName: n.authorName || n.authorname,
+        attachmentUrl: n.attachmentUrl || n.attachmenturl,
+        attachmentName: n.attachmentName || n.attachmentname,
+        attachmentType: n.attachmentType || n.attachmenttype,
+        createdAt: n.createdAt || n.createdat,
+        updatedAt: n.updatedAt || n.updatedat
+      }))
       const commentsRaw = await db.getAll(`
         SELECT tc.*, u.avatarUrl as authorAvatar
         FROM task_comments tc 

@@ -31,7 +31,8 @@ import { toast } from "sonner"
 
 
 export function CreateTaskDialog() {
-  const { createTask, allEmployees, tasks } = useTaskContext()
+  const { createTask, allEmployees, tasks, currentUser } = useTaskContext()
+  const selectableEmployees = allEmployees.filter(emp => emp.id !== currentUser?.id)
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -156,7 +157,7 @@ export function CreateTaskDialog() {
                   </RadioGroup>
                 </div>
                 <div className="flex flex-col gap-1 border border-border p-2 rounded-md h-[235px] overflow-y-auto bg-secondary/30 mt-1">
-                  {allEmployees.map((emp) => {
+                  {selectableEmployees.map((emp) => {
                     return (
                       <label
                         key={emp.id}
@@ -262,7 +263,7 @@ export function CreateTaskDialog() {
                       <SelectValue placeholder="Select from employees..." />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border">
-                      {allEmployees.map((emp) => (
+                      {selectableEmployees.map((emp) => (
                         <SelectItem key={emp.id} value={emp.id}>
                           {emp.name}
                         </SelectItem>

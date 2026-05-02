@@ -181,8 +181,9 @@ export function AdminSidebar({
   }
 
   const filteredEmployees = allEmployees.filter(e =>
-    e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    e.email.toLowerCase().includes(searchQuery.toLowerCase())
+    e.id !== currentUser?.id &&
+    (e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    e.email.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   const initials = currentUser?.name
