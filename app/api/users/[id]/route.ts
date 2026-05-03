@@ -175,16 +175,24 @@ export async function DELETE(
     // 5. Clear notifications
     await db.execute("DELETE FROM notifications WHERE userId = ?", [id]);
 
+    // Get user name for better logging before deletion
+    const targetUserInfo = await db.getOne("SELECT name FROM users WHERE id = ?", [id]);
+    const targetName = targetUserInfo?.name || "Unknown User";
+
     // 6. Finally delete the user
     await db.execute("DELETE FROM users WHERE id = ?", [id]);
 
     await logActivity({
-      action: "USER_STATUS_UPDATED",
+      action: "USER_DELETED",
       entityId: id,
       entityType: "USER",
       userId: currentUser.id,
       userName: currentUser.name,
-      details: { deletedUserId: id, action: "DELETED" }
+      details: { 
+        deletedUserId: id, 
+        name: targetName,
+        action: "DELETED" 
+      }
     });
 
     return NextResponse.json({ message: "User deleted successfully" }, { status: 200 })

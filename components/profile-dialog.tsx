@@ -146,25 +146,15 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
       onOpenChange(val)
     }}>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto p-0 border-none bg-transparent shadow-none [&>button]:hidden">
-        <div className="relative w-full h-full p-1 bg-gradient-to-br from-primary/20 via-transparent to-primary/10 rounded-[2.5rem]">
-          <div className="relative bg-background/80 backdrop-blur-3xl border border-white/20 dark:border-white/5 rounded-[2.4rem] overflow-hidden shadow-2xl">
-            {/* Custom Close Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="absolute right-6 top-6 z-50 rounded-full hover:bg-foreground/5 transition-colors"
-            >
-              <X className="h-5 w-5 text-muted-foreground" />
-            </Button>
-
+        <div className="relative w-full h-full p-[2px] bg-gradient-to-br from-primary/30 via-transparent to-primary/10 rounded-[2rem] shadow-2xl">
+          <div className="relative bg-background/95 backdrop-blur-3xl border-none rounded-[2rem] overflow-hidden">
             <DialogHeader className="p-8 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <DialogTitle className="text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+                  <DialogTitle className="text-4xl font-black tracking-tight text-foreground">
                     My Profile
                   </DialogTitle>
-                  <DialogDescription className="text-sm font-medium text-muted-foreground mt-1">
+                  <DialogDescription className="text-[11px] font-bold text-muted-foreground mt-2 uppercase tracking-widest">
                     Manage your identity and notification settings
                   </DialogDescription>
                 </div>
@@ -217,13 +207,13 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                       />
                     </div>
                     <div className="text-center">
-                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-1">Account Role</p>
-                      <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold border border-primary/20">
+                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2">Account Role</p>
+                      <span className="px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-wider border border-primary/20 shadow-sm">
                         {currentUser?.role === 'head_admin' ? 'HEAD ADMIN' : currentUser?.role?.replace('_', ' ').toUpperCase()}
                       </span>
                       {currentUser?.organizationName && (
-                        <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-secondary/50 px-4 py-1.5 rounded-xl border border-border">
-                          <Building2 className="h-3.5 w-3.5 text-primary" />
+                        <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-foreground bg-secondary/40 px-5 py-2.5 rounded-2xl border border-border backdrop-blur-sm">
+                          <Building2 className="h-4 w-4 text-primary" />
                           {currentUser.organizationName}
                         </div>
                       )}
@@ -245,7 +235,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                             id="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="h-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                            className="h-14 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
                             placeholder="Your Name"
                           />
                         </div>
@@ -255,7 +245,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                             id="jobTitle"
                             value={jobTitle}
                             onChange={(e) => setJobTitle(e.target.value)}
-                            className="h-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                            className="h-14 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
                             placeholder="e.g. Senior Manager"
                           />
                         </div>
@@ -267,7 +257,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                               id="phone"
                               value={phone}
                               onChange={(e) => setPhone(e.target.value)}
-                              className="h-12 pl-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                              className="h-14 pl-12 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
                               placeholder="+1 234 567 890"
                             />
                           </div>
@@ -276,44 +266,47 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                     </div>
 
                     {/* Workplace Group */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="h-4 w-4 text-emerald-500" />
-                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assignment</span>
-                      </div>
+                    <div className="space-y-4 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin className="h-4 w-4 text-emerald-500" />
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assignment</span>
+                        </div>
 
-                      <div className="space-y-4">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="location" className="text-[11px] font-bold text-muted-foreground ml-1">Location</Label>
-                          <div className="relative">
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                            <Input
-                              id="location"
-                              value={location}
-                              onChange={(e) => setLocation(e.target.value)}
-                              className="h-12 pl-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
-                              placeholder="Location"
-                            />
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="location" className="text-[11px] font-bold text-muted-foreground ml-1">Location</Label>
+                            <div className="relative">
+                              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                              <Input
+                                id="location"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                className="h-14 pl-12 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
+                                placeholder="Location"
+                              />
+                            </div>
                           </div>
                         </div>
-                        <div className="pt-2">
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={handleSave}
-                            disabled={loading}
-                            className="w-full h-12 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:bg-primary/90 transition-all disabled:opacity-50"
-                          >
-                            {loading ? (
-                              <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
-                              <>
-                                <Save className="h-4 w-4" />
-                                Save Profile
-                              </>
-                            )}
-                          </motion.button>
-                        </div>
+                      </div>
+                      
+                      <div className="pt-6">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleSave}
+                          disabled={loading}
+                          className="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-indigo-600 text-white font-black shadow-lg shadow-primary/30 flex items-center justify-center gap-3 hover:from-primary/90 hover:to-indigo-600/90 transition-all disabled:opacity-50 text-base"
+                        >
+                          {loading ? (
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                          ) : (
+                            <>
+                              <Save className="h-5 w-5" />
+                              Save Profile
+                            </>
+                          )}
+                        </motion.button>
                       </div>
                     </div>
                   </div>

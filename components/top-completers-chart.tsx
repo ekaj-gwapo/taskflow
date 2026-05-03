@@ -54,13 +54,14 @@ export function TopCompletersChart({ onHide }: { onHide?: () => void }) {
   const [isRevealed, setIsRevealed] = useState(false)
   const isHeadAdmin = currentUser?.role?.toLowerCase() === "head_admin"
   const isAdmin = currentUser?.role?.toLowerCase() === "admin"
-  const isAdminOrAbove = isHeadAdmin || isAdmin
+  const isCreator = currentUser?.role?.toLowerCase() === "creator"
+  const isAdminOrAbove = isHeadAdmin || isAdmin || isCreator
   // Only Head Admin and Superadmin can reveal names — Admins cannot
   const canRevealNames = currentUser?.role?.toLowerCase() === "head_admin" || currentUser?.role?.toLowerCase() === "superadmin" || currentUser?.role?.toLowerCase() === "creator"
 
   const leaderboard = useMemo(() => {
     const stats = allEmployees
-      .filter((emp) => !((isHeadAdmin || isAdmin) && emp.id === currentUser?.id))
+      .filter((emp) => !((isHeadAdmin || isAdmin || isCreator) && emp.id === currentUser?.id))
       .map((emp) => {
       const empTasks = tasks.filter((t) => t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id)
       const completedTasks = empTasks.filter((t) => t.status === "completed")

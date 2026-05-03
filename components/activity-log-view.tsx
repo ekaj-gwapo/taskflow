@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityLog } from "@/lib/store";
-import { FileText, Users, MessageSquare, AlertCircle, Trash2, CheckCircle2, PlusCircle, Paperclip, UserCog, UserCircle, Key, ShieldCheck, UserCheck, Share2, Archive, RotateCcw } from "lucide-react";
+import { FileText, Users, MessageSquare, AlertCircle, Trash2, CheckCircle2, PlusCircle, Paperclip, UserCog, UserCircle, Key, ShieldCheck, UserCheck, Share2, Archive, RotateCcw, UserPlus } from "lucide-react";
 import { useTaskContext } from "@/lib/task-context";
 
 export function ActivityLogView() {
@@ -70,6 +70,12 @@ export function ActivityLogView() {
         return { icon: <Key className="h-4 w-4 text-yellow-600" />, bg: "bg-yellow-50 border-yellow-200" };
       case "USER_STATUS_UPDATED":
         return { icon: <ShieldCheck className="h-4 w-4 text-cyan-600" />, bg: "bg-cyan-50 border-cyan-200" };
+      case "USER_CREATED":
+        return { icon: <UserPlus className="h-4 w-4 text-emerald-600" />, bg: "bg-emerald-50 border-emerald-200" };
+      case "USER_DELETED":
+        return { icon: <Trash2 className="h-4 w-4 text-red-600" />, bg: "bg-red-50 border-red-200" };
+      case "ORGANIZATION_CREATED":
+        return { icon: <ShieldCheck className="h-4 w-4 text-primary" />, bg: "bg-primary/5 border-primary/20" };
       case "TASK_ARCHIVED":
         return { icon: <Archive className="h-4 w-4 text-amber-600" />, bg: "bg-amber-50 border-amber-200" };
       case "TASK_RESTORED":
@@ -141,9 +147,15 @@ export function ActivityLogView() {
       case "AVATAR_UPDATED":
         return <span>Updated the profile photo of <strong>{log.userName}</strong></span>;
       case "PASSWORD_RESET":
-        return <span>Reset the password for user ID <strong>{log.details?.resetUserId}</strong></span>;
+        return <span>Reset the password for <strong>{log.details?.name || log.details?.resetUserId || "a user"}</strong></span>;
       case "USER_STATUS_UPDATED":
-        return <span>{log.details?.isActive ? "Activated" : "Deactivated"} user account <strong>{log.details?.updatedUserId || "Unknown"}</strong></span>;
+        return <span>{log.details?.isActive ? "Activated" : "Deactivated"} user account <strong>{log.details?.name || log.details?.updatedUserId || "Unknown"}</strong></span>;
+      case "USER_CREATED":
+        return <span>Created a new user account for <strong>{log.details?.name || "a new member"}</strong> as <strong>{log.details?.role?.toLowerCase() || "employee"}</strong></span>;
+      case "USER_DELETED":
+        return <span>Permanently deleted user account <strong>{log.details?.name || "a user"}</strong></span>;
+      case "ORGANIZATION_CREATED":
+        return <span>Created the organization <strong>{log.details?.name || "a new organization"}</strong></span>;
       case "TASK_ARCHIVED":
         return <span>Archived the task <strong>{taskName}</strong></span>;
       case "TASK_RESTORED":
@@ -195,7 +207,7 @@ export function ActivityLogView() {
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto">
         {logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <AlertCircle className="h-12 w-12 text-muted-foreground/30 mb-4" />
@@ -204,55 +216,113 @@ export function ActivityLogView() {
               Task creations, updates, and comments will appear here.
             </p>
           </div>
+        ) : currentUser?.role === 'creator' ? (
+          /* SIMPLE TABLE DESIGN FOR CREATOR - HIGH PERFORMANCE */
+          <div className="min-w-full inline-block align-middle">
+            <div className="overflow-hidden border-t border-border/50">
+              <table className="min-w-full divide-y divide-border/40">
+                <thead className="bg-muted/30">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">User</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Action</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Details</th>
+                    <th className="px-6 py-3 text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/30 bg-card">
+                  {logs.map((log) => {
+                    const config = getActionConfig(log.action);
+                    const userName = log.userName || "Unknown";
+                    const date = log.createdAt ? new Date(log.createdAt) : new Date();
+                    const formattedDate = format(date, 'MMM d, h:mm a');
+                    
+                    return (
+                      <tr key={log.id} className="hover:bg-muted/20 transition-colors group">
+                        <td className="px-6 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-5 w-5 border border-border/50">
+                              <AvatarFallback className="text-[8px] bg-secondary text-foreground font-bold">
+                                {userName.split(" ").map(n => n[0]).join("").toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs font-semibold text-foreground">{userName}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <div className={`p-1 rounded-md ${config.bg} border/50`}>
+                              {config.icon}
+                            </div>
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">{log.action.replace(/_/g, ' ')}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="text-xs text-muted-foreground line-clamp-1 group-hover:line-clamp-none transition-all">
+                            {getLogMessage(log)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-3 text-right whitespace-nowrap text-[10px] font-medium text-muted-foreground">
+                          {formattedDate}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         ) : (
-          <div className="relative border-l-2 border-border/60 ml-4 md:ml-6 space-y-8 pb-8">
-            {logs.map((log) => {
-              const config = getActionConfig(log.action);
-              const userName = log.userName || "Unknown User";
-              const initials = userName
-                .split(" ")
-                .filter(Boolean)
-                .map(n => n[0])
-                .join("")
-                .toUpperCase() || "?";
-              
-              const date = log.createdAt ? new Date(log.createdAt) : new Date();
-              const formattedDate = isNaN(date.getTime()) ? "Unknown date" : format(date, 'MMM d, yyyy h:mm a');
-              
-              return (
-                <div key={log.id} className="relative pl-6 md:pl-8 group">
-                  <span className="absolute -left-[1.3rem] top-1 px-1 py-1 rounded-full bg-card items-center justify-center flex border-2 border-border/80 group-hover:border-primary/50 group-hover:scale-110 transition-all z-10">
-                    <div className={`p-1.5 rounded-full ${config.bg} border`}>
-                      {config.icon}
-                    </div>
-                  </span>
-                  
-                  <div className="flex flex-col bg-card border border-border/60 hover:border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-center justify-between gap-4 mb-2">
-                      <div className="flex items-center gap-2.5">
-                        <Avatar className="h-6 w-6 border border-border/50">
-                          <AvatarFallback className="text-[9px] bg-secondary text-foreground font-bold">{initials}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-semibold text-foreground">{userName}</span>
+          /* ORIGINAL DETAILED DESIGN FOR OTHER ROLES */
+          <div className="p-6">
+            <div className="relative border-l-2 border-border/60 ml-4 md:ml-6 space-y-8 pb-8">
+              {logs.map((log) => {
+                const config = getActionConfig(log.action);
+                const userName = log.userName || "Unknown User";
+                const initials = userName
+                  .split(" ")
+                  .filter(Boolean)
+                  .map(n => n[0])
+                  .join("")
+                  .toUpperCase() || "?";
+                
+                const date = log.createdAt ? new Date(log.createdAt) : new Date();
+                const formattedDate = isNaN(date.getTime()) ? "Unknown date" : format(date, 'MMM d, yyyy h:mm a');
+                
+                return (
+                  <div key={log.id} className="relative pl-6 md:pl-8 group">
+                    <span className="absolute -left-[1.3rem] top-1 px-1 py-1 rounded-full bg-card items-center justify-center flex border-2 border-border/80 group-hover:border-primary/50 group-hover:scale-110 transition-all z-10">
+                      <div className={`p-1.5 rounded-full ${config.bg} border`}>
+                        {config.icon}
                       </div>
-                      <span className="text-[11px] font-medium text-muted-foreground shrink-0 uppercase tracking-wide">
-                        {formattedDate}
-                      </span>
-                    </div>
+                    </span>
                     
-                    <div className="text-sm text-muted-foreground/90 pl-[2.1rem]">
-                      {getLogMessage(log)}
-                    </div>
-                    
-                    {log.details?.content && (
-                      <div className="mt-3 ml-[2.1rem] pl-3 py-1.5 border-l-2 border-border/50 text-sm text-foreground/80 italic line-clamp-2">
-                        "{log.details.content}"
+                    <div className="flex flex-col bg-card border border-border/60 hover:border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+                      <div className="flex items-center justify-between gap-4 mb-2">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="h-6 w-6 border border-border/50">
+                            <AvatarFallback className="text-[9px] bg-secondary text-foreground font-bold">{initials}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-semibold text-foreground">{userName}</span>
+                        </div>
+                        <span className="text-[11px] font-medium text-muted-foreground shrink-0 uppercase tracking-wide">
+                          {formattedDate}
+                        </span>
                       </div>
-                    )}
+                      
+                      <div className="text-sm text-muted-foreground/90 pl-[2.1rem]">
+                        {getLogMessage(log)}
+                      </div>
+                      
+                      {log.details?.content && (
+                        <div className="mt-3 ml-[2.1rem] pl-3 py-1.5 border-l-2 border-border/50 text-sm text-foreground/80 italic line-clamp-2">
+                          "{log.details.content}"
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

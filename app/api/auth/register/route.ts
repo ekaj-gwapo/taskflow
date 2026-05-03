@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
+import { logActivity } from "@/lib/activity";
+import { verifyToken } from "@/lib/auth-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,6 +58,35 @@ export async function POST(request: NextRequest) {
     const message = isVerified 
       ? "User created successfully." 
       : "Registration successful. Please check your email to verify your account.";
+
+    // Log activity
+    const authHeader = request.headers.get("authorization");
+    let actorId = userId;
+    let actorName = name;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.substring(7);
+      const decoded = verifyToken(token);
+      if (decoded) {
+        actorId = decoded.id;
+        actorName = decoded.name;
+      }
+    }
+
+    await logActivity({
+      action: "USER_CREATED",
+      entityId: userId,
+      entityType: "USER",
+      userId: actorId,
+      userName: actorName,
+      details: { 
+        createdUserId: userId, 
+        name: name, 
+        email: email, 
+        role: role || defaultRole,
+        isAutoVerified: isVerified
+      }
+    });
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error: any) {

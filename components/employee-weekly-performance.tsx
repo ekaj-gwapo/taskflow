@@ -23,10 +23,11 @@ export function EmployeeWeeklyPerformance({ onHide }: { onHide?: () => void }) {
   const [expandedEmployee, setExpandedEmployee] = useState<string | null>(null)
   const isHeadAdmin = currentUser?.role?.toLowerCase() === "head_admin"
   const isAdmin = currentUser?.role?.toLowerCase() === "admin"
+  const isCreator = currentUser?.role?.toLowerCase() === "creator"
 
   const weeklyData = useMemo(() => {
     return allEmployees
-      .filter((emp) => !((isHeadAdmin || isAdmin) && emp.id === currentUser?.id))
+      .filter((emp) => !((isHeadAdmin || isAdmin || isCreator) && emp.id === currentUser?.id))
       .map(emp => {
       const empTasks = tasks.filter(t => 
         t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id

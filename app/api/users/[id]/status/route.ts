@@ -23,13 +23,21 @@ export async function PUT(
       [isActiveValue, id]
     )
 
+    // Get user name for better logging
+    const targetUser = await db.getOne("SELECT name FROM users WHERE id = ?", [id]);
+    const targetName = targetUser?.name || "Unknown User";
+
     await logActivity({
       action: "USER_STATUS_UPDATED",
       entityId: id,
       entityType: "USER",
       userId: auth.user!.id,
       userName: auth.user!.name,
-      details: { updatedUserId: id, isActive: !!isActive }
+      details: { 
+        updatedUserId: id, 
+        name: targetName,
+        isActive: !!isActiveValue 
+      }
     });
 
     return NextResponse.json(

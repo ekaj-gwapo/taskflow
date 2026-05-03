@@ -88,7 +88,6 @@ export function EmployeeSidebar({
   setIsProfileOpen,
 }: EmployeeSidebarProps) {
   const { currentUser, tasks, login, logout, seenTaskIds } = useTaskContext()
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
 
   useEffect(() => {
@@ -109,7 +108,6 @@ export function EmployeeSidebar({
   })
   const [theme, setTheme] = useState(currentUser?.theme || "emerald")
   const [mode, setMode] = useState<"light" | "dark">(currentUser?.mode || "light")
-  const [tempProfileData, setTempProfileData] = useState(profileData)
  
   useEffect(() => {
     if (currentUser) {
@@ -121,7 +119,6 @@ export function EmployeeSidebar({
         jobTitle: currentUser.jobTitle || "",
       }
       setProfileData(newData)
-      setTempProfileData(newData)
       setTheme(currentUser.theme || "emerald")
       setMode(currentUser.mode || "light")
     }
@@ -136,38 +133,6 @@ export function EmployeeSidebar({
     (t.assignees && t.assignees.length > 1 && t.assignees.some(a => a.id === currentUser?.id))
   )
 
-  const handleEditProfile = () => {
-    setTempProfileData(profileData)
-    setIsEditingProfile(true)
-  }
-
-  const handleSaveProfile = async () => {
-    if (!currentUser) return
-    try {
-      const token = localStorage.getItem("token")
-      const response = await fetch(`/api/users/${currentUser.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ ...tempProfileData, theme, mode }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        login(data.user.role.toLowerCase() as any, data.user.id, data.user)
-        setProfileData(tempProfileData)
-        setIsEditingProfile(false)
-      }
-    } catch (error) {
-      console.error("Failed to update profile:", error)
-    }
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setTempProfileData(prev => ({ ...prev, [field]: value }))
-  }
 
   const initials = currentUser?.name
     .split(" ")
@@ -386,41 +351,7 @@ export function EmployeeSidebar({
                 </p>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Personal Details</h4>
-                  {!isEditingProfile ? (
-                    <button 
-                      onClick={handleEditProfile}
-                      className="text-[11px] font-bold text-primary hover:underline transition-all"
-                    >
-                      EDIT
-                    </button>
-                  ) : (
-                    <div className="flex gap-3">
-                       <button 
-                        onClick={() => setIsEditingProfile(false)}
-                        className="text-[11px] font-bold text-muted-foreground hover:text-foreground"
-                      >
-                        CANCEL
-                      </button>
-                      <button 
-                        onClick={handleSaveProfile}
-                        className="text-[11px] font-bold text-primary hover:text-primary/80 transition-colors"
-                      >
-                        SAVE
-                      </button>
-                    </div>
-                  )}
-                </div>
 
-                <div className="space-y-3">
-                  <ProfileItem icon={<Mail className="h-3.5 w-3.5" />} label="Email" value={isEditingProfile ? tempProfileData.email : profileData.email} isEditing={isEditingProfile} onChange={(v) => handleInputChange('email', v)} />
-                  <ProfileItem icon={<ClipboardList className="h-3.5 w-3.5" />} label="Position" value={isEditingProfile ? tempProfileData.jobTitle : profileData.jobTitle} isEditing={isEditingProfile} onChange={(v) => handleInputChange('jobTitle', v)} placeholder="Add job title..." />
-                  <ProfileItem icon={<Phone className="h-3.5 w-3.5" />} label="Phone" value={isEditingProfile ? tempProfileData.phone : profileData.phone} isEditing={isEditingProfile} onChange={(v) => handleInputChange('phone', v)} placeholder="Not set" />
-                  <ProfileItem icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value={isEditingProfile ? tempProfileData.location : profileData.location} isEditing={isEditingProfile} onChange={(v) => handleInputChange('location', v)} placeholder="Not set" />
-                </div>
-              </div>
 
               {/* Appearance Section */}
               <div className="space-y-4 pt-4 border-t border-border/50">
@@ -461,14 +392,12 @@ export function EmployeeSidebar({
                         key={t.id}
                         onClick={() => {
                           setTheme(t.id)
-                          if (!isEditingProfile) {
-                            const token = localStorage.getItem("token")
-                            fetch(`/api/users/${currentUser?.id}`, {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                              body: JSON.stringify({ ...profileData, theme: t.id, mode })
-                            }).then(res => res.json()).then(data => data.user && login(currentUser?.role!.toLowerCase() as any, currentUser?.id!, data.user))
-                          }
+                          const token = localStorage.getItem("token")
+                          fetch(`/api/users/${currentUser?.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ ...profileData, theme: t.id, mode })
+                          }).then(res => res.json()).then(data => data.user && login(currentUser?.role!.toLowerCase() as any, currentUser?.id!, data.user))
                         }}
                         className={cn(
                           "group relative flex h-6 w-6 items-center justify-center rounded-full transition-all ring-offset-background",
@@ -493,14 +422,12 @@ export function EmployeeSidebar({
                       size="sm"
                       onClick={() => {
                         setMode("light")
-                        if (!isEditingProfile) {
-                          const token = localStorage.getItem("token")
-                          fetch(`/api/users/${currentUser?.id}`, {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                            body: JSON.stringify({ ...profileData, theme, mode: "light" })
-                          }).then(res => res.json()).then(data => data.user && login(currentUser?.role!.toLowerCase() as any, currentUser?.id!, data.user))
-                        }
+                        const token = localStorage.getItem("token")
+                        fetch(`/api/users/${currentUser?.id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ ...profileData, theme, mode: "light" })
+                        }).then(res => res.json()).then(data => data.user && login(currentUser?.role!.toLowerCase() as any, currentUser?.id!, data.user))
                       }}
                       className="flex-1 rounded-lg h-9 text-[11px]"
                     >
@@ -512,14 +439,12 @@ export function EmployeeSidebar({
                       size="sm"
                       onClick={() => {
                         setMode("dark")
-                        if (!isEditingProfile) {
-                          const token = localStorage.getItem("token")
-                          fetch(`/api/users/${currentUser?.id}`, {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                            body: JSON.stringify({ ...profileData, theme, mode: "dark" })
-                          }).then(res => res.json()).then(data => data.user && login(currentUser?.role!.toLowerCase() as any, currentUser?.id!, data.user))
-                        }
+                        const token = localStorage.getItem("token")
+                        fetch(`/api/users/${currentUser?.id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ ...profileData, theme, mode: "dark" })
+                        }).then(res => res.json()).then(data => data.user && login(currentUser?.role!.toLowerCase() as any, currentUser?.id!, data.user))
                       }}
                       className="flex-1 rounded-lg h-9 text-[11px]"
                     >
@@ -534,64 +459,8 @@ export function EmployeeSidebar({
         </div>
       </div>
 
-      <div className="mt-auto border-t border-border/40 bg-muted/20">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button
-              className="w-full flex items-center gap-3 px-6 py-4 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all group"
-            >
-              <LogOut className="h-4 w-4 transition-transform group-hover:scale-110" />
-              <span className="text-xs font-bold uppercase tracking-wider">Logout</span>
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="bg-card border-border sm:max-w-[400px]">
-            <AlertDialogHeader>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-2">
-                <LogOut className="h-6 w-6" />
-              </div>
-              <AlertDialogTitle className="text-xl font-bold">End Session?</AlertDialogTitle>
-              <AlertDialogDescription className="text-muted-foreground">
-                Are you sure you want to log out? Any unsaved changes might be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-4 gap-2">
-              <AlertDialogCancel className="rounded-xl border-border hover:bg-accent flex-1">
-                Stay
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={logout}
-                className="rounded-xl bg-destructive text-white hover:bg-destructive/90 flex-1"
-              >
-                Sign Out
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+
       <ProfileDialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen} />
     </aside>
-  )
-}
-
-function ProfileItem({ icon, label, value, isEditing, onChange, placeholder }: { icon: React.ReactNode; label: string; value: string; isEditing: boolean; onChange: (v: string) => void; placeholder?: string }) {
-  return (
-    <div className="p-3 rounded-lg bg-secondary/20 border border-border/50 flex items-center gap-3 transition-colors hover:bg-secondary/40">
-      <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center shrink-0 text-primary">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">{label}</p>
-        {isEditing ? (
-          <input 
-            className="text-xs font-medium bg-transparent border-none p-0 focus:ring-0 w-full text-foreground"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            autoFocus={label === 'Email'}
-          />
-        ) : (
-          <p className="text-xs font-medium text-foreground truncate">{value || placeholder || "Not set"}</p>
-        )}
-      </div>
-    </div>
   )
 }

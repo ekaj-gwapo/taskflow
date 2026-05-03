@@ -903,7 +903,7 @@ const url = `/api/tasks/${taskId}`
 
   // Access Control: Get only tasks visible to current employee
   const getEmployeeVisibleTasks = useCallback(() => {
-    if (currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") {
+    if (currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin" || currentRole === "creator") {
       return []
     }
     if (currentRole === "employee" && currentUser) {
@@ -915,7 +915,7 @@ const url = `/api/tasks/${taskId}`
   // Access Control: Check if current user can access a specific task
   const canAccessTask = useCallback(
     (taskId: string) => {
-      if (currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") {
+      if (currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin" || currentRole === "creator") {
         return true
       }
       if (currentRole === "employee" && currentUser) {

@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { TaskDetailPanel } from "@/components/task-detail-panel"
+import { UserManagement } from "@/components/user-management"
 import { AdminSidebar } from "@/components/admin-sidebar"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
@@ -30,6 +31,7 @@ import { ActivityLogView } from "@/components/activity-log-view"
 import { SmartBriefing } from "@/components/smart-briefing"
 import { EmployeeWeeklyPerformance } from "@/components/employee-weekly-performance"
 import { EmployeeProfileReport } from "@/components/employee-profile-report"
+import { OrgAnalytics } from "@/components/org-analytics"
 import { formatDate, formatDateTime, calculateTaskProgress, cn } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 import {
@@ -313,12 +315,12 @@ function TeamProjectCard({
   )
 }
 
-export function AdminDashboard({ 
-  isProfileOpen, 
-  setIsProfileOpen 
-}: { 
-  isProfileOpen?: boolean; 
-  setIsProfileOpen?: (open: boolean) => void 
+export function AdminDashboard({
+  isProfileOpen,
+  setIsProfileOpen
+}: {
+  isProfileOpen?: boolean;
+  setIsProfileOpen?: (open: boolean) => void
 } = {}) {
   const { tasks, archivedTasks, fetchArchivedTasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen, selectedTaskId, selectTask } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -423,7 +425,10 @@ export function AdminDashboard({
 
   const matchesHierarchy = useCallback((t: Task) => {
     if (selectedEmployeeId === null || selectedEmployeeId === 'activity-log') return true // Dashboard view
-    if (selectedEmployeeId === 'team-projects') return (t.assignees && t.assignees.length > 1)
+    if (selectedEmployeeId === 'team-projects') {
+      if (currentUser?.role?.toUpperCase() === 'CREATOR') return true
+      return (t.assignees && t.assignees.length > 1)
+    }
     if (selectedEmployeeId === 'my-tasks') {
       if (myTaskTab === 'assigned') {
         return (t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)
@@ -509,21 +514,25 @@ export function AdminDashboard({
       </div>
 
       <div className="flex-1 min-w-0 overflow-y-auto p-6 space-y-6">
-        <motion.div layout>
-          <SmartBriefing />
-        </motion.div>
+        {selectedEmployeeId !== 'user-management' && selectedEmployeeId !== 'profile' && (
+          <>
+            <motion.div layout>
+              <SmartBriefing />
+            </motion.div>
 
-        {selectedEmployeeId === "my-tasks" && myTaskTab === "assigned" && (
-          <motion.div layout>
-            <UrgentTasksSection
-              tasks={tasks.filter(t => t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)}
-              onSelectTask={(task) => {
-                selectTask(task.id);
-                markAsSeen(task.id);
-                markCompletedAsSeen(task.id);
-              }}
-            />
-          </motion.div>
+            {selectedEmployeeId === "my-tasks" && myTaskTab === "assigned" && (
+              <motion.div layout>
+                <UrgentTasksSection
+                  tasks={tasks.filter(t => t.assignees?.some(a => a.id === currentUser?.id) || t.assigneeId === currentUser?.id)}
+                  onSelectTask={(task) => {
+                    selectTask(task.id);
+                    markAsSeen(task.id);
+                    markCompletedAsSeen(task.id);
+                  }}
+                />
+              </motion.div>
+            )}
+          </>
         )}
 
         <AnimatePresence mode="wait">
@@ -536,6 +545,16 @@ export function AdminDashboard({
               transition={{ duration: 0.5, ease: "easeInOut" }}
               className="space-y-6 overflow-hidden"
             >
+              {currentUser?.role === 'creator' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-full"
+                >
+
+                </motion.div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <AnimatePresence mode="popLayout">
                   {visibleCharts.workload && (
@@ -604,92 +623,93 @@ export function AdminDashboard({
           <div className="flex-1 min-w-0 space-y-6">
             {/* SEARCH & FILTER */}
             <AnimatePresence mode="wait">
-              {selectedEmployeeId !== 'activity-log' && (
-                <motion.div
-                  key="search-filter-section"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="sticky -top-6 z-30 bg-background/80 backdrop-blur-xl pb-4 pt-7 -mx-6 px-6 border-b border-border/50"
-                >
-                  <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center py-2">
-                    <div className="w-full flex flex-col sm:flex-row gap-3 items-center flex-1 min-w-0">
-                      <div className="relative w-full sm:w-auto sm:flex-1 min-w-[150px] max-w-sm shrink">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          value={selectedEmployeeId === 'team-projects' ? teamSearchQuery : searchQuery}
-                          onChange={(e) => selectedEmployeeId === 'team-projects' ? setTeamSearchQuery(e.target.value) : setSearchQuery(e.target.value)}
-                          className="pl-9 bg-background border-border text-foreground w-full"
-                          placeholder="Search tasks or Assignee"
-                        />
+              {!['activity-log', 'profile', 'user-management'].includes(selectedEmployeeId as string) &&
+                !(currentUser?.role === 'creator' && !selectedEmployeeId) && (
+                  <motion.div
+                    key="search-filter-section"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="sticky -top-6 z-30 bg-background/80 backdrop-blur-xl pb-4 pt-7 -mx-6 px-6 border-b border-border/50"
+                  >
+                    <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center py-2">
+                      <div className="w-full flex flex-col sm:flex-row gap-3 items-center flex-1 min-w-0">
+                        <div className="relative w-full sm:w-auto sm:flex-1 min-w-[150px] max-w-sm shrink">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            value={selectedEmployeeId === 'team-projects' ? teamSearchQuery : searchQuery}
+                            onChange={(e) => selectedEmployeeId === 'team-projects' ? setTeamSearchQuery(e.target.value) : setSearchQuery(e.target.value)}
+                            className="pl-9 bg-background border-border text-foreground w-full"
+                            placeholder="Search tasks or Assignee"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 flex-wrap">
+                          <Select
+                            value={selectedEmployeeId === 'team-projects' ? teamFilterPriority : filterPriority}
+                            onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterPriority : setFilterPriority}
+                          >
+                            <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
+                              <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                              <SelectValue placeholder="Priority" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border-border">
+                              <SelectItem value="all">All Priorities</SelectItem>
+                              <SelectItem value="low">Low</SelectItem>
+                              <SelectItem value="medium">Medium</SelectItem>
+                              <SelectItem value="high">High</SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          <Select
+                            value={selectedEmployeeId === 'team-projects' ? teamFilterStatus : filterStatus}
+                            onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterStatus : setFilterStatus}
+                          >
+                            <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
+                              <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                              <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border-border">
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              <SelectItem value="todo">To Do</SelectItem>
+                              <SelectItem value="in-progress">In Progress</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="overdue">Overdue</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 flex-wrap">
-                        <Select
-                          value={selectedEmployeeId === 'team-projects' ? teamFilterPriority : filterPriority}
-                          onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterPriority : setFilterPriority}
+                      <div className="flex gap-2 w-full sm:w-auto shrink-0 mt-2 lg:mt-0 flex-wrap justify-end">
+                        <button
+                          onClick={() => {
+                            if (!showCharts) {
+                              setVisibleCharts({
+                                workload: true,
+                                performance: true,
+                                recent: true,
+                                leaderboard: true
+                              });
+                            }
+                            setShowCharts(!showCharts);
+                          }}
+                          className={cn(
+                            "flex items-center justify-center p-2 rounded-md transition-colors shrink-0 border border-border bg-background",
+                            showCharts ? "text-primary border-primary/30 bg-primary/5" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                          )}
+                          title={showCharts ? "Hide Analytics" : "Show Analytics"}
                         >
-                          <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
-                            <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                            <SelectValue placeholder="Priority" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border-border">
-                            <SelectItem value="all">All Priorities</SelectItem>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        <Select
-                          value={selectedEmployeeId === 'team-projects' ? teamFilterStatus : filterStatus}
-                          onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterStatus : setFilterStatus}
-                        >
-                          <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
-                            <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                            <SelectValue placeholder="Status" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border-border">
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="todo">To Do</SelectItem>
-                            <SelectItem value="in-progress">In Progress</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="overdue">Overdue</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 w-full sm:w-auto shrink-0 mt-2 lg:mt-0 flex-wrap justify-end">
-                      <button
-                        onClick={() => {
-                          if (!showCharts) {
-                            setVisibleCharts({
-                              workload: true,
-                              performance: true,
-                              recent: true,
-                              leaderboard: true
-                            });
-                          }
-                          setShowCharts(!showCharts);
-                        }}
-                        className={cn(
-                          "flex items-center justify-center p-2 rounded-md transition-colors shrink-0 border border-border bg-background",
-                          showCharts ? "text-primary border-primary/30 bg-primary/5" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                          <Activity className="h-4 w-4" />
+                        </button>
+                        {(currentUser?.role?.toUpperCase() === 'SUPERADMIN' || currentUser?.role?.toUpperCase() === 'HEAD_ADMIN') && (
+                          <OfficeAccomplishmentReport />
                         )}
-                        title={showCharts ? "Hide Analytics" : "Show Analytics"}
-                      >
-                        <Activity className="h-4 w-4" />
-                      </button>
-                      {(currentUser?.role?.toUpperCase() === 'SUPERADMIN' || currentUser?.role?.toUpperCase() === 'HEAD_ADMIN') && (
-                        <OfficeAccomplishmentReport />
-                      )}
-                      <CreateTaskDialog />
+                        <CreateTaskDialog />
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
             </AnimatePresence>
 
             <AnimatePresence>
@@ -717,7 +737,17 @@ export function AdminDashboard({
 
             {/* TABLE OR GRID */}
             <AnimatePresence mode="wait">
-              {selectedEmployeeId === 'activity-log' ? (
+              {selectedEmployeeId === 'user-management' ? (
+                <motion.div
+                  key="user-management"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <UserManagement />
+                </motion.div>
+              ) : selectedEmployeeId === 'activity-log' ? (
                 <motion.div
                   key="activity-log"
                   initial={{ opacity: 0, y: 10 }}
@@ -735,9 +765,9 @@ export function AdminDashboard({
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <EmployeeProfileReport />
+                  <EmployeeProfileReport onEditProfile={() => setIsProfileOpen?.(true)} />
                 </motion.div>
-              ) : selectedEmployeeId === 'team-projects' ? (
+              ) : (selectedEmployeeId === 'team-projects' && currentUser?.role?.toLowerCase() !== 'creator') ? (
                 <motion.div
                   key="team-projects"
                   layout
@@ -807,6 +837,22 @@ export function AdminDashboard({
                       </div>
                     </div>
                   )}
+                </motion.div>
+              ) : currentUser?.role === 'creator' && !selectedEmployeeId ? (
+                <motion.div
+                  key="creator-overview-info"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-border rounded-[2rem] bg-card/20"
+                >
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Activity className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground">Organization Oversight</h3>
+                  <p className="text-sm text-muted-foreground mt-2 max-w-md">
+                    You are in the oversight dashboard. Use the charts above to monitor performance.
+                    To manage individual tasks, go to the <strong>All Tasks</strong> section in the sidebar.
+                  </p>
                 </motion.div>
               ) : (
                 <motion.div

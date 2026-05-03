@@ -98,7 +98,6 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const { allEmployees, tasks, currentUser, login, logout, seenTaskIds } = useTaskContext()
   const [activeTab, setActiveTab] = useState<"employees" | "profile">("employees")
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
 
   useEffect(() => {
@@ -116,7 +115,6 @@ export function AdminSidebar({
   })
   const [theme, setTheme] = useState(currentUser?.theme || "emerald")
   const [mode, setMode] = useState<"light" | "dark">(currentUser?.mode || "light")
-  const [tempProfileData, setTempProfileData] = useState(profileData)
   const [isEmployeesExpanded, setIsEmployeesExpanded] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
  
@@ -130,44 +128,12 @@ export function AdminSidebar({
         jobTitle: currentUser.jobTitle || "",
       }
       setProfileData(newData)
-      setTempProfileData(newData)
       setTheme(currentUser.theme || "emerald")
       setMode(currentUser.mode || "light")
     }
   }, [currentUser])
 
-  const handleEditProfile = () => {
-    setTempProfileData(profileData)
-    setIsEditingProfile(true)
-  }
 
-  const handleSaveProfile = async () => {
-    if (!currentUser) return
-    try {
-      const token = localStorage.getItem("token")
-      const response = await fetch(`/api/users/${currentUser.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ ...tempProfileData, theme, mode }),
-      })
-
-      if (response.ok) {
-        const updatedUser = await response.json()
-        setProfileData(tempProfileData)
-        setIsEditingProfile(false)
-        login(currentUser.role, currentUser.id, updatedUser.user)
-      }
-    } catch (error) {
-      console.error("Failed to update profile:", error)
-    }
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setTempProfileData(prev => ({ ...prev, [field]: value }))
-  }
 
   const getEmployeeTaskStats = (employeeId: string) => {
     const employeeTasks = tasks.filter((t) => 
@@ -291,7 +257,7 @@ export function AdminSidebar({
                 </Button>
               )}
 
-              {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN") && (
+              {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "CREATOR") && (
                 <button
                   onClick={() => onSelectEmployee(null)}
                   className={cn(
@@ -318,6 +284,37 @@ export function AdminSidebar({
                   <ChevronRight className={cn(
                     "h-3.5 w-3.5 shrink-0",
                     selectedEmployeeId === null ? "text-primary-foreground/70" : "text-muted-foreground"
+                  )} />
+                </button>
+              )}
+
+              {currentUser?.role?.toUpperCase() === "CREATOR" && (
+                <button
+                  onClick={() => onSelectEmployee('user-management')}
+                  className={cn(
+                    "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
+                    selectedEmployeeId === 'user-management'
+                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                  )}
+                >
+                  <div className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-md border",
+                    selectedEmployeeId === 'user-management'
+                      ? "bg-white/20 border-white/30 text-primary-foreground"
+                      : "bg-primary/10 text-primary border-primary/20"
+                  )}>
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  <span className={cn(
+                    "flex-1 text-sm font-semibold",
+                    selectedEmployeeId === 'user-management' ? "text-primary-foreground" : "text-foreground"
+                  )}>
+                    User Management
+                  </span>
+                  <ChevronRight className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    selectedEmployeeId === 'user-management' ? "text-primary-foreground/70" : "text-muted-foreground"
                   )} />
                 </button>
               )}
@@ -379,7 +376,7 @@ export function AdminSidebar({
                   "flex-1 text-sm font-semibold",
                   selectedEmployeeId === 'team-projects' ? "text-white" : "text-foreground"
                 )}>
-                  Team Projects
+                  {currentUser?.role?.toUpperCase() === 'CREATOR' ? 'All Tasks' : 'Team Projects'}
                 </span>
                 <ChevronRight className={cn(
                   "h-3.5 w-3.5 shrink-0",
@@ -387,7 +384,7 @@ export function AdminSidebar({
                 )} />
               </button>
 
-              {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN") && (
+              {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN" || currentUser?.role?.toUpperCase() === "CREATOR") && (
                 <button
                   onClick={() => onSelectEmployee('archived-tasks')}
                   className={cn(
@@ -447,111 +444,115 @@ export function AdminSidebar({
                 )} />
               </button>
 
-              <button
-                onClick={() => setIsEmployeesExpanded(!isEmployeesExpanded)}
-                className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all text-muted-foreground hover:bg-primary hover:text-white mb-1 group"
-              >
-                <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/5 text-primary group-hover:bg-white/20 group-hover:text-white transition-colors">
-                  <User className="h-3 w-3" />
-                </div>
-                <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-white">
-                  Individual Employees
-                </span>
-                <motion.div
-                  animate={{ rotate: isEmployeesExpanded ? 90 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-                </motion.div>
-              </button>
-
-              <AnimatePresence>
-                {isEmployeesExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden space-y-1"
+              {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN" || currentUser?.role?.toUpperCase() === "CREATOR") && (
+                <>
+                  <button
+                    onClick={() => setIsEmployeesExpanded(!isEmployeesExpanded)}
+                    className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all text-muted-foreground hover:bg-primary hover:text-white mb-1 group"
                   >
-                    <div className="px-1 py-2">
-                      <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-                        <Input
-                          placeholder="Search employees..."
-                          className="pl-8 h-8 text-xs bg-secondary/30 border-transparent focus-visible:bg-background"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                      </div>
+                    <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/5 text-primary group-hover:bg-white/20 group-hover:text-white transition-colors">
+                      <User className="h-3 w-3" />
                     </div>
+                    <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-white">
+                      Individual Employees
+                    </span>
+                    <motion.div
+                      animate={{ rotate: isEmployeesExpanded ? 90 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                    </motion.div>
+                  </button>
 
-                    {filteredEmployees.map((employee) => {
-                      const stats = getEmployeeTaskStats(employee.id)
-                      const empInitials = employee.name.split(" ").map(n => n[0]).join("").toUpperCase()
-                      const isActive = selectedEmployeeId === employee.id
+                  <AnimatePresence>
+                    {isEmployeesExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden space-y-1"
+                      >
+                        <div className="px-1 py-2">
+                          <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                            <Input
+                              placeholder="Search employees..."
+                              className="pl-8 h-8 text-xs bg-secondary/30 border-transparent focus-visible:bg-background"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                          </div>
+                        </div>
 
-                      return (
-                        <motion.button
-                          layout
-                          key={employee.id}
-                          onClick={() => onSelectEmployee(employee.id)}
-                          className={cn(
-                            "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all border group",
-                            isActive
-                              ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.01]"
-                              : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 border-transparent"
-                          )}
-                        >
-                          <Avatar className={cn(
-                            "h-7 w-7 border transition-all",
-                            isActive ? "border-white/30 scale-105" : "border-border/50"
-                          )}>
-                            {employee.avatar ? (
-                              <AvatarImage src={employee.avatar} />
-                            ) : (
-                              <AvatarFallback className={cn(
-                                "text-[10px] font-bold",
-                                isActive ? "bg-white/20 text-primary-foreground" : "bg-primary/10 text-primary"
+                        {filteredEmployees.map((employee) => {
+                          const stats = getEmployeeTaskStats(employee.id)
+                          const empInitials = employee.name.split(" ").map(n => n[0]).join("").toUpperCase()
+                          const isActive = selectedEmployeeId === employee.id
+
+                          return (
+                            <motion.button
+                              layout
+                              key={employee.id}
+                              onClick={() => onSelectEmployee(employee.id)}
+                              className={cn(
+                                "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all border group",
+                                isActive
+                                  ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.01]"
+                                  : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 border-transparent"
+                              )}
+                            >
+                              <Avatar className={cn(
+                                "h-7 w-7 border transition-all",
+                                isActive ? "border-white/30 scale-105" : "border-border/50"
                               )}>
-                                {empInitials}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className={cn(
-                              "text-xs font-semibold truncate",
-                              isActive ? "text-white" : "text-foreground"
-                            )}>
-                              {employee.name}
-                            </p>
-                            {!isActive && (
-                              <div className="flex items-center gap-2 mt-0.5">
-                                {stats.inProgress > 0 && (
-                                  <span className="flex items-center gap-1 text-[10px] text-primary font-medium">
-                                    <span className="h-1 w-1 rounded-full bg-primary" />
-                                    {stats.inProgress}
-                                  </span>
+                                {employee.avatar ? (
+                                  <AvatarImage src={employee.avatar} />
+                                ) : (
+                                  <AvatarFallback className={cn(
+                                    "text-[10px] font-bold",
+                                    isActive ? "bg-white/20 text-primary-foreground" : "bg-primary/10 text-primary"
+                                  )}>
+                                    {empInitials}
+                                  </AvatarFallback>
                                 )}
-                                {stats.overdue > 0 && (
-                                  <span className="flex items-center gap-1 text-[10px] text-destructive font-medium">
-                                    <span className="h-1 w-1 rounded-full bg-destructive" />
-                                    {stats.overdue}
-                                  </span>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className={cn(
+                                  "text-xs font-semibold truncate",
+                                  isActive ? "text-white" : "text-foreground"
+                                )}>
+                                  {employee.name}
+                                </p>
+                                {!isActive && (
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {stats.inProgress > 0 && (
+                                      <span className="flex items-center gap-1 text-[10px] text-primary font-medium">
+                                        <span className="h-1 w-1 rounded-full bg-primary" />
+                                        {stats.inProgress}
+                                      </span>
+                                    )}
+                                    {stats.overdue > 0 && (
+                                      <span className="flex items-center gap-1 text-[10px] text-destructive font-medium">
+                                        <span className="h-1 w-1 rounded-full bg-destructive" />
+                                        {stats.overdue}
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
                               </div>
-                            )}
-                          </div>
-                          <ChevronRight className={cn(
-                            "h-3 w-3 shrink-0 transition-transform",
-                            isActive ? "text-white/70 translate-x-0.5" : "text-muted-foreground/30"
-                          )} />
-                        </motion.button>
-                      )
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                              <ChevronRight className={cn(
+                                "h-3 w-3 shrink-0 transition-transform",
+                                isActive ? "text-white/70 translate-x-0.5" : "text-muted-foreground/30"
+                              )} />
+                            </motion.button>
+                          )
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              )}
             </motion.div>
           ) : (
             <motion.div
@@ -599,50 +600,6 @@ export function AdminSidebar({
                 </div>
               </div>
 
-              <div className="space-y-4 px-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Account Details</span>
-                  </div>
-                  {!isEditingProfile ? (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={handleEditProfile}
-                      className="h-7 px-2 text-[10px] font-black text-primary hover:bg-primary/5 rounded-lg"
-                    >
-                      EDIT
-                    </Button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setIsEditingProfile(false)}
-                        className="h-7 px-2 text-[10px] font-black text-muted-foreground"
-                      >
-                        CANCEL
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        onClick={handleSaveProfile}
-                        className="h-7 px-2 text-[10px] font-black bg-primary text-white rounded-lg"
-                      >
-                        SAVE
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 gap-2">
-                  <ProfileItem icon={<Mail className="h-3.5 w-3.5" />} label="Email" value={profileData.email} isEditing={isEditingProfile} onChange={(v) => handleInputChange('email', v)} />
-                  <ProfileItem icon={<ClipboardList className="h-3.5 w-3.5" />} label="Position" value={profileData.jobTitle} isEditing={isEditingProfile} onChange={(v) => handleInputChange('jobTitle', v)} placeholder="Add job title..." />
-                  <ProfileItem icon={<Phone className="h-3.5 w-3.5" />} label="Phone" value={profileData.phone} isEditing={isEditingProfile} onChange={(v) => handleInputChange('phone', v)} placeholder="Add contact..." />
-                  <ProfileItem icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value={profileData.location} isEditing={isEditingProfile} onChange={(v) => handleInputChange('location', v)} placeholder="Add workplace..." />
-                </div>
-              </div>
-
               {/* Appearance Section */}
               <div className="space-y-4 pt-4 border-t border-border/50">
                 <div className="flex items-center gap-2 px-1">
@@ -682,15 +639,12 @@ export function AdminSidebar({
                         key={t.id}
                         onClick={() => {
                           setTheme(t.id)
-                          if (!isEditingProfile) {
-                            // Instant save if not in edit mode
-                            const token = localStorage.getItem("token")
-                            fetch(`/api/users/${currentUser?.id}`, {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                              body: JSON.stringify({ ...profileData, theme: t.id, mode })
-                            }).then(res => res.json()).then(data => data.user && login(currentUser?.role!, currentUser?.id!, data.user))
-                          }
+                          const token = localStorage.getItem("token")
+                          fetch(`/api/users/${currentUser?.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ ...profileData, theme: t.id, mode })
+                          }).then(res => res.json()).then(data => data.user && login(currentUser?.role!, currentUser?.id!, data.user))
                         }}
                         className={cn(
                           "group relative flex h-6 w-6 items-center justify-center rounded-full transition-all ring-offset-background",
@@ -715,14 +669,12 @@ export function AdminSidebar({
                       size="sm"
                       onClick={() => {
                         setMode("light")
-                        if (!isEditingProfile) {
-                          const token = localStorage.getItem("token")
-                          fetch(`/api/users/${currentUser?.id}`, {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                            body: JSON.stringify({ ...profileData, theme, mode: "light" })
-                          }).then(res => res.json()).then(data => data.user && login(currentUser?.role!, currentUser?.id!, data.user))
-                        }
+                        const token = localStorage.getItem("token")
+                        fetch(`/api/users/${currentUser?.id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ ...profileData, theme, mode: "light" })
+                        }).then(res => res.json()).then(data => data.user && login(currentUser?.role!, currentUser?.id!, data.user))
                       }}
                       className="flex-1 rounded-lg h-9 text-[11px]"
                     >
@@ -734,14 +686,12 @@ export function AdminSidebar({
                       size="sm"
                       onClick={() => {
                         setMode("dark")
-                        if (!isEditingProfile) {
-                          const token = localStorage.getItem("token")
-                          fetch(`/api/users/${currentUser?.id}`, {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                            body: JSON.stringify({ ...profileData, theme, mode: "dark" })
-                          }).then(res => res.json()).then(data => data.user && login(currentUser?.role!, currentUser?.id!, data.user))
-                        }
+                        const token = localStorage.getItem("token")
+                        fetch(`/api/users/${currentUser?.id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ ...profileData, theme, mode: "dark" })
+                        }).then(res => res.json()).then(data => data.user && login(currentUser?.role!, currentUser?.id!, data.user))
                       }}
                       className="flex-1 rounded-lg h-9 text-[11px]"
                     >
@@ -756,64 +706,8 @@ export function AdminSidebar({
         </AnimatePresence>
       </div>
 
-      <div className="mt-auto border-t border-border/40 bg-muted/20">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button
-              className="w-full flex items-center gap-3 px-6 py-4 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all group"
-            >
-              <LogOut className="h-4 w-4 transition-transform group-hover:scale-110" />
-              <span className="text-xs font-bold uppercase tracking-wider">Logout</span>
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="bg-card border-border sm:max-w-[400px]">
-            <AlertDialogHeader>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-2">
-                <LogOut className="h-6 w-6" />
-              </div>
-              <AlertDialogTitle className="text-xl font-bold">End Session?</AlertDialogTitle>
-              <AlertDialogDescription className="text-muted-foreground">
-                Are you sure you want to log out? Any unsaved changes might be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-4 gap-2">
-              <AlertDialogCancel className="rounded-xl border-border hover:bg-accent flex-1">
-                Stay
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={logout}
-                className="rounded-xl bg-destructive text-white hover:bg-destructive/90 flex-1"
-              >
-                Sign Out
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+
       <ProfileDialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen} />
     </aside>
-  )
-}
-
-function ProfileItem({ icon, label, value, isEditing, onChange, placeholder }: { icon: React.ReactNode; label: string; value: string; isEditing: boolean; onChange: (v: string) => void; placeholder?: string }) {
-  return (
-    <div className="p-3 rounded-lg bg-secondary/20 border border-border/50 flex items-center gap-3 transition-colors hover:bg-secondary/40">
-      <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center shrink-0 text-primary">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">{label}</p>
-        {isEditing ? (
-          <input 
-            className="text-xs font-medium bg-transparent border-none p-0 focus:ring-0 w-full text-foreground"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            autoFocus={label === 'Email'}
-          />
-        ) : (
-          <p className="text-xs font-medium text-foreground truncate">{value || placeholder || "Not set"}</p>
-        )}
-      </div>
-    </div>
   )
 }

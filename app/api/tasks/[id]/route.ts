@@ -225,8 +225,16 @@ export async function PUT(
     let newAssigneeId = existingTask.assigneeId;
 
     if (assigneeIds !== undefined && (role === "ADMIN" || role === "SUPERADMIN" || role === "HEAD_ADMIN")) {
-      newDelegatedById = auth.user!.id;
-      newDelegatedAt = new Date().toISOString();
+      const isOnlySelf = assigneeIds.length === 1 && assigneeIds[0] === auth.user!.id;
+      const isEmpty = assigneeIds.length === 0;
+      
+      if (isOnlySelf || isEmpty) {
+        newDelegatedById = null;
+        newDelegatedAt = null;
+      } else {
+        newDelegatedById = auth.user!.id;
+        newDelegatedAt = new Date().toISOString();
+      }
       newAssigneeId = assigneeIds.length > 0 ? assigneeIds[0] : null;
     }
 

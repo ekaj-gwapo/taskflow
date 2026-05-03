@@ -58,6 +58,17 @@ export async function POST(request: NextRequest) {
       { expiresIn: "1d" }
     );
 
+    // Log activity
+    const { logActivity } = await import("@/lib/activity");
+    await logActivity({
+      action: "ORGANIZATION_CREATED",
+      entityId: orgId,
+      entityType: "ORGANIZATION",
+      userId: decoded.id,
+      userName: decoded.name,
+      details: { name: name.trim(), slug }
+    });
+
     return NextResponse.json({ 
       message: "Organization created successfully", 
       orgId, 

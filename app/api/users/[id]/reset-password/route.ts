@@ -31,13 +31,20 @@ export async function PUT(
       [hashedPassword, id]
     )
 
+    // Get user name for better logging
+    const targetUser = await db.getOne("SELECT name FROM users WHERE id = ?", [id]);
+    const targetName = targetUser?.name || "Unknown User";
+
     await logActivity({
       action: "PASSWORD_RESET",
       entityId: id,
       entityType: "USER",
       userId: auth.user!.id,
       userName: auth.user!.name,
-      details: { resetUserId: id }
+      details: { 
+        resetUserId: id,
+        name: targetName
+      }
     });
 
     return NextResponse.json(

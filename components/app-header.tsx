@@ -54,37 +54,44 @@ export function AppHeader() {
             <AlertDialogTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
-                title="Logout"
+                className="h-9 px-4 rounded-full bg-secondary/40 hover:bg-destructive/10 hover:text-destructive transition-all gap-2 text-[11px] font-black text-muted-foreground uppercase tracking-widest border border-border/50 hover:border-destructive/30 shadow-sm"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Logout</span>
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-card border-border sm:max-w-[400px]">
-              <AlertDialogHeader>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-2">
-                  <LogOut className="h-6 w-6" />
-                </div>
-                <AlertDialogTitle className="text-xl font-bold">End Session?</AlertDialogTitle>
-                <AlertDialogDescription className="text-muted-foreground">
-                  Are you sure you want to log out? Any unsaved changes might be lost.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter className="mt-4 gap-2">
-                <AlertDialogCancel className="rounded-xl border-border hover:bg-accent flex-1">
-                  Stay
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    localStorage.removeItem("token")
-                    window.location.href = "/"
-                  }}
-                  className="rounded-xl bg-destructive text-white hover:bg-destructive/90 flex-1"
-                >
-                  Sign Out
-                </AlertDialogAction>
-              </AlertDialogFooter>
+            <AlertDialogContent className="bg-background/95 backdrop-blur-3xl border border-white/10 dark:border-white/5 sm:max-w-md rounded-[2rem] p-0 overflow-hidden shadow-2xl">
+              <div className="p-8 pb-6 bg-gradient-to-br from-destructive/10 via-transparent to-transparent">
+                <AlertDialogHeader className="space-y-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive shadow-inner border border-destructive/20 mx-auto sm:mx-0">
+                    <LogOut className="h-8 w-8" />
+                  </div>
+                  <div className="space-y-2 text-center sm:text-left">
+                    <AlertDialogTitle className="text-2xl font-black tracking-tight text-foreground">
+                      End Session?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-sm font-medium text-muted-foreground">
+                      Are you sure you want to sign out of your account? You will need to log in again to access your dashboard.
+                    </AlertDialogDescription>
+                  </div>
+                </AlertDialogHeader>
+              </div>
+              <div className="p-6 pt-4 bg-muted/20 border-t border-border/50">
+                <AlertDialogFooter className="gap-3 sm:gap-4 flex-col sm:flex-row">
+                  <AlertDialogCancel className="h-12 rounded-xl border-border/50 bg-background hover:bg-secondary transition-colors flex-1 font-bold">
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      localStorage.removeItem("token")
+                      window.location.href = "/"
+                    }}
+                    className="h-12 rounded-xl bg-gradient-to-r from-destructive to-red-600 text-white hover:from-destructive/90 hover:to-red-600/90 shadow-lg shadow-destructive/20 flex-1 font-black transition-all"
+                  >
+                    Sign Out
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </div>
             </AlertDialogContent>
           </AlertDialog>
         </div>

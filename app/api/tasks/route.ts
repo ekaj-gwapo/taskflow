@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         WHERE t.archived = ?
         ORDER BY t.createdAt DESC
       `, [archivedValue]) as any[]
-    } else if (role === "ADMIN" || role === "HEAD_ADMIN") {
+    } else if (role === "ADMIN" || role === "HEAD_ADMIN" || role === "CREATOR") {
       if (!orgId) return NextResponse.json({ tasks: [] });
       tasks = await db.getAll(`
         SELECT t.*, 

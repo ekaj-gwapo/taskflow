@@ -7,9 +7,17 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { UserPlus, Users, Mail, Shield, Smartphone, Trash2, Loader2, Search, Power, KeyRound, MapPin } from "lucide-react"
 import { toast } from "sonner"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface User {
   id: string
@@ -44,6 +52,9 @@ export function UserManagement() {
   
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const [statusUpdateUser, setStatusUpdateUser] = useState<{ id: string, name: string, currentStatus: boolean } | null>(null)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
   const handleDeleteUser = async (id: string) => {
     try {
@@ -97,8 +108,11 @@ export function UserManagement() {
     }
   }
 
-  const toggleUserStatus = async (id: string, currentStatus: boolean = true) => {
+  const toggleUserStatus = async () => {
+    if (!statusUpdateUser) return
+    const { id, currentStatus, name } = statusUpdateUser
     try {
+      setIsUpdatingStatus(true)
       const newStatus = !currentStatus
       const res = await fetch(`/api/users/${id}/status`, {
         method: "PUT",
@@ -109,7 +123,8 @@ export function UserManagement() {
         body: JSON.stringify({ isActive: newStatus })
       })
       if (res.ok) {
-        toast.success(`User ${newStatus ? 'activated' : 'deactivated'} successfully`)
+        toast.success(`${name} has been ${newStatus ? 'activated' : 'deactivated'} successfully`)
+        setStatusUpdateUser(null)
         fetchUsers()
       } else {
         const data = await res.json()
@@ -117,6 +132,8 @@ export function UserManagement() {
       }
     } catch (e) {
       toast.error("An error occurred")
+    } finally {
+      setIsUpdatingStatus(false)
     }
   }
 
@@ -182,252 +199,337 @@ export function UserManagement() {
   )
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="space-y-8"
+    >
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Users className="h-8 w-8 text-primary" />
-            Organization Team
-          </h1>
-          <p className="text-muted-foreground mt-1">Manage your organization&apos;s administrators and employees.</p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+              <Users className="h-6 w-6" />
+            </div>
+            <h1 className="text-4xl font-black text-foreground tracking-tight">Organization Team</h1>
+          </div>
+          <p className="text-muted-foreground font-medium ml-1">Manage your organization&apos;s administrators and employees with precision.</p>
         </div>
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative w-full md:w-96 group">
+          <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-xl group-hover:bg-primary/10 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
           <Input
-            placeholder="Search users..."
-            className="pl-10 bg-secondary/50 border-border"
+            placeholder="Search team members..."
+            className="relative h-12 pl-12 rounded-2xl bg-background/50 backdrop-blur-sm border-border focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Create User Form */}
-        <Card className="lg:col-span-1 border-border bg-card/50 backdrop-blur-sm self-start">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5 text-primary" />
-              Add Team Member
-            </CardTitle>
-            <CardDescription>Invite a new administrator or employee to your organization.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Full Name</label>
-                <Input
-                  required
-                  placeholder="John Doe"
-                  value={newUser.name}
-                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Username</label>
-                <Input
-                  required
-                  placeholder="johndoe"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Initial Password</label>
-                <Input
-                  required
-                  type="password"
-                  placeholder="••••••••"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Role</label>
-                <select
-                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={newUser.role}
-                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+        <div className="lg:col-span-4 space-y-6">
+          <Card className="relative overflow-hidden border-none shadow-2xl rounded-[2rem] bg-gradient-to-br from-card to-secondary/10">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] -rotate-12">
+              <UserPlus className="h-32 w-32" />
+            </div>
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="text-2xl font-black flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20">
+                  <UserPlus className="h-5 w-5" />
+                </div>
+                Add Team Member
+              </CardTitle>
+              <CardDescription className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-2">
+                Invite a new administrator or employee
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 pt-2">
+              <form onSubmit={handleCreateUser} className="space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">Full Name</label>
+                  <Input
+                    required
+                    placeholder="Enter full name"
+                    className="h-12 rounded-xl bg-secondary/30 border-none focus:bg-background transition-all font-medium"
+                    value={newUser.name}
+                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">Username / Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                    <Input
+                      required
+                      placeholder="username@org.com"
+                      className="h-12 pl-12 rounded-xl bg-secondary/30 border-none focus:bg-background transition-all font-medium"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">Initial Password</label>
+                  <div className="relative">
+                    <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                    <Input
+                      required
+                      type="password"
+                      placeholder="••••••••"
+                      className="h-12 pl-12 rounded-xl bg-secondary/30 border-none focus:bg-background transition-all font-medium"
+                      value={newUser.password}
+                      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">Role</label>
+                  <Select 
+                    value={newUser.role} 
+                    onValueChange={(value) => setNewUser({ ...newUser, role: value })}
+                  >
+                    <SelectTrigger className="h-12 pl-4 rounded-xl bg-secondary/30 border-none text-sm font-medium focus:bg-background transition-all outline-none cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <Shield className="h-4 w-4 text-muted-foreground/50" />
+                        <SelectValue placeholder="Select role" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-border bg-popover/95 backdrop-blur-xl">
+                      <SelectItem value="EMPLOYEE" className="rounded-lg">Employee</SelectItem>
+                      <SelectItem value="ADMIN" className="rounded-lg">Admin</SelectItem>
+                      {currentUser?.role?.toLowerCase() === "creator" && (
+                        <SelectItem value="HEAD_ADMIN" className="rounded-lg">Head Admin</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">Phone</label>
+                    <Input
+                      placeholder="+1..."
+                      className="h-12 rounded-xl bg-secondary/30 border-none focus:bg-background transition-all font-medium"
+                      value={newUser.phone}
+                      onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">Location</label>
+                    <Input
+                      placeholder="City, State"
+                      className="h-12 rounded-xl bg-secondary/30 border-none focus:bg-background transition-all font-medium"
+                      value={newUser.location}
+                      onChange={(e) => setNewUser({ ...newUser, location: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-black text-base shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all mt-4" 
+                  disabled={isCreating}
                 >
-                  <option value="EMPLOYEE">Employee</option>
-                  <option value="ADMIN">Admin</option>
-                  {currentUser?.role?.toLowerCase() === "creator" && <option value="head_admin">Head Admin</option>}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Phone (Optional)</label>
-                <Input
-                  placeholder="+1 (555) 000-0000"
-                  value={newUser.phone}
-                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Location (Optional)</label>
-                <Input
-                  placeholder="New York, NY"
-                  value={newUser.location}
-                  onChange={(e) => setNewUser({ ...newUser, location: e.target.value })}
-                />
-              </div>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isCreating}>
-                {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create User Account"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                  {isCreating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
+                    <>
+                      <UserPlus className="mr-2 h-5 w-5" />
+                      Create User Account
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* User List */}
-        <Card className="lg:col-span-2 border-border bg-card/50 backdrop-blur-sm overflow-hidden">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              User Directory
-            </CardTitle>
-            <CardDescription>A list of all users registered in the system.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="p-12 flex flex-col items-center justify-center text-muted-foreground">
-                <Loader2 className="h-8 w-8 animate-spin mb-2" />
-                <p>Loading user database...</p>
+        <div className="lg:col-span-8">
+          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-background/50 backdrop-blur-xl overflow-hidden min-h-[600px]">
+            <CardHeader className="p-8 border-b border-border/50 bg-muted/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl font-black flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-secondary text-primary flex items-center justify-center">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    User Directory
+                  </CardTitle>
+                  <CardDescription className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-2">
+                    {filteredUsers.length} total team members registered
+                  </CardDescription>
+                </div>
               </div>
-            ) : filteredUsers.length === 0 ? (
-              <div className="p-12 text-center text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>No users found matching your search.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border bg-secondary/30">
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact & Location</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {filteredUsers.map((user) => (
-                      <tr key={user.id} className={`hover:bg-accent/30 transition-colors group ${user.isActive === false ? "opacity-60 bg-muted/30" : ""}`}>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar className={`h-9 w-9 border border-border ${user.isActive === false ? "grayscale" : ""}`}>
-                              {user.avatar ? (
-                                <AvatarImage src={user.avatar} />
-                              ) : (
-                                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                                  {user.name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U"}
-                                </AvatarFallback>
-                              )}
-                            </Avatar>
-                            <div>
-                              <div className="text-sm font-semibold flex items-center gap-2">
-                                {user.name}
-                                {user.isActive === false && (
-                                  <Badge variant="destructive" className="h-5 px-1.5 py-0">Deactivated</Badge>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-32 flex flex-col items-center justify-center text-muted-foreground">
+                  <div className="h-16 w-16 rounded-3xl bg-primary/5 flex items-center justify-center mb-6 animate-pulse">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                  <p className="font-bold tracking-widest uppercase text-[10px]">Accessing Database...</p>
+                </div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="p-32 text-center text-muted-foreground">
+                  <div className="h-24 w-24 rounded-[2rem] bg-secondary/50 flex items-center justify-center mx-auto mb-6">
+                    <Users className="h-12 w-12 opacity-20" />
+                  </div>
+                  <p className="text-lg font-black text-foreground">No users found</p>
+                  <p className="text-sm font-medium mt-1">Try adjusting your search terms</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-muted/30">
+                        <th className="text-left py-6 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">User Profile</th>
+                        <th className="text-left py-6 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">System Role</th>
+                        <th className="text-left py-6 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Connectivity</th>
+                        <th className="text-right py-6 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Management</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {filteredUsers.map((user, idx) => (
+                        <motion.tr 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          key={user.id} 
+                          className={`hover:bg-primary/[0.02] transition-colors group ${user.isActive === false ? "bg-muted/10" : ""}`}
+                        >
+                          <td className="py-5 px-8">
+                            <div className="flex items-center gap-4">
+                              <div className="relative">
+                                <Avatar className={`h-12 w-12 rounded-2xl shadow-lg transition-all group-hover:scale-105 ${user.isActive === false ? "grayscale opacity-50" : "ring-2 ring-background"}`}>
+                                  {user.avatar ? (
+                                    <AvatarImage src={user.avatar} className="object-cover" />
+                                  ) : (
+                                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary-foreground text-primary-foreground font-black text-sm">
+                                      {user.name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U"}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                                {user.isActive !== false && (
+                                  <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 border-2 border-background shadow-sm" />
                                 )}
                               </div>
-                              <div className="flex items-center text-xs text-muted-foreground gap-1">
-                                <Mail className="h-3 w-3" />
-                                {user.email}
+                              <div>
+                                <div className="text-base font-black text-foreground flex items-center gap-2 tracking-tight">
+                                  {user.name}
+                                  {user.isActive === false && (
+                                    <Badge variant="outline" className="h-5 px-2 bg-destructive/10 text-destructive border-destructive/20 text-[9px] font-black uppercase tracking-tighter">Disabled</Badge>
+                                  )}
+                                </div>
+                                <div className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                                  <Mail className="h-3 w-3 text-primary/50" />
+                                  {user.email}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge variant={user.role?.toLowerCase() === "master_admin" ? "destructive" : user.role?.toLowerCase() === "creator" ? "default" : user.role?.toLowerCase() === "head_admin" ? "secondary" : "outline"}>
-                            {user.role?.toLowerCase() === "master_admin" ? "Master Admin" : user.role?.toLowerCase() === "creator" ? "Creator" : user.role?.toLowerCase() === "head_admin" ? "Head Admin" : user.role?.toLowerCase() === "admin" ? "Admin" : "Employee"}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4 text-xs text-muted-foreground">
-                          <div className="space-y-1">
-                            {user.phone ? (
-                              <div className="flex items-center gap-1">
-                                <Smartphone className="h-3 w-3" />
-                                {user.phone}
+                          </td>
+                          <td className="py-5 px-4">
+                            <Badge className={`rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider border shadow-sm ${
+                              user.role?.toLowerCase() === "creator" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
+                              user.role?.toLowerCase() === "head_admin" ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/20" :
+                              user.role?.toLowerCase() === "admin" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                              "bg-slate-500/10 text-slate-600 border-slate-500/20"
+                            }`}>
+                              {user.role?.toLowerCase().replace('_', ' ')}
+                            </Badge>
+                          </td>
+                          <td className="py-5 px-4">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2 text-xs font-bold text-foreground/80">
+                                <div className={`h-1.5 w-1.5 rounded-full ${user.phone ? 'bg-primary' : 'bg-muted'}`} />
+                                {user.phone || <span className="text-muted-foreground/40 font-medium italic">No number</span>}
                               </div>
-                            ) : (
-                              <span className="opacity-50">No phone</span>
-                            )}
-                            {user.location && (
-                              <div className="flex items-center gap-1 text-primary/80">
-                                <MapPin className="h-3 w-3" />
-                                {user.location}
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground tracking-wide">
+                                <MapPin className="h-3 w-3 text-primary/40" />
+                                {user.location || "Not set"}
                               </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setResetPasswordId(user.id)}
-                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                              title="Reset Password"
-                            >
-                              <KeyRound className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => toggleUserStatus(user.id, user.isActive ?? true)}
-                              className={`h-8 w-8 ${user.isActive === false ? 'text-green-600 bg-green-100 hover:bg-green-200' : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'}`}
-                              title={user.isActive === false ? "Activate User" : "Deactivate User"}
-                            >
-                              <Power className="h-4 w-4" />
-                            </Button>
-                            
-                            {(currentUser?.role?.toLowerCase() === "creator" || currentUser?.role?.toLowerCase() === "superadmin" || currentUser?.role?.toLowerCase() === "master_admin") && (
+                            </div>
+                          </td>
+                          <td className="py-5 px-8">
+                            <div className="flex items-center justify-end gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setDeleteUserId(user.id)}
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                title="Delete User"
-                                disabled={user.id === currentUser?.id}
+                                onClick={() => setResetPasswordId(user.id)}
+                                className="h-9 w-9 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                                title="Reset Password"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <KeyRound className="h-4 w-4" />
                               </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setStatusUpdateUser({ id: user.id, name: user.name, currentStatus: user.isActive ?? true })}
+                                className={`h-9 w-9 rounded-xl transition-all ${
+                                  user.isActive === false 
+                                    ? 'text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20' 
+                                    : 'text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10'
+                                }`}
+                                title={user.isActive === false ? "Activate User" : "Deactivate User"}
+                              >
+                                <Power className="h-4 w-4" />
+                              </Button>
+                              
+                              {(currentUser?.role?.toLowerCase() === "creator" || currentUser?.role?.toLowerCase() === "superadmin" || currentUser?.role?.toLowerCase() === "master_admin") && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteUserId(user.id)}
+                                  className="h-9 w-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                                  title="Delete User"
+                                  disabled={user.id === currentUser?.id}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Dialog open={!!resetPasswordId} onOpenChange={(open) => !open && setResetPasswordId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
-            <DialogDescription>
-              Enter a new password for this user. They will use this to sign in.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleResetPassword} className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">New Password</label>
+        <DialogContent className="rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+          <div className="bg-gradient-to-br from-primary/10 to-transparent p-8 pb-6">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <KeyRound className="h-5 w-5" />
+                </div>
+                Reset Password
+              </DialogTitle>
+              <DialogDescription className="font-medium text-muted-foreground mt-2">
+                Enter a new secure password for this team member.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <form onSubmit={handleResetPassword} className="p-8 pt-4 space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">New Password</label>
               <Input
                 required
                 type="password"
                 placeholder="••••••••"
+                className="h-12 rounded-xl bg-secondary/30 border-none focus:bg-background transition-all font-medium"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 minLength={6}
               />
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setResetPasswordId(null)}>Cancel</Button>
-              <Button type="submit" disabled={isResetting}>
-                {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Reset Password"}
+            <DialogFooter className="flex items-center gap-3">
+              <Button type="button" variant="ghost" onClick={() => setResetPasswordId(null)} className="h-12 rounded-xl font-bold flex-1">Cancel</Button>
+              <Button type="submit" disabled={isResetting} className="h-12 rounded-xl font-black flex-1 shadow-lg shadow-primary/20">
+                {isResetting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update Password"}
               </Button>
             </DialogFooter>
           </form>
@@ -435,31 +537,80 @@ export function UserManagement() {
       </Dialog>
 
       <Dialog open={!!deleteUserId} onOpenChange={(open) => !open && setDeleteUserId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-destructive flex items-center gap-2">
-              <Trash2 className="h-5 w-5" />
-              Delete User Account
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this user? This action is permanent and will remove all their access. Their previous activity logs and notes will be preserved but they will be unassigned from all tasks.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={() => setDeleteUserId(null)} disabled={isDeleting}>
-              Cancel
-            </Button>
-            <Button 
-              type="button" 
-              variant="destructive" 
-              onClick={() => deleteUserId && handleDeleteUser(deleteUserId)}
-              disabled={isDeleting}
-            >
-              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete Permanently"}
-            </Button>
-          </DialogFooter>
+        <DialogContent className="rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+          <div className="bg-gradient-to-br from-destructive/10 to-transparent p-8 pb-6">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black text-destructive flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
+                  <Trash2 className="h-5 w-5" />
+                </div>
+                Delete Account
+              </DialogTitle>
+              <DialogDescription className="font-bold text-muted-foreground mt-2 uppercase tracking-tight">
+                This action is permanent and irreversible
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="p-8 pt-4 space-y-4">
+            <p className="text-sm font-medium text-foreground/80 leading-relaxed">
+              Are you sure you want to delete this user? All their access will be revoked immediately. Their contributions will be preserved but they will be unassigned from all active tasks.
+            </p>
+            <DialogFooter className="flex items-center gap-3 pt-4">
+              <Button type="button" variant="ghost" onClick={() => setDeleteUserId(null)} disabled={isDeleting} className="h-12 rounded-xl font-bold flex-1">Keep User</Button>
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={() => deleteUserId && handleDeleteUser(deleteUserId)}
+                disabled={isDeleting}
+                className="h-12 rounded-xl font-black flex-1 shadow-lg shadow-destructive/20"
+              >
+                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm Delete"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
-    </div>
+
+      <Dialog open={!!statusUpdateUser} onOpenChange={(open) => !open && setStatusUpdateUser(null)}>
+        <DialogContent className="rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+          <div className={`p-8 pb-6 bg-gradient-to-br ${statusUpdateUser?.currentStatus ? 'from-amber-500/10' : 'from-emerald-500/10'} to-transparent`}>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black flex items-center gap-3">
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${statusUpdateUser?.currentStatus ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
+                  <Power className="h-5 w-5" />
+                </div>
+                {statusUpdateUser?.currentStatus ? 'Deactivate' : 'Reactivate'} Account
+              </DialogTitle>
+              <DialogDescription className="font-bold text-muted-foreground mt-2 uppercase tracking-wider">
+                {statusUpdateUser?.name}
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="p-8 pt-4 space-y-4">
+            <p className="text-sm font-medium text-foreground/80 leading-relaxed">
+              {statusUpdateUser?.currentStatus 
+                ? `Deactivating this account will prevent the user from logging in or accessing any organization resources until you manually reactivate them.`
+                : `This will immediately restore the user's access to the platform and all their assigned tasks.`}
+            </p>
+            <DialogFooter className="flex items-center gap-3 pt-4">
+              <Button type="button" variant="ghost" onClick={() => setStatusUpdateUser(null)} disabled={isUpdatingStatus} className="h-12 rounded-xl font-bold flex-1">Cancel</Button>
+              <Button 
+                type="button" 
+                variant={statusUpdateUser?.currentStatus ? "destructive" : "default"}
+                onClick={toggleUserStatus}
+                disabled={isUpdatingStatus}
+                className={`h-12 rounded-xl font-black flex-1 shadow-lg transition-all ${
+                  !statusUpdateUser?.currentStatus 
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20" 
+                    : "shadow-destructive/20"
+                }`}
+              >
+                {isUpdatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : (statusUpdateUser?.currentStatus ? "Confirm Deactivation" : "Confirm Activation")}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </motion.div>
   )
 }

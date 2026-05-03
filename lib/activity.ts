@@ -25,7 +25,10 @@ export type ActivityAction =
   | "TASK_ARCHIVED"
   | "TASK_RESTORED"
   | "DUE_DATE_UPDATED"
-  | "MEMBER_REMOVED";
+  | "MEMBER_REMOVED"
+  | "USER_CREATED"
+  | "USER_DELETED"
+  | "ORGANIZATION_CREATED";
 
 export interface ActivityLogPayload {
   action: ActivityAction;

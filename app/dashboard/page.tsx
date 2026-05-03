@@ -98,34 +98,32 @@ function AppContent() {
           </div>
         ) : currentRole === "creator" ? (
           <div className="flex-1 flex min-h-0">
-            <div className="hidden lg:block w-80 shrink-0 border-r border-border">
-              <AdminSidebar selectedEmployeeId={null} onSelectEmployee={() => {}} onSelectTask={() => {}} />
-            </div>
-            <div className="flex-1 overflow-y-auto bg-secondary/10">
-              {!currentUser.orgId ? (
-                <div className="h-full flex items-center justify-center p-6">
-                  <div className="max-w-md w-full text-center space-y-6 animate-in fade-in zoom-in duration-500">
-                    <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 mb-2">
-                      <Rocket className="h-10 w-10 text-primary" />
-                    </div>
-                    <h2 className="text-3xl font-black tracking-tight text-foreground">Ready to Launch?</h2>
-                    <p className="text-muted-foreground text-lg">
-                      You haven&apos;t created an organization yet. Let&apos;s set up your workspace to start managing tasks and teams.
-                    </p>
-                    <Button 
-                      size="lg" 
-                      onClick={() => router.push("/auth/onboarding")}
-                      className="w-full h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                    >
-                      Create Organization
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
+            {!currentUser.orgId ? (
+              <div className="flex-1 h-full flex items-center justify-center p-6 bg-secondary/10">
+                <div className="max-w-md w-full text-center space-y-6 animate-in fade-in zoom-in duration-500">
+                  <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 mb-2">
+                    <Rocket className="h-10 w-10 text-primary" />
                   </div>
+                  <h2 className="text-3xl font-black tracking-tight text-foreground">Ready to Launch?</h2>
+                  <p className="text-muted-foreground text-lg">
+                    You haven&apos;t created an organization yet. Let&apos;s set up your workspace to start managing tasks and teams.
+                  </p>
+                  <Button 
+                    size="lg" 
+                    onClick={() => router.push("/auth/onboarding")}
+                    className="w-full h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Create Organization
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
                 </div>
-              ) : (
-                <UserManagement />
-              )}
-            </div>
+              </div>
+            ) : (
+              <AdminDashboard 
+                isProfileOpen={isProfileOpen} 
+                setIsProfileOpen={setIsProfileOpen} 
+              />
+            )}
           </div>
         ) : (currentRole === "head_admin" || currentRole === "admin") ? (
           <AdminDashboard isProfileOpen={isProfileOpen} setIsProfileOpen={setIsProfileOpen} />
