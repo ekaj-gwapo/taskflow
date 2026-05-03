@@ -179,17 +179,34 @@ export function EmployeeSidebar({
   const hasUnseenTeamTasks = teamTasks.some(t => !seenTaskIds.has(t.id) && t.status !== 'completed')
 
   return (
-    <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg">
-      <div className="p-6 border-b border-border bg-primary/5">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-            <ClipboardList className="h-6 w-6 text-primary-foreground" />
+    <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg overflow-hidden">
+      {/* Sidebar Header - Modern & Sleek */}
+      <div className="p-8 border-b border-border/40 relative overflow-hidden group">
+        {/* Subtle background decoration */}
+        <div className="absolute -top-12 -left-12 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+        
+        <div className="flex items-center gap-4 relative">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center shadow-sm overflow-hidden transition-transform group-hover:scale-105 duration-300">
+            {currentUser?.organizationLogo ? (
+              <img 
+                src={currentUser.organizationLogo} 
+                alt={currentUser.organizationName || "Logo"} 
+                className="w-full h-full object-contain p-1.5"
+              />
+            ) : (
+              <ClipboardList className="h-6 w-6 text-primary" />
+            )}
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold text-foreground tracking-tight">TaskFlow</span>
-            <span className="text-[10px] font-medium text-primary uppercase tracking-widest leading-none mt-0.5">
-              {currentUser?.organizationName || "Employee Portal"}
+          <div className="flex flex-col min-w-0">
+            <span className="text-base font-black text-foreground tracking-tight leading-none mb-1.5">
+              {currentUser?.organizationName || "TaskFlow"}
             </span>
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
+                {currentUser?.role?.replace('_', ' ') || "Organization"}
+              </span>
+            </div>
           </div>
         </div>
       </div>

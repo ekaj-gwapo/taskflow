@@ -19,11 +19,14 @@ import {
 import { Progress } from "@/components/ui/progress"
 
 export function EmployeeWeeklyPerformance({ onHide }: { onHide?: () => void }) {
-  const { tasks, allEmployees } = useTaskContext()
+  const { tasks, allEmployees, currentUser } = useTaskContext()
   const [expandedEmployee, setExpandedEmployee] = useState<string | null>(null)
+  const isHeadAdmin = currentUser?.role?.toLowerCase() === "head_admin"
 
   const weeklyData = useMemo(() => {
-    return allEmployees.map(emp => {
+    return allEmployees
+      .filter((emp) => !(isHeadAdmin && emp.id === currentUser?.id))
+      .map(emp => {
       const empTasks = tasks.filter(t => 
         t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id
       )

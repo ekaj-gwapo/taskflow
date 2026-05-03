@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    const { name } = await request.json();
+    const { name, logoUrl } = await request.json();
     if (!name || name.trim().length < 3) {
       return NextResponse.json({ error: "Organization name is too short" }, { status: 400 });
     }
@@ -35,9 +35,9 @@ export async function POST(request: NextRequest) {
 
     // Create organization
     await db.execute(`
-      INSERT INTO organizations (id, name, slug, createdat, updatedat)
-      VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `, [orgId, name.trim(), slug]);
+      INSERT INTO organizations (id, name, slug, logo_url, createdat, updatedat)
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `, [orgId, name.trim(), slug, logoUrl]);
 
     // Update user to be the creator of this org
     await db.execute(`

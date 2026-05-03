@@ -14,6 +14,7 @@ export interface User {
   emailVerified?: boolean
   orgId?: string
   organizationName?: string
+  organizationLogo?: string
   notifyOnAssign?: boolean
   notifyOnDeadline?: boolean
   notifyOnDiscussion?: boolean

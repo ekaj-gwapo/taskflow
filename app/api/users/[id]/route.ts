@@ -15,9 +15,12 @@ export async function GET(
     }
 
     const user = await db.getOne(`
-      SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, theme, mode, createdat AS "createdAt", orgid AS "orgId"
-      FROM users 
-      WHERE id = ?
+      SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", 
+             u.role, u.theme, u.mode, u.createdat AS "createdAt", u.orgid AS "orgId",
+             o.name as "organizationName", o.logo_url as "organizationLogo"
+      FROM users u
+      LEFT JOIN organizations o ON u.orgid = o.id
+      WHERE u.id = ?
     `, [id]);
 
     if (!user) {
@@ -98,9 +101,12 @@ export async function PUT(
     }
 
     const user = await db.getOne(`
-      SELECT id, name, email, phone, location, jobtitle AS "jobTitle", role, theme, mode, orgid AS "orgId"
-      FROM users 
-      WHERE id = ?
+      SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", 
+             u.role, u.theme, u.mode, u.orgid AS "orgId",
+             o.name as "organizationName", o.logo_url as "organizationLogo"
+      FROM users u
+      LEFT JOIN organizations o ON u.orgid = o.id
+      WHERE u.id = ?
     `, [id]);
 
     return NextResponse.json(

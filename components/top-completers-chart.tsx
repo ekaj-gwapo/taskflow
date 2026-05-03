@@ -50,11 +50,14 @@ function CustomTooltip({
 }
 
 export function TopCompletersChart({ onHide }: { onHide?: () => void }) {
-  const { tasks, allEmployees } = useTaskContext()
+  const { tasks, allEmployees, currentUser } = useTaskContext()
   const [isRevealed, setIsRevealed] = useState(false)
+  const isHeadAdmin = currentUser?.role?.toLowerCase() === "head_admin"
 
   const leaderboard = useMemo(() => {
-    const stats = allEmployees.map((emp) => {
+    const stats = allEmployees
+      .filter((emp) => !(isHeadAdmin && emp.id === currentUser?.id))
+      .map((emp) => {
       const empTasks = tasks.filter((t) => t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id)
       const completedTasks = empTasks.filter((t) => t.status === "completed")
       const completed = completedTasks.length

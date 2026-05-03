@@ -7,10 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Activity, AlertCircle, ChevronDown } from "lucide-react"
 
 export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
-  const { tasks, allEmployees } = useTaskContext()
+  const { tasks, allEmployees, currentUser } = useTaskContext()
+  const isHeadAdmin = currentUser?.role?.toLowerCase() === "head_admin"
 
   const workloadData = useMemo(() => {
-    const stats = allEmployees.map((emp) => {
+    const stats = allEmployees
+      .filter((emp) => !(isHeadAdmin && emp.id === currentUser?.id))
+      .map((emp) => {
       const activeTasks = tasks.filter((t) => (t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id) && t.status !== "completed")
       
       const high = activeTasks.filter((t) => t.priority === "high").length

@@ -163,6 +163,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         notifyOnExtension: userData.notifyOnExtension ?? userData.notifyonextension ?? true,
         orgId: userData.orgId || userData.orgid,
         organizationName: userData.organizationName || userData.organizationname,
+        organizationLogo: userData.organizationLogo || userData.organizationlogo,
       }
       setCurrentUser(user)
       setCurrentRole(userData.role.toLowerCase() as UserRole)
@@ -1007,6 +1008,7 @@ const url = `/api/tasks/${taskId}`
             role: data.user.role.toLowerCase() as UserRole,
             orgId: data.user.orgId || data.user.orgid,
             organizationName: data.user.organizationName || data.user.organizationname,
+            organizationLogo: data.user.organizationLogo || data.user.organizationlogo,
           }
           setCurrentUser(normalizedUser)
           setCurrentRole(normalizedUser.role)

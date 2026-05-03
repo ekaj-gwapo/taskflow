@@ -5,16 +5,21 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Building2, ArrowRight, Loader2, Rocket, ShieldCheck } from "lucide-react"
-import { motion } from "framer-motion"
+import { Building2, ArrowRight, Loader2, Rocket, ShieldCheck, Camera, X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { useTaskContext } from "@/lib/task-context"
 import { toast } from "sonner"
+import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 export function OnboardingScreen() {
   const router = useRouter()
   const { login, currentUser, isLoadingSession } = useTaskContext()
   const [loading, setLoading] = useState(false)
   const [orgName, setOrgName] = useState("")
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   // Safety redirect
   useEffect(() => {
@@ -22,6 +27,27 @@ export function OnboardingScreen() {
       router.replace("/dashboard")
     }
   }, [currentUser, isLoadingSession, router])
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Logo must be less than 2MB")
+        return
+      }
+      setLogoFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeLogo = () => {
+    setLogoFile(null)
+    setLogoPreview(null)
+  }
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,13 +60,36 @@ export function OnboardingScreen() {
     const token = localStorage.getItem("token")
 
     try {
+      let finalLogoUrl = ""
+
+      if (logoFile) {
+        setIsUploading(true)
+        const formData = new FormData()
+        formData.append("file", logoFile)
+        
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData
+        })
+
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json()
+          finalLogoUrl = uploadData.url
+        }
+        setIsUploading(false)
+      }
+
       const response = await fetch("/api/organizations/create", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ name: orgName.trim() }),
+        body: JSON.stringify({ 
+          name: orgName.trim(),
+          logoUrl: finalLogoUrl
+        }),
       })
 
       const data = await response.json()
@@ -58,7 +107,8 @@ export function OnboardingScreen() {
           login("creator", currentUser.id, { 
             ...currentUser, 
             role: "creator", 
-            orgId: data.orgId 
+            orgId: data.orgId,
+            organizationLogo: finalLogoUrl
           })
         }
         
@@ -105,6 +155,41 @@ export function OnboardingScreen() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="flex flex-col items-center justify-center pt-2 pb-6">
+              <div className="relative">
+                <div className={cn(
+                  "h-24 w-24 rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden transition-all duration-300 bg-secondary/30",
+                  logoPreview ? "border-primary/50 shadow-lg shadow-primary/5" : "border-border hover:border-primary/30"
+                )}>
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain p-2" />
+                  ) : (
+                    <Building2 className="h-10 w-10 text-muted-foreground/40" />
+                  )}
+                </div>
+                
+                <label className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-all">
+                  <Camera className="h-5 w-5" />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                </label>
+
+                <AnimatePresence>
+                  {logoPreview && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      onClick={removeLogo}
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground shadow-md flex items-center justify-center hover:bg-destructive/90 transition-all"
+                    >
+                      <X className="h-3 w-3" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
+              <p className="mt-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Organization Logo</p>
+            </div>
+
             <form onSubmit={handleCreateOrg} className="space-y-5">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-foreground flex items-center gap-2">

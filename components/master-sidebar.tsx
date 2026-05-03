@@ -21,15 +21,22 @@ export function MasterSidebar({ activeView, onViewChange }: MasterSidebarProps) 
   ]
 
   return (
-    <div className="h-full flex flex-col bg-card border-r border-border shadow-sm">
-      <div className="p-6 border-b border-border bg-primary/5">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+    <div className="h-full flex flex-col bg-card border-r border-border shadow-sm overflow-hidden">
+      {/* Sidebar Header - Modern & Sleek */}
+      <div className="p-8 border-b border-border/40 relative overflow-hidden group bg-primary/5">
+        {/* Subtle background decoration */}
+        <div className="absolute -top-12 -left-12 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors" />
+        
+        <div className="flex items-center gap-4 relative">
+          <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105 duration-300">
             <ShieldAlert className="h-6 w-6 text-primary-foreground" />
           </div>
-          <div>
-            <h2 className="text-xl font-black tracking-tight text-foreground">MASTER</h2>
-            <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] leading-none">System Control</p>
+          <div className="flex flex-col">
+            <h2 className="text-base font-black tracking-tight text-foreground leading-none mb-1.5">MASTER</h2>
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em] leading-none">System Control</p>
+            </div>
           </div>
         </div>
       </div>
@@ -62,9 +69,20 @@ export function MasterSidebar({ activeView, onViewChange }: MasterSidebarProps) 
 
         <div className="pt-8">
           <p className="px-2 mb-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Platform</p>
-          <button className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-all">
-            <Settings className="h-5 w-5" />
-            <span className="font-bold text-sm tracking-tight">System Settings</span>
+          <button 
+            onClick={() => onViewChange("settings")}
+            className={cn(
+              "w-full flex items-center justify-between px-3 py-3 rounded-xl transition-all duration-200 group",
+              activeView === "settings"
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <Settings className={cn("h-5 w-5", activeView === "settings" ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary")} />
+              <span className="font-bold text-sm tracking-tight">System Settings</span>
+            </div>
+            {activeView === "settings" && <ChevronRight className="h-4 w-4" />}
           </button>
         </div>
       </div>

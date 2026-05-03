@@ -12,7 +12,7 @@ interface RecentlyCompletedTasksProps {
 }
 
 export function RecentlyCompletedTasks({ onSelectTask, onHide }: RecentlyCompletedTasksProps) {
-  const { tasks, seenCompletedTaskIds, markCompletedAsSeen } = useTaskContext()
+  const { tasks, seenCompletedTaskIds, markCompletedAsSeen, currentUser } = useTaskContext()
   
   const recentTasks = useMemo(() => {
     return tasks
@@ -108,9 +108,9 @@ export function RecentlyCompletedTasks({ onSelectTask, onHide }: RecentlyComplet
                       {task.title}
                     </p>
                     <p className="text-[11px] text-muted-foreground truncate font-medium">
-                      {displayAssignees.length > 0 
-                        ? displayAssignees.map(a => a.name).join(", ") 
-                        : "Unassigned"}
+                      {displayAssignees.filter(a => !(currentUser?.role?.toLowerCase() === "head_admin" && a.id === currentUser?.id)).length > 0 
+                        ? displayAssignees.filter(a => !(currentUser?.role?.toLowerCase() === "head_admin" && a.id === currentUser?.id)).map(a => a.name).join(", ") 
+                        : "TaskFlow Member"}
                     </p>
                   </div>
                   <div className="flex flex-col items-end shrink-0 text-muted-foreground ml-auto">

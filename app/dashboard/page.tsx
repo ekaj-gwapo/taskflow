@@ -13,6 +13,9 @@ import { MasterUserManagement } from "@/components/master-user-management"
 import { MasterSidebar } from "@/components/master-sidebar"
 import { MasterOverview } from "@/components/master-overview"
 import { MasterOrgManagement } from "@/components/master-org-management"
+import { MasterSettings } from "@/components/master-settings"
+import { Rocket, ArrowRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 function AppContent() {
   const { currentUser, currentRole, isLoadingSession, login } = useTaskContext()
@@ -26,7 +29,7 @@ function AppContent() {
       console.log("Dashboard Session Check:", { currentRole, orgId: currentUser?.orgId });
       if (!currentUser || !currentRole) {
         router.replace(`/auth/login${window.location.search}`)
-      } else if (currentRole !== "master_admin" && !currentUser.orgId) {
+      } else if (currentRole !== "master_admin" && currentRole !== "creator" && !currentUser.orgId) {
         console.log("Redirecting to onboarding because orgId is missing");
         router.replace("/auth/onboarding")
       }
@@ -90,6 +93,7 @@ function AppContent() {
               {activeMasterView === "organizations" && <MasterOrgManagement />}
               {activeMasterView === "users" && <MasterUserManagement />}
               {activeMasterView === "logs" && <div className="p-8">Activity Logs Coming Soon</div>}
+              {activeMasterView === "settings" && <MasterSettings />}
             </div>
           </div>
         ) : currentRole === "creator" ? (
@@ -98,7 +102,29 @@ function AppContent() {
               <AdminSidebar selectedEmployeeId={null} onSelectEmployee={() => {}} onSelectTask={() => {}} />
             </div>
             <div className="flex-1 overflow-y-auto bg-secondary/10">
-              <UserManagement />
+              {!currentUser.orgId ? (
+                <div className="h-full flex items-center justify-center p-6">
+                  <div className="max-w-md w-full text-center space-y-6 animate-in fade-in zoom-in duration-500">
+                    <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 mb-2">
+                      <Rocket className="h-10 w-10 text-primary" />
+                    </div>
+                    <h2 className="text-3xl font-black tracking-tight text-foreground">Ready to Launch?</h2>
+                    <p className="text-muted-foreground text-lg">
+                      You haven&apos;t created an organization yet. Let&apos;s set up your workspace to start managing tasks and teams.
+                    </p>
+                    <Button 
+                      size="lg" 
+                      onClick={() => router.push("/auth/onboarding")}
+                      className="w-full h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      Create Organization
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <UserManagement />
+              )}
             </div>
           </div>
         ) : (currentRole === "head_admin" || currentRole === "admin") ? (

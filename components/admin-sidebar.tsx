@@ -212,18 +212,34 @@ export function AdminSidebar({
   const pendingExtensionsCount = tasksWithPendingExtensions.length
 
   return (
-    <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg">
-      {/* Sidebar Header */}
-      <div className="p-6 border-b border-border bg-primary/5">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-            <LayoutDashboard className="h-6 w-6 text-primary-foreground" />
+    <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg overflow-hidden">
+      {/* Sidebar Header - Modern & Sleek */}
+      <div className="p-8 border-b border-border/40 relative overflow-hidden group">
+        {/* Subtle background decoration */}
+        <div className="absolute -top-12 -left-12 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+        
+        <div className="flex items-center gap-4 relative">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center shadow-sm overflow-hidden transition-transform group-hover:scale-105 duration-300">
+            {currentUser?.organizationLogo ? (
+              <img 
+                src={currentUser.organizationLogo} 
+                alt={currentUser.organizationName || "Logo"} 
+                className="w-full h-full object-contain p-1.5"
+              />
+            ) : (
+              <LayoutDashboard className="h-6 w-6 text-primary" />
+            )}
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold text-foreground tracking-tight">TaskFlow</span>
-            <span className="text-[10px] font-medium text-primary uppercase tracking-widest leading-none mt-0.5">
-              {currentUser?.organizationName || "Admin Panel"}
+          <div className="flex flex-col min-w-0">
+            <span className="text-base font-black text-foreground tracking-tight leading-none mb-1.5">
+              {currentUser?.organizationName || "TaskFlow"}
             </span>
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
+                {currentUser?.role?.replace('_', ' ') || "Organization"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -340,37 +356,6 @@ export function AdminSidebar({
                 </button>
               )}
 
-              {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN") && (
-                <button
-                  onClick={() => onSelectEmployee('archived-tasks')}
-                  className={cn(
-                    "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-4",
-                    selectedEmployeeId === 'archived-tasks'
-                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
-                  )}
-                >
-                  <div className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-md border",
-                    selectedEmployeeId === 'archived-tasks'
-                      ? "bg-white/20 border-white/30 text-primary-foreground"
-                      : "bg-primary/10 text-primary border-primary/20"
-                  )}>
-                    <Archive className="h-4 w-4" />
-                  </div>
-                  <span className={cn(
-                    "flex-1 text-sm font-semibold",
-                    selectedEmployeeId === 'archived-tasks' ? "text-white" : "text-foreground"
-                  )}>
-                    Archived Tasks
-                  </span>
-                  <ChevronRight className={cn(
-                    "h-3.5 w-3.5 shrink-0",
-                    selectedEmployeeId === 'archived-tasks' ? "text-white/70" : "text-muted-foreground"
-                  )} />
-                </button>
-              )}
-
               <div className="h-px bg-border/50 my-2" />
 
               <button
@@ -401,6 +386,37 @@ export function AdminSidebar({
                   selectedEmployeeId === 'team-projects' ? "text-white/70" : "text-muted-foreground"
                 )} />
               </button>
+
+              {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN") && (
+                <button
+                  onClick={() => onSelectEmployee('archived-tasks')}
+                  className={cn(
+                    "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-4",
+                    selectedEmployeeId === 'archived-tasks'
+                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                  )}
+                >
+                  <div className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-md border",
+                    selectedEmployeeId === 'archived-tasks'
+                      ? "bg-white/20 border-white/30 text-primary-foreground"
+                      : "bg-primary/10 text-primary border-primary/20"
+                  )}>
+                    <Archive className="h-4 w-4" />
+                  </div>
+                  <span className={cn(
+                    "flex-1 text-sm font-semibold",
+                    selectedEmployeeId === 'archived-tasks' ? "text-white" : "text-foreground"
+                  )}>
+                    Archived Tasks
+                  </span>
+                  <ChevronRight className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    selectedEmployeeId === 'archived-tasks' ? "text-white/70" : "text-muted-foreground"
+                  )} />
+                </button>
+              )}
 
               <button
                 onClick={() => onSelectEmployee('activity-log')}
