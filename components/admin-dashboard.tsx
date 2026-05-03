@@ -568,9 +568,12 @@ export function AdminDashboard({
         <motion.div layout className="flex-1 min-w-0 overflow-y-auto p-6 pr-4 lg:pr-5 space-y-6">
           {selectedEmployeeId !== 'user-management' && selectedEmployeeId !== 'profile' && (
             <>
-              <motion.div layout>
-                <SmartBriefing />
-              </motion.div>
+              {/* Welcome Panel - Only shown on the main Dashboard/Overview view */}
+              {!selectedEmployeeId && (
+                <motion.div layout>
+                  <SmartBriefing />
+                </motion.div>
+              )}
 
               {selectedEmployeeId === "my-tasks" && myTaskTab === "assigned" && (
                 <motion.div layout>

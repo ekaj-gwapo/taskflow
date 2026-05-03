@@ -153,9 +153,9 @@ export function EmployeeSidebar({
 
   return (
     <aside className={cn(
-      "shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg overflow-hidden transition-all duration-300 relative",
+      "shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg transition-all duration-300 relative",
       isCollapsed ? "w-20" : "w-80",
-      isMobile ? "w-80 h-full fixed inset-y-0 left-0 z-50" : ""
+      isMobile ? "w-80 h-full fixed inset-y-0 left-0 z-50 overflow-hidden" : ""
     )}>
       {/* Sidebar Header - Modern & Sleek */}
       <div className={cn(
@@ -202,8 +202,7 @@ export function EmployeeSidebar({
             size="icon"
             onClick={onToggleCollapse}
             className={cn(
-              "hidden lg:flex h-8 w-8 rounded-lg border border-border/50 bg-background/50 hover:bg-primary/10 hover:text-primary transition-all",
-              isCollapsed ? "absolute -right-0.5" : ""
+              "hidden lg:flex h-8 w-8 rounded-lg border border-border/50 bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all absolute top-8 -right-4 z-50",
             )}
           >
             <ChevronRight className={cn("h-4 w-4 transition-transform", isCollapsed ? "" : "rotate-180")} />
@@ -271,7 +270,7 @@ export function EmployeeSidebar({
 
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col min-h-full">
-          {activeTab === "tasks" && (
+          {(activeTab === "tasks" || isCollapsed) && (
            <div className="p-3 space-y-2 animate-in slide-in-from-left-1 duration-200">
               {!isCollapsed && <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-2 mt-2">Task Categories</p>}
               
@@ -408,7 +407,7 @@ export function EmployeeSidebar({
             </div>
           )}
 
-          {activeTab === "profile" && (
+          {activeTab === "profile" && !isCollapsed && (
             <div className="p-4 space-y-6 animate-in fade-in duration-300">
               <div className="flex flex-col items-center text-center p-6 rounded-xl bg-secondary/30 border border-border/50 shadow-inner">
                 <div className="relative group">

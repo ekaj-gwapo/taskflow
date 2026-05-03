@@ -328,7 +328,10 @@ export function EmployeeDashboard({
                 transition={{ duration: 0.2 }}
                 className="p-4 lg:p-6 lg:pr-5 flex flex-col gap-6"
               >
-                <SmartBriefing />
+                {/* Welcome Panel - Only shown on main Dashboard (Individual or Team views) */}
+                {(selectedCategory === "individual" || selectedCategory === "team") && (
+                  <SmartBriefing />
+                )}
 
                 {/* Urgent Tasks Section */}
                 {selectedCategory !== "profile" && (

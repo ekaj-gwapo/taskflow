@@ -187,9 +187,9 @@ export function AdminSidebar({
 
   return (
     <aside className={cn(
-      "shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg overflow-hidden transition-all duration-300 relative",
+      "shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg transition-all duration-300 relative",
       isCollapsed ? "w-20" : "w-80",
-      isMobile ? "w-80 h-full fixed inset-y-0 left-0 z-50" : ""
+      isMobile ? "w-80 h-full fixed inset-y-0 left-0 z-50 overflow-hidden" : ""
     )}>
       {/* Sidebar Header - Modern & Sleek */}
       <div className={cn(
@@ -236,8 +236,7 @@ export function AdminSidebar({
             size="icon"
             onClick={onToggleCollapse}
             className={cn(
-              "hidden lg:flex h-8 w-8 rounded-lg border border-border/50 bg-background/50 hover:bg-primary/10 hover:text-primary transition-all",
-              isCollapsed ? "absolute -right-0.5" : ""
+              "hidden lg:flex h-8 w-8 rounded-lg border border-border/50 bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all absolute top-8 -right-4 z-50",
             )}
           >
             <ChevronRight className={cn("h-4 w-4 transition-transform", isCollapsed ? "" : "rotate-180")} />
@@ -305,7 +304,7 @@ export function AdminSidebar({
 
       <div className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
-          {selectedEmployeeId !== "profile" ? (
+          { (selectedEmployeeId !== "profile" || isCollapsed) ? (
             <motion.div
               key="employees"
               initial={{ opacity: 0, x: -20 }}
@@ -683,6 +682,7 @@ export function AdminSidebar({
               transition={{ duration: 0.2 }}
               className="p-4 space-y-6"
             >
+              {/* Refined Internal Profile View */}
               <div className="relative group p-1 rounded-[2rem] bg-gradient-to-br from-primary/10 to-emerald-500/5 mb-2">
                 <div className="flex flex-col items-center text-center p-6 rounded-[1.9rem] bg-background/40 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-xl">
                   <div className="relative group/avatar mb-4">
@@ -690,11 +690,11 @@ export function AdminSidebar({
                       whileHover={{ scale: 1.05 }}
                       className="relative"
                     >
-                      <Avatar className="h-24 w-24 border-4 border-background shadow-2xl transition-transform cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
+                      <Avatar className="h-20 w-20 border-4 border-background shadow-2xl transition-transform cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
                         {currentUser?.avatar ? (
                           <AvatarImage src={currentUser.avatar} className="object-cover" />
                         ) : (
-                          <AvatarFallback className="text-2xl font-black bg-gradient-to-br from-primary to-emerald-500 text-white">
+                          <AvatarFallback className="text-xl font-black bg-gradient-to-br from-primary to-emerald-500 text-white">
                             {initials}
                           </AvatarFallback>
                         )}
@@ -705,26 +705,26 @@ export function AdminSidebar({
                         className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white cursor-pointer transition-opacity"
                         onClick={() => setIsProfileDialogOpen(true)}
                       >
-                        <Camera className="h-6 w-6" />
+                        <Camera className="h-5 w-5" />
                       </motion.div>
                     </motion.div>
-                    <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-lg bg-emerald-500 border-2 border-background shadow-lg shadow-emerald-500/20" title="Online" />
+                    <div className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-lg bg-emerald-500 border-2 border-background shadow-lg" title="Online" />
                   </div>
                   
-                  <h3 className="text-xl font-black text-foreground tracking-tight">{profileData.name}</h3>
-                  <div className="mt-1 flex flex-col gap-1">
-                    <span className="px-3 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] border border-primary/20">
-                      {currentUser?.role === 'head_admin' ? 'HEAD ADMIN' : currentUser?.role?.replace('_', ' ').toUpperCase()}
+                  <h3 className="text-lg font-black text-foreground tracking-tight">{profileData.name}</h3>
+                  <div className="mt-1">
+                    <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-black uppercase tracking-widest border border-primary/20">
+                      {currentUser?.role?.replace('_', ' ').toUpperCase()}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Appearance Section */}
+              {/* Sidebar Settings Section */}
               <div className="space-y-4 pt-4 border-t border-border/50">
                 <div className="flex items-center gap-2 px-1">
                   <Palette className="h-4 w-4 text-primary" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Appearance</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sidebar Settings</span>
                 </div>
 
                 <div className="space-y-3 px-1">
@@ -782,7 +782,7 @@ export function AdminSidebar({
                 </div>
 
                 <div className="space-y-3 px-1">
-                  <p className="text-[10px] text-muted-foreground font-medium">Color Mode</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Theme Mode</p>
                   <div className="flex gap-2">
                     <Button
                       variant={mode === "light" ? "default" : "outline"}
