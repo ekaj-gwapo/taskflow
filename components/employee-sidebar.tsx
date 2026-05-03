@@ -79,6 +79,10 @@ interface EmployeeSidebarProps {
   onSelectCategory: (category: "individual" | "team" | "profile" | "activity-log") => void
   isProfileOpen?: boolean
   setIsProfileOpen?: (open: boolean) => void
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
+  isMobile?: boolean
+  onCloseMobile?: () => void
 }
 
 export function EmployeeSidebar({
@@ -86,6 +90,10 @@ export function EmployeeSidebar({
   onSelectCategory,
   isProfileOpen,
   setIsProfileOpen,
+  isCollapsed = false,
+  onToggleCollapse,
+  isMobile = false,
+  onCloseMobile,
 }: EmployeeSidebarProps) {
   const { currentUser, tasks, login, logout, seenTaskIds } = useTaskContext()
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
@@ -144,14 +152,24 @@ export function EmployeeSidebar({
   const hasUnseenTeamTasks = teamTasks.some(t => !seenTaskIds.has(t.id) && t.status !== 'completed')
 
   return (
-    <aside className="w-80 shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg overflow-hidden">
+    <aside className={cn(
+      "shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg overflow-hidden transition-all duration-300 relative",
+      isCollapsed ? "w-20" : "w-80",
+      isMobile ? "w-80 h-full fixed inset-y-0 left-0 z-50" : ""
+    )}>
       {/* Sidebar Header - Modern & Sleek */}
-      <div className="p-8 border-b border-border/40 relative overflow-hidden group">
+      <div className={cn(
+        "p-4 border-b border-border/40 relative overflow-hidden group flex items-center justify-between",
+        isCollapsed ? "justify-center" : "p-8"
+      )}>
         {/* Subtle background decoration */}
         <div className="absolute -top-12 -left-12 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
         
-        <div className="flex items-center gap-4 relative">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center shadow-sm overflow-hidden transition-transform group-hover:scale-105 duration-300">
+        <div className={cn("flex items-center gap-4 relative", isCollapsed ? "justify-center" : "")}>
+          <div className={cn(
+            "rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center shadow-sm overflow-hidden transition-transform group-hover:scale-105 duration-300",
+            isCollapsed ? "h-10 w-10" : "h-12 w-12"
+          )}>
             {currentUser?.organizationLogo ? (
               <img 
                 src={currentUser.organizationLogo} 
@@ -159,173 +177,233 @@ export function EmployeeSidebar({
                 className="w-full h-full object-contain p-1.5"
               />
             ) : (
-              <ClipboardList className="h-6 w-6 text-primary" />
+              <LayoutDashboard className="h-6 w-6 text-primary" />
             )}
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-base font-black text-foreground tracking-tight leading-none mb-1.5">
-              {currentUser?.organizationName || "TaskFlow"}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
-                {currentUser?.role?.replace('_', ' ') || "Organization"}
+          {!isCollapsed && (
+            <div className="flex flex-col min-w-0">
+              <span className="text-base font-black text-foreground tracking-tight leading-none mb-1.5">
+                {currentUser?.organizationName || "TaskFlow"}
               </span>
+              <div className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
+                  {currentUser?.role?.replace('_', ' ') || "Employee"}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
+
+        {/* Desktop Collapse Toggle */}
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className={cn(
+              "hidden lg:flex h-8 w-8 rounded-lg border border-border/50 bg-background/50 hover:bg-primary/10 hover:text-primary transition-all",
+              isCollapsed ? "absolute -right-0.5" : ""
+            )}
+          >
+            <ChevronRight className={cn("h-4 w-4 transition-transform", isCollapsed ? "" : "rotate-180")} />
+          </Button>
+        )}
+
+        {/* Mobile Close Button */}
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onCloseMobile}
+            className="lg:hidden h-8 w-8"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 p-3 border-b border-border bg-background/50">
-        <button
-          onClick={() => {
-            setActiveTab("tasks")
-            if (selectedCategory === "profile") {
-              onSelectCategory("individual")
-            }
-          }}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "tasks"
-              ? "bg-primary text-primary-foreground shadow-md"
-              : "text-muted-foreground hover:bg-accent hover:text-foreground"
-            }`}
-        >
-          <div className="relative">
+      {!isCollapsed && (
+        <div className="flex gap-1 p-3 border-b border-border bg-background/50">
+          <button
+            onClick={() => { setActiveTab("tasks"); onSelectCategory("individual"); }}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "tasks"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+          >
             <ClipboardList className="h-4 w-4" />
-            {hasUnseenIndividualTasks && (
-              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive border border-background animate-pulse" />
-            )}
-          </div>
-          <span>Tasks</span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("profile")
-            onSelectCategory("profile")
-          }}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "profile"
-              ? "bg-primary text-primary-foreground shadow-md"
-              : "text-muted-foreground hover:bg-accent hover:text-foreground"
-            }`}
-        >
-          <User className="h-4 w-4" />
-          <span>Profile</span>
-        </button>
-      </div>
+            <span>Tasks</span>
+          </button>
+          <button
+            onClick={() => { setActiveTab("profile"); onSelectCategory("profile"); }}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "profile"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+          >
+            <User className="h-4 w-4" />
+            <span>Profile</span>
+          </button>
+        </div>
+      )}
+      {isCollapsed && (
+        <div className="flex flex-col gap-2 p-3 border-b border-border bg-background/50 items-center">
+           <Button
+            variant={activeTab === "tasks" ? "default" : "ghost"}
+            size="icon"
+            onClick={() => { setActiveTab("tasks"); onSelectCategory("individual"); }}
+            className="h-10 w-10 rounded-xl"
+           >
+              <ClipboardList className="h-5 w-5" />
+           </Button>
+           <Button
+            variant={activeTab === "profile" ? "default" : "ghost"}
+            size="icon"
+            onClick={() => { setActiveTab("profile"); onSelectCategory("profile"); }}
+            className="h-10 w-10 rounded-xl"
+           >
+              <User className="h-5 w-5" />
+           </Button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col min-h-full">
           {activeTab === "tasks" && (
-            <div className="p-3 space-y-2 animate-in slide-in-from-left-1 duration-200">
-              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-2 mt-2">Task Categories</p>
+           <div className="p-3 space-y-2 animate-in slide-in-from-left-1 duration-200">
+              {!isCollapsed && <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-2 mt-2">Task Categories</p>}
               
               <button
                 onClick={() => onSelectCategory("individual")}
+                title={isCollapsed ? "My Tasks" : ""}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
+                  "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
+                  isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
                   selectedCategory === "individual"
                     ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
                     : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
                 )}
               >
                 <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md border",
+                  "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
                   selectedCategory === "individual"
                     ? "bg-white/20 border-white/30 text-primary-foreground"
                     : "bg-primary/10 text-primary border-primary/20"
                 )}>
                   <User className="h-4 w-4" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <span className={cn(
-                    "block text-sm font-semibold",
-                    selectedCategory === "individual" ? "text-white" : "text-foreground"
-                  )}>
-                    My Tasks
-                  </span>
-                    <span className={cn(
-                      "text-[10px] font-medium",
-                      selectedCategory === "individual" ? "text-white/70" : "text-muted-foreground"
-                    )}>
-                      Tasks assigned specifically to you
-                    </span>
-                  </div>
-                  {hasUnseenIndividualTasks && (
-                    <div className="text-[10px] font-bold px-2 py-1 rounded-full bg-destructive text-white animate-pulse shadow-sm min-w-[38px] text-center">
-                      NEW
-                    </div>
-                  )}
-                </button>
+                {!isCollapsed && (
+                  <>
+                    <div className="flex-1 min-w-0">
+                      <span className={cn(
+                        "block text-sm font-semibold",
+                        selectedCategory === "individual" ? "text-white" : "text-foreground"
+                      )}>
+                        My Tasks
+                      </span>
+                        <span className={cn(
+                          "text-[10px] font-medium",
+                          selectedCategory === "individual" ? "text-white/70" : "text-muted-foreground"
+                        )}>
+                          Tasks assigned specifically to you
+                        </span>
+                      </div>
+                      {hasUnseenIndividualTasks && (
+                        <div className="text-[10px] font-bold px-2 py-1 rounded-full bg-destructive text-white animate-pulse shadow-sm min-w-[38px] text-center">
+                          NEW
+                        </div>
+                      )}
+                  </>
+                )}
+                {isCollapsed && hasUnseenIndividualTasks && (
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                )}
+              </button>
 
               <button
                 onClick={() => onSelectCategory("team")}
+                title={isCollapsed ? "Team Tasks" : ""}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm",
+                  "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
+                  isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
                   selectedCategory === "team"
                     ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
                     : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
                 )}
               >
                 <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md border",
+                  "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
                   selectedCategory === "team"
                     ? "bg-white/20 border-white/30 text-primary-foreground"
                     : "bg-primary/10 text-primary border-primary/20"
                 )}>
                   <Users className="h-4 w-4" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <span className={cn(
-                    "block text-sm font-semibold",
-                    selectedCategory === "team" ? "text-white" : "text-foreground"
-                  )}>
-                    Team Tasks
-                  </span>
-                    <span className={cn(
-                      "text-[10px] font-medium",
-                      selectedCategory === "team" ? "text-white/70" : "text-muted-foreground"
-                    )}>
-                      Collaborative projects and tasks
-                    </span>
-                  </div>
-                  {hasUnseenTeamTasks && (
-                    <div className="text-[10px] font-bold px-2 py-1 rounded-full bg-destructive text-white animate-pulse shadow-sm min-w-[38px] text-center">
-                      NEW
-                    </div>
-                  )}
-                </button>
+                {!isCollapsed && (
+                  <>
+                    <div className="flex-1 min-w-0">
+                      <span className={cn(
+                        "block text-sm font-semibold",
+                        selectedCategory === "team" ? "text-white" : "text-foreground"
+                      )}>
+                        Team Tasks
+                      </span>
+                        <span className={cn(
+                          "text-[10px] font-medium",
+                          selectedCategory === "team" ? "text-white/70" : "text-muted-foreground"
+                        )}>
+                          Collaborative projects and tasks
+                        </span>
+                      </div>
+                      {hasUnseenTeamTasks && (
+                        <div className="text-[10px] font-bold px-2 py-1 rounded-full bg-destructive text-white animate-pulse shadow-sm min-w-[38px] text-center">
+                          NEW
+                        </div>
+                      )}
+                  </>
+                )}
+                {isCollapsed && hasUnseenTeamTasks && (
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                )}
+              </button>
 
               <button
                 onClick={() => onSelectCategory("activity-log")}
+                title={isCollapsed ? "Activity Log" : ""}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm",
+                  "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm",
+                  isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
                   selectedCategory === "activity-log"
                     ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
                     : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
                 )}
               >
                 <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md border",
+                  "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
                   selectedCategory === "activity-log"
                     ? "bg-white/20 border-white/30 text-primary-foreground"
                     : "bg-primary/10 text-primary border-primary/20"
                 )}>
                   <Activity className="h-4 w-4" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <span className={cn(
-                    "block text-sm font-semibold",
-                    selectedCategory === "activity-log" ? "text-white" : "text-foreground"
-                  )}>
-                    Activity Log
-                  </span>
-                  <span className={cn(
-                    "text-[10px] font-medium",
-                    selectedCategory === "activity-log" ? "text-white/70" : "text-muted-foreground"
-                  )}>
-                    Your history and updates
-                  </span>
-                </div>
+                {!isCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <span className={cn(
+                      "block text-sm font-semibold",
+                      selectedCategory === "activity-log" ? "text-white" : "text-foreground"
+                    )}>
+                      Activity Log
+                    </span>
+                    <span className={cn(
+                      "text-[10px] font-medium",
+                      selectedCategory === "activity-log" ? "text-white/70" : "text-muted-foreground"
+                    )}>
+                      Recent actions and updates
+                    </span>
+                  </div>
+                )}
               </button>
             </div>
           )}

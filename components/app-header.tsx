@@ -2,7 +2,7 @@
 
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Shield, LogOut } from "lucide-react"
+import { LayoutDashboard, Shield, LogOut, Menu } from "lucide-react"
 import { NotificationBell } from "@/components/notification-bell"
 import {
   AlertDialog,
@@ -16,7 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-export function AppHeader() {
+export function AppHeader({ onMenuClick }: { onMenuClick?: () => void }) {
   const { currentUser, currentRole } = useTaskContext()
 
   if (!currentUser) return null
@@ -26,6 +26,16 @@ export function AppHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
+          {onMenuClick && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden h-9 w-9"
+              onClick={onMenuClick}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
           {/* Logo Placeholder - Replace with your logo */}
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary hover:bg-primary/90 transition-colors" title="Click to upload your logo">
             <LayoutDashboard className="h-5 w-5 text-primary-foreground" />

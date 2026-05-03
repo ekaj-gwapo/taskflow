@@ -23,7 +23,7 @@ export function ActivityLogView() {
         });
         if (res.ok) {
           const data = await res.json();
-          console.log("Activity logs data:", data);
+
           setLogs(data.logs || []);
         }
       } catch (err) {

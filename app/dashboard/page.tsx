@@ -26,11 +26,11 @@ function AppContent() {
 
   useEffect(() => {
     if (!isLoadingSession) {
-      console.log("Dashboard Session Check:", { currentRole, orgId: currentUser?.orgId });
+
       if (!currentUser || !currentRole) {
         router.replace(`/auth/login${window.location.search}`)
       } else if (currentRole !== "master_admin" && currentRole !== "creator" && !currentUser.orgId) {
-        console.log("Redirecting to onboarding because orgId is missing");
+
         router.replace("/auth/onboarding")
       }
     }
@@ -80,12 +80,13 @@ function AppContent() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <AppHeader />
-      <main className="flex-1 flex min-h-0">
+    <div className="flex flex-col h-screen w-full overflow-hidden">
+      <main className="flex-1 flex w-full min-h-0 overflow-hidden">
         {currentRole === "master_admin" ? (
-          <div className="flex-1 flex min-h-0">
-            <div className="hidden lg:block w-80 shrink-0 border-r border-border">
+          <div className="flex-1 flex flex-col min-h-0">
+            <AppHeader />
+            <div className="flex-1 flex min-h-0 overflow-hidden">
+              <div className="hidden lg:block w-80 shrink-0 border-r border-border">
               <MasterSidebar activeView={activeMasterView} onViewChange={setActiveMasterView} />
             </div>
             <div className="flex-1 overflow-y-auto bg-secondary/5">
@@ -96,10 +97,13 @@ function AppContent() {
               {activeMasterView === "settings" && <MasterSettings />}
             </div>
           </div>
-        ) : currentRole === "creator" ? (
+        </div>
+      ) : currentRole === "creator" ? (
           <div className="flex-1 flex min-h-0">
             {!currentUser.orgId ? (
-              <div className="flex-1 h-full flex items-center justify-center p-6 bg-secondary/10">
+              <div className="flex-1 flex flex-col min-h-0">
+                <AppHeader />
+                <div className="flex-1 flex items-center justify-center p-6 bg-secondary/10 overflow-y-auto">
                 <div className="max-w-md w-full text-center space-y-6 animate-in fade-in zoom-in duration-500">
                   <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 mb-2">
                     <Rocket className="h-10 w-10 text-primary" />
@@ -118,7 +122,8 @@ function AppContent() {
                   </Button>
                 </div>
               </div>
-            ) : (
+            </div>
+          ) : (
               <AdminDashboard 
                 isProfileOpen={isProfileOpen} 
                 setIsProfileOpen={setIsProfileOpen} 
