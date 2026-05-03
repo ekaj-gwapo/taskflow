@@ -108,8 +108,16 @@ export function RecentlyCompletedTasks({ onSelectTask, onHide }: RecentlyComplet
                       {task.title}
                     </p>
                     <p className="text-[11px] text-muted-foreground truncate font-medium">
-                      {displayAssignees.filter(a => !(currentUser?.role?.toLowerCase() === "head_admin" && a.id === currentUser?.id)).length > 0 
-                        ? displayAssignees.filter(a => !(currentUser?.role?.toLowerCase() === "head_admin" && a.id === currentUser?.id)).map(a => a.name).join(", ") 
+                      {displayAssignees.filter(a => {
+                        const role = currentUser?.role?.toLowerCase()
+                        const isAdminRole = role === "head_admin" || role === "admin"
+                        return !(isAdminRole && a.id === currentUser?.id)
+                      }).length > 0 
+                        ? displayAssignees.filter(a => {
+                            const role = currentUser?.role?.toLowerCase()
+                            const isAdminRole = role === "head_admin" || role === "admin"
+                            return !(isAdminRole && a.id === currentUser?.id)
+                          }).map(a => a.name).join(", ") 
                         : "TaskFlow Member"}
                     </p>
                   </div>

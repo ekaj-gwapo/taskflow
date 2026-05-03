@@ -385,7 +385,7 @@ export function TaskDetailPanel({
                 <span className="font-semibold text-foreground">{task.createdBy.name}</span>
                 <span className="uppercase text-[9px] font-bold tracking-wider bg-primary/10 text-primary px-1.5 py-0.5 rounded-md border border-primary/20 shrink-0">{task.createdBy.role}</span>
               </span>
-              {task.delegatedBy && task.delegatedBy.id !== task.createdBy.id && (
+              {task.delegatedBy && task.delegatedBy.id?.toLowerCase() !== task.createdBy.id?.toLowerCase() && (
                 <span className="flex items-center gap-1.5 text-muted-foreground/80 flex-wrap">
                   <span className="text-primary/60 font-bold">↳</span> Delegated by <span className="font-semibold text-foreground">{task.delegatedBy.name}</span>
                 </span>
@@ -479,7 +479,17 @@ export function TaskDetailPanel({
                           <CommandList className="max-h-[250px]">
                             <CommandEmpty>No employee found.</CommandEmpty>
                             <CommandGroup className="p-1.5">
-                              {allEmployees.filter(emp => emp.id !== currentUser?.id).map((emp) => {
+                              {allEmployees.filter(emp => {
+                                // Show everyone except current user normally
+                                // BUT if current user is Admin/Head Admin/Creator/Superadmin, show them too 
+                                // OR if they are already an assignee, show them so they can be removed
+                                const isManagement = ["admin", "head_admin", "creator", "superadmin"].includes(currentUser?.role?.toLowerCase() || "");
+                                const isAlreadyAssignee = localAssigneeIds.includes(currentUser?.id || "");
+                                if (emp.id === currentUser?.id) {
+                                  return isManagement || isAlreadyAssignee;
+                                }
+                                return true;
+                              }).map((emp) => {
                                 const isSelected = localAssigneeIds.includes(emp.id)
                                 return (
                                   <CommandItem

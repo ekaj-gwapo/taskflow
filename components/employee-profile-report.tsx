@@ -50,11 +50,16 @@ export function EmployeeProfileReport() {
 
     const userRole = currentUser.role?.toLowerCase()
     const isHeadAdmin = userRole === 'head_admin'
-    const isManagement = userRole === 'admin' || userRole === 'head_admin' || userRole === 'superadmin'
+    const isAdmin = userRole === 'admin'
+    const isManagement = isAdmin || isHeadAdmin || userRole === 'superadmin'
 
-    const relevantTasks = isManagement 
-      ? tasks 
-      : tasks.filter(t => t.assignees?.some(a => a.id === currentUser.id) || t.assigneeId === currentUser.id)
+    // For personal stats: tasks actually assigned TO this user
+    const personalTasks = tasks.filter(t =>
+      t.assignees?.some(a => a.id === currentUser.id) || t.assigneeId === currentUser.id
+    )
+
+    // For overview (Head Admin): all org tasks
+    const relevantTasks = isHeadAdmin ? tasks : personalTasks
 
     const completed = relevantTasks.filter(t => t.status === "completed")
     const inProgress = relevantTasks.filter(t => t.status === "in-progress")
@@ -62,7 +67,7 @@ export function EmployeeProfileReport() {
     
     // Calculate On-Time Rate
     const onTimeCompleted = completed.filter(t => {
-      if (!t.completedAt) return true // Should not happen for completed
+      if (!t.completedAt) return true
       return new Date(t.completedAt) <= new Date(t.dueDate)
     })
 
@@ -75,20 +80,20 @@ export function EmployeeProfileReport() {
       ? Math.round((completed.length / relevantTasks.length) * 100) 
       : 0
 
-    // Calculate Total Points
+    // Calculate Total Points (personal — tasks assigned to them)
     let totalPoints = 0
-    completed.forEach(t => {
+    const personalCompleted = personalTasks.filter(t => t.status === "completed")
+    personalCompleted.forEach(t => {
       const assignment = t.assignees?.find(a => a.id === currentUser.id)
       if (assignment?.points) {
         totalPoints += assignment.points
       }
     })
 
-    // Weekly Accomplishment
-    const completedThisWeek = completed.filter(t => isDateInCurrentWeek(t.completedAt))
+    // Weekly Accomplishment (personal)
+    const completedThisWeek = personalCompleted.filter(t => isDateInCurrentWeek(t.completedAt))
 
     // Admin Specific Stats
-    const isAdmin = userRole === 'admin' || userRole === 'head_admin' || userRole === 'superadmin'
     const createdTasksCount = tasks.filter(t => t.createdById === currentUser.id).length
     const reassignedTasksCount = logs.filter(l => 
       l.userId === currentUser.id && 
@@ -97,6 +102,8 @@ export function EmployeeProfileReport() {
 
     return {
       total: relevantTasks.length,
+      personalTotal: personalTasks.length,
+      personalCompleted: personalCompleted.length,
       completed: completed.length,
       inProgress: inProgress.length,
       overdue: overdue.length,
@@ -106,6 +113,7 @@ export function EmployeeProfileReport() {
       completedThisWeek: completedThisWeek.length,
       isAdmin,
       isHeadAdmin,
+      isManagement,
       createdTasksCount,
       reassignedTasksCount
     }
@@ -113,29 +121,30 @@ export function EmployeeProfileReport() {
 
   if (!stats) return null
 
-  const metrics = [
-    { 
-      icon: <Target className="h-4 w-4 text-blue-500" />, 
-      label: stats.isAdmin ? "Total Overseen" : "Total Assigned", 
-      value: stats.total, 
-      description: stats.isAdmin ? "Organizational tasks" : "Lifetime tasks", 
-      color: "blue" 
-    },
-  ]
+  // For Head Admin: show org overview metrics
+  // For Admin: show personal task metrics (assigned to them) + management metrics
+  // For Employee: show personal task metrics
+  const isHeadAdmin = stats.isHeadAdmin
+  const isAdmin = stats.isAdmin
 
-  // Only show individual performance metrics if not a head_admin 
-  // AND either they are an employee OR they actually have personal progress/points
-  const showIndividualStats = !stats.isHeadAdmin && (!stats.isAdmin || stats.totalPoints > 0 || stats.completed > 0)
+  const metrics = []
 
-  if (showIndividualStats) {
+  if (isHeadAdmin) {
+    // Head Admin: org-wide overview
     metrics.push(
-      { icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />, label: "Accomplished", value: stats.completed, description: "Completed tasks", color: "emerald" },
+      { icon: <Target className="h-4 w-4 text-blue-500" />, label: "Total Overseen", value: stats.total, description: "Organizational tasks", color: "blue" },
+    )
+  } else {
+    // Admin and Employee: personal task stats
+    metrics.push(
+      { icon: <Target className="h-4 w-4 text-blue-500" />, label: "Total Assigned", value: stats.personalTotal, description: "Lifetime tasks", color: "blue" },
+      { icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />, label: "Accomplished", value: stats.personalCompleted, description: "Completed tasks", color: "emerald" },
       { icon: <Zap className="h-4 w-4 text-amber-500" />, label: "Points Earned", value: stats.totalPoints, description: "Performance score", color: "amber" },
       { icon: <TrendingUp className="h-4 w-4 text-purple-500" />, label: "This Week", value: stats.completedThisWeek, description: "Recent success", color: "purple" }
     )
   }
 
-  if (stats.isAdmin) {
+  if (stats.isAdmin || stats.isHeadAdmin) {
     metrics.push(
       { icon: <PlusCircle className="h-4 w-4 text-sky-500" />, label: "Tasks Created", value: stats.createdTasksCount, description: "Total initialized", color: "blue" },
       { icon: <RefreshCw className="h-4 w-4 text-orange-500" />, label: "Reassigned", value: stats.reassignedTasksCount, description: "Tasks delegated", color: "amber" }

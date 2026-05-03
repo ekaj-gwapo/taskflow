@@ -131,7 +131,7 @@ function EmployeeTaskCard({
                 <span className="text-[10px] text-muted-foreground font-medium bg-secondary/50 px-1.5 py-0.5 rounded border border-border/50">
                   Created by <span className="text-foreground">{task.createdBy.name}</span>
                 </span>
-                {task.delegatedBy && task.delegatedBy.id !== task.createdBy.id && (
+                {task.delegatedBy && task.delegatedBy.id?.toLowerCase() !== task.createdBy.id?.toLowerCase() && (
                   <span className="text-[10px] text-primary/80 font-medium bg-primary/5 px-1.5 py-0.5 rounded border border-primary/20">
                     ↳ Delegated by <span className="text-foreground">{task.delegatedBy.name}</span>
                   </span>

@@ -9,10 +9,11 @@ import { Activity, AlertCircle, ChevronDown } from "lucide-react"
 export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
   const { tasks, allEmployees, currentUser } = useTaskContext()
   const isHeadAdmin = currentUser?.role?.toLowerCase() === "head_admin"
+  const isAdmin = currentUser?.role?.toLowerCase() === "admin"
 
   const workloadData = useMemo(() => {
     const stats = allEmployees
-      .filter((emp) => !(isHeadAdmin && emp.id === currentUser?.id))
+      .filter((emp) => !((isHeadAdmin || isAdmin) && emp.id === currentUser?.id))
       .map((emp) => {
       const activeTasks = tasks.filter((t) => (t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id) && t.status !== "completed")
       

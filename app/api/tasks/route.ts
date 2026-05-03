@@ -287,18 +287,18 @@ export async function POST(request: NextRequest) {
       createdById: task.createdById || task.createdbyid || null,
       createdBy: (task.createdById || task.createdbyid) ? { 
         id: task.createdById || task.createdbyid, 
-        name: task.creatorName, 
-        email: task.creatorEmail, 
-        role: task.creatorRole, 
-        avatar: task.creatorAvatar 
+        name: task.creatorName || task.creatorname, 
+        email: task.creatorEmail || task.creatoremail, 
+        role: task.creatorRole || task.creatorrole, 
+        avatar: task.creatorAvatar || task.creatoravatar 
       } : null,
       delegatedById: task.delegatedById || task.delegatedbyid || null,
       delegatedBy: (task.delegatedById || task.delegatedbyid) ? { 
         id: task.delegatedById || task.delegatedbyid, 
-        name: task.delegatorName, 
-        email: task.delegatorEmail, 
-        role: task.delegatorRole, 
-        avatar: task.delegatorAvatar 
+        name: task.delegatorName || task.delegatorname, 
+        email: task.delegatorEmail || task.delegatoremail, 
+        role: task.delegatorRole || task.delegatorrole, 
+        avatar: task.delegatorAvatar || task.delegatoravatar 
       } : null,
       createdAt: task.createdAt || task.createdat,
       updatedAt: task.updatedAt || task.updatedat,

@@ -81,6 +81,42 @@ export async function POST(
       createdAt: rawStepNote.createdAt || rawStepNote.createdat
     };
 
+    // Notify relevant users
+    try {
+      const taskId = (await params).id;
+      // 1. Get all assignees
+      const assignments = await db.getAll("SELECT userId FROM task_assignments WHERE taskId = ?", [taskId]);
+      const assigneeIds = assignments.map(a => a.userId || a.userid);
+      
+      const createdById = task.createdById || task.createdbyid;
+      const delegatedById = task.delegatedById || task.delegatedbyid;
+      const assigneeId = task.assigneeId || task.assigneeid;
+
+      if (assigneeId) assigneeIds.push(assigneeId);
+      
+      // 2. Add creator and delegator
+      if (createdById) assigneeIds.push(createdById);
+      if (delegatedById) assigneeIds.push(delegatedById);
+      
+      // 3. Remove duplicates, nulls, and the author
+      const notifyUserIds = Array.from(new Set(assigneeIds.filter(id => id && id !== auth.user!.id)));
+      
+      if (notifyUserIds.length > 0) {
+        const now = new Date().toISOString();
+        const notificationTitle = `New Step Note on "${task.title}"`;
+        const notificationMessage = `${auth.user!.name} added a note to a step: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`;
+        
+        for (const userId of notifyUserIds) {
+          await db.execute(
+            "INSERT INTO notifications (id, userId, type, title, message, link, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [uuidv4(), userId, "STEP_NOTE_ADDED", notificationTitle, notificationMessage, `/tasks/${taskId}`, now]
+          );
+        }
+      }
+    } catch (notifError) {
+      console.error("Failed to create step note notifications:", notifError);
+    }
+
     return NextResponse.json(
       { message: "Note created successfully", note: stepNote },
       { status: 201 }

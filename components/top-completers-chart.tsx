@@ -53,10 +53,14 @@ export function TopCompletersChart({ onHide }: { onHide?: () => void }) {
   const { tasks, allEmployees, currentUser } = useTaskContext()
   const [isRevealed, setIsRevealed] = useState(false)
   const isHeadAdmin = currentUser?.role?.toLowerCase() === "head_admin"
+  const isAdmin = currentUser?.role?.toLowerCase() === "admin"
+  const isAdminOrAbove = isHeadAdmin || isAdmin
+  // Only Head Admin and Superadmin can reveal names — Admins cannot
+  const canRevealNames = currentUser?.role?.toLowerCase() === "head_admin" || currentUser?.role?.toLowerCase() === "superadmin" || currentUser?.role?.toLowerCase() === "creator"
 
   const leaderboard = useMemo(() => {
     const stats = allEmployees
-      .filter((emp) => !(isHeadAdmin && emp.id === currentUser?.id))
+      .filter((emp) => !((isHeadAdmin || isAdmin) && emp.id === currentUser?.id))
       .map((emp) => {
       const empTasks = tasks.filter((t) => t.assignees?.some(a => a.id === emp.id) || t.assigneeId === emp.id)
       const completedTasks = empTasks.filter((t) => t.status === "completed")
@@ -113,12 +117,14 @@ export function TopCompletersChart({ onHide }: { onHide?: () => void }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsRevealed(!isRevealed)}
-              className="text-[10px] font-bold uppercase tracking-wider text-primary hover:underline bg-primary/5 px-2 py-1 rounded"
-            >
-              {isRevealed ? "Hide Names" : "Reveal Names"}
-            </button>
+            {canRevealNames && (
+              <button
+                onClick={() => setIsRevealed(!isRevealed)}
+                className="text-[10px] font-bold uppercase tracking-wider text-primary hover:underline bg-primary/5 px-2 py-1 rounded"
+              >
+                {isRevealed ? "Hide Names" : "Reveal Names"}
+              </button>
+            )}
             {onHide && (
               <button 
                 onClick={(e) => {
