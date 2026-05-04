@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, type ReactNode, Suspense } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import {
   type User,
@@ -88,6 +88,30 @@ interface TaskContextType {
 
 const TaskContext = createContext<TaskContextType | null>(null)
 
+function SearchParamsSyncer({
+  setSelectedTaskId,
+  setTargetSection,
+}: {
+  setSelectedTaskId: (taskId: string | null) => void
+  setTargetSection: (section: string | null) => void
+}) {
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const taskId = searchParams.get("taskId")
+    const section = searchParams.get("section")
+    
+    if (taskId) {
+      setSelectedTaskId(taskId)
+    }
+    if (section) {
+      setTargetSection(section)
+    }
+  }, [searchParams, setSelectedTaskId, setTargetSection])
+
+  return null
+}
+
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null)
@@ -102,20 +126,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [targetSection, setTargetSection] = useState<string | null>(null)
 
-  const searchParams = useSearchParams()
 
-  // Sync with URL params on initial load
-  useEffect(() => {
-    const taskId = searchParams.get("taskId")
-    const section = searchParams.get("section")
-    
-    if (taskId) {
-      setSelectedTaskId(taskId)
-    }
-    if (section) {
-      setTargetSection(section)
-    }
-  }, [searchParams])
   
   const markNotificationAsRead = useCallback(async (options?: { id?: string; taskId?: string }) => {
     if (!currentUser) return
@@ -1147,6 +1158,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         setTargetSection,
       }}
     >
+      <Suspense fallback={null}>
+        <SearchParamsSyncer 
+          setSelectedTaskId={setSelectedTaskId} 
+          setTargetSection={setTargetSection} 
+        />
+      </Suspense>
       {children}
     </TaskContext.Provider>
   )
