@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ClipboardList, User, Mail, Phone, MapPin, Save, X, LayoutDashboard, Search, ChevronRight, Shield, Clipboard, Users, Activity, Palette, Check, Sun, Moon, LogOut, Layers } from "lucide-react"
+import { ClipboardList, User, Mail, Phone, MapPin, Save, X, LayoutDashboard, Search, ChevronRight, Shield, Clipboard, Users, Activity, Palette, Check, Sun, Moon, LogOut, Layers, Camera } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ProfileDialog } from "@/components/profile-dialog"
 import {
@@ -153,22 +154,21 @@ export function EmployeeSidebar({
 
   return (
     <aside className={cn(
-      "shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg transition-all duration-300 relative",
-      isCollapsed ? "w-20" : "w-80",
-      isMobile ? "w-80 h-full fixed inset-y-0 left-0 z-50 overflow-hidden" : ""
+      "shrink-0 border-r border-border/50 bg-card/60 backdrop-blur-2xl flex flex-col h-full transition-all duration-500 ease-in-out relative z-40 shadow-[0_0_50px_-12px_rgba(0,0,0,0.1)]",
+      isCollapsed ? "w-24" : "w-80",
+      isMobile ? "w-80 h-full fixed inset-y-0 left-0 z-50 overflow-hidden shadow-2xl" : ""
     )}>
-      {/* Sidebar Header - Modern & Sleek */}
+      {/* Dynamic Background Effect */}
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent opacity-50 pointer-events-none" />
+
       <div className={cn(
-        "p-4 border-b border-border/40 relative overflow-hidden group flex items-center justify-between",
-        isCollapsed ? "justify-center" : "p-8"
+        "p-4 border-b border-border/40 relative group flex items-center justify-between",
+        isCollapsed ? "justify-center" : ""
       )}>
-        {/* Subtle background decoration */}
-        <div className="absolute -top-12 -left-12 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
-        
-        <div className={cn("flex items-center gap-4 relative", isCollapsed ? "justify-center" : "")}>
+        <div className={cn("flex items-center gap-3", isCollapsed ? "flex-col" : "")}>
           <div className={cn(
-            "rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center shadow-sm overflow-hidden transition-transform group-hover:scale-105 duration-300",
-            isCollapsed ? "h-10 w-10" : "h-12 w-12"
+            "rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20",
+            isCollapsed ? "h-8 w-8" : "h-10 w-10"
           )}>
             {currentUser?.organizationLogo ? (
               <img 
@@ -177,41 +177,39 @@ export function EmployeeSidebar({
                 className="w-full h-full object-contain p-1.5"
               />
             ) : (
-              <LayoutDashboard className="h-6 w-6 text-primary" />
+              <Shield className="h-5 w-5 text-primary" />
             )}
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] leading-none mb-1 opacity-80">
-                Organization
-              </span>
-              <span className="text-xl font-black text-foreground tracking-tighter leading-tight mb-2 drop-shadow-sm">
+              <span className="text-sm font-bold truncate">
                 {currentUser?.organizationName || "TaskFlow"}
               </span>
-              <div className="flex items-center">
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[9px] font-black text-primary uppercase tracking-wider leading-none">
-                    {currentUser?.role?.replace('_', ' ') || "Member"}
-                  </span>
-                </div>
-              </div>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                {currentUser?.role?.replace('_', ' ') || "Member"}
+              </span>
             </div>
           )}
         </div>
 
-        {/* Desktop Collapse Toggle */}
+        {/* Desktop Collapse Toggle - Premium Floating Look */}
         {!isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleCollapse}
-            className={cn(
-              "hidden lg:flex h-8 w-8 rounded-lg border border-border/50 bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all absolute top-8 -right-4 z-50",
-            )}
+          <motion.div
+            initial={false}
+            animate={{ x: isCollapsed ? 0 : 0 }}
           >
-            <ChevronRight className={cn("h-4 w-4 transition-transform", isCollapsed ? "" : "rotate-180")} />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapse}
+              className={cn(
+                "hidden lg:flex h-7 w-7 rounded-full border border-border/50 bg-background/80 backdrop-blur-sm shadow-md hover:bg-primary/10 hover:text-primary transition-all absolute top-1/2 -right-3.5 -translate-y-1/2 z-50",
+                "opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              )}
+            >
+              <ChevronRight className={cn("h-3.5 w-3.5 transition-transform duration-500", isCollapsed ? "" : "rotate-180")} />
+            </Button>
+          </motion.div>
         )}
 
         {/* Mobile Close Button */}
@@ -227,190 +225,188 @@ export function EmployeeSidebar({
         )}
       </div>
 
-      {/* Tab Navigation */}
-      {!isCollapsed && (
-        <div className="flex gap-1 p-3 border-b border-border bg-background/50">
+      {/* Tab Navigation - Modern Segmented Control */}
+      <div className="px-4 py-4 border-b border-border/30 bg-background/20 backdrop-blur-sm">
+        <div className={cn(
+          "relative flex bg-secondary/30 rounded-[1rem] p-1 border border-border/50",
+          isCollapsed ? "flex-col gap-1" : "gap-1"
+        )}>
+          {/* Animated Background Slide */}
+          {!isCollapsed && (
+            <motion.div
+              layoutId="tab-bg"
+              className="absolute inset-y-1 bg-background rounded-[0.75rem] shadow-sm z-0"
+              initial={false}
+              animate={{
+                left: activeTab === "profile" ? "50%" : "4px",
+                right: activeTab === "profile" ? "4px" : "50%",
+              }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+            />
+          )}
+
           <button
             onClick={() => { setActiveTab("workspace"); onSelectCategory("individual"); }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "workspace"
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              }`}
+            className={cn(
+              "relative flex-1 flex items-center justify-center gap-2.5 px-3 py-2 rounded-[0.75rem] text-xs font-bold transition-all z-10",
+              isCollapsed ? "h-11 w-11 px-0" : "",
+              activeTab === "workspace"
+                ? "text-primary drop-shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title={isCollapsed ? "Workspace" : ""}
           >
-            <Layers className="h-4 w-4" />
-            <span>Workspace</span>
+            <Layers className={cn("h-4 w-4 transition-transform", activeTab === "workspace" ? "scale-110" : "opacity-70")} />
+            {!isCollapsed && <span className="uppercase tracking-widest">Workspace</span>}
           </button>
+
           <button
             onClick={() => { setActiveTab("profile"); onSelectCategory("profile"); }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "profile"
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              }`}
+            className={cn(
+              "relative flex-1 flex items-center justify-center gap-2.5 px-3 py-2 rounded-[0.75rem] text-xs font-bold transition-all z-10",
+              isCollapsed ? "h-11 w-11 px-0" : "",
+              activeTab === "profile"
+                ? "text-primary drop-shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title={isCollapsed ? "Profile" : ""}
           >
-            <User className="h-4 w-4" />
-            <span>Profile</span>
+            <User className={cn("h-4 w-4 transition-transform", activeTab === "profile" ? "scale-110" : "opacity-70")} />
+            {!isCollapsed && <span className="uppercase tracking-widest">Profile</span>}
           </button>
         </div>
-      )}
-      {isCollapsed && (
-        <div className="flex flex-col gap-2 p-3 border-b border-border bg-background/50 items-center">
-           <Button
-            variant={activeTab === "workspace" ? "default" : "ghost"}
-            size="icon"
-            onClick={() => { setActiveTab("workspace"); onSelectCategory("individual"); }}
-            className="h-10 w-10 rounded-xl"
-            title="Workspace"
-           >
-              <Layers className="h-5 w-5" />
-           </Button>
-           <Button
-            variant={activeTab === "profile" ? "default" : "ghost"}
-            size="icon"
-            onClick={() => { setActiveTab("profile"); onSelectCategory("profile"); }}
-            className="h-10 w-10 rounded-xl"
-           >
-              <User className="h-5 w-5" />
-           </Button>
-        </div>
-      )}
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col min-h-full">
           {(activeTab === "workspace" || isCollapsed) && (
            <div className="p-3 space-y-2 animate-in slide-in-from-left-1 duration-200">
-              {!isCollapsed && <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-2 mt-2">Task Categories</p>}
+              {!isCollapsed && (
+                <div className="flex items-center justify-between mb-4 px-2 mt-4">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60">
+                    Task Categories
+                  </span>
+                </div>
+              )}
               
               <button
                 onClick={() => onSelectCategory("individual")}
-                title={isCollapsed ? "My Tasks" : ""}
                 className={cn(
-                  "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
-                  isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
+                  "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                  isCollapsed ? "justify-center px-0 h-14" : "gap-4",
                   selectedCategory === "individual"
-                    ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
-                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                    ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
                 )}
               >
                 <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
+                  "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
                   selectedCategory === "individual"
-                    ? "bg-white/20 border-white/30 text-primary-foreground"
-                    : "bg-primary/10 text-primary border-primary/20"
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
                 )}>
-                  <User className="h-4 w-4" />
+                  <User className="h-5 w-5" />
                 </div>
                 {!isCollapsed && (
                   <>
                     <div className="flex-1 min-w-0">
                       <span className={cn(
-                        "block text-sm font-semibold",
+                        "block text-sm font-black uppercase tracking-widest",
                         selectedCategory === "individual" ? "text-white" : "text-foreground"
                       )}>
                         My Tasks
                       </span>
-                        <span className={cn(
-                          "text-[10px] font-medium",
-                          selectedCategory === "individual" ? "text-white/70" : "text-muted-foreground"
-                        )}>
-                          Tasks assigned specifically to you
-                        </span>
+                      <span className={cn(
+                        "text-[9px] font-medium opacity-60",
+                        selectedCategory === "individual" ? "text-white" : "text-muted-foreground"
+                      )}>Your personal assignments</span>
+                    </div>
+                    {hasUnseenIndividualTasks && (
+                      <div className="flex items-center justify-center h-5 px-2 rounded-md bg-white/20 border border-white/30 backdrop-blur-sm shadow-sm animate-pulse">
+                        <span className="text-[9px] font-black text-white uppercase tracking-tighter">New</span>
                       </div>
-                      {hasUnseenIndividualTasks && (
-                        <div className="flex items-center justify-center h-5 px-2 rounded-md bg-primary/10 border border-primary/20 backdrop-blur-sm shadow-sm animate-pulse duration-[3000ms]">
-                          <span className="text-[9px] font-black text-primary uppercase tracking-tighter">
-                            New
-                          </span>
-                        </div>
-                      )}
+                    )}
                   </>
                 )}
                 {isCollapsed && hasUnseenIndividualTasks && (
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                  <span className="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-destructive border-2 border-background animate-pulse" />
                 )}
               </button>
 
               <button
                 onClick={() => onSelectCategory("team")}
-                title={isCollapsed ? "Team Tasks" : ""}
                 className={cn(
-                  "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
-                  isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
+                  "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                  isCollapsed ? "justify-center px-0 h-14" : "gap-4",
                   selectedCategory === "team"
-                    ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
-                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                    ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
                 )}
               >
                 <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
+                  "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
                   selectedCategory === "team"
-                    ? "bg-white/20 border-white/30 text-primary-foreground"
-                    : "bg-primary/10 text-primary border-primary/20"
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
                 )}>
-                  <Users className="h-4 w-4" />
+                  <Users className="h-5 w-5" />
                 </div>
                 {!isCollapsed && (
                   <>
                     <div className="flex-1 min-w-0">
                       <span className={cn(
-                        "block text-sm font-semibold",
+                        "block text-sm font-black uppercase tracking-widest",
                         selectedCategory === "team" ? "text-white" : "text-foreground"
                       )}>
                         Team Tasks
                       </span>
-                        <span className={cn(
-                          "text-[10px] font-medium",
-                          selectedCategory === "team" ? "text-white/70" : "text-muted-foreground"
-                        )}>
-                          Collaborative projects and tasks
-                        </span>
+                      <span className={cn(
+                        "text-[9px] font-medium opacity-60",
+                        selectedCategory === "team" ? "text-white" : "text-muted-foreground"
+                      )}>Collaborative projects</span>
+                    </div>
+                    {hasUnseenTeamTasks && (
+                      <div className="flex items-center justify-center h-5 px-2 rounded-md bg-white/20 border border-white/30 backdrop-blur-sm shadow-sm animate-pulse">
+                        <span className="text-[9px] font-black text-white uppercase tracking-tighter">New</span>
                       </div>
-                      {hasUnseenTeamTasks && (
-                        <div className="flex items-center justify-center h-5 px-2 rounded-md bg-primary/10 border border-primary/20 backdrop-blur-sm shadow-sm animate-pulse duration-[3000ms]">
-                          <span className="text-[9px] font-black text-primary uppercase tracking-tighter">
-                            New
-                          </span>
-                        </div>
-                      )}
+                    )}
                   </>
                 )}
                 {isCollapsed && hasUnseenTeamTasks && (
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                  <span className="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-destructive border-2 border-background animate-pulse" />
                 )}
               </button>
 
               <button
                 onClick={() => onSelectCategory("activity-log")}
-                title={isCollapsed ? "Activity Log" : ""}
                 className={cn(
-                  "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm",
-                  isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
+                  "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                  isCollapsed ? "justify-center px-0 h-14" : "gap-4",
                   selectedCategory === "activity-log"
-                    ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
-                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                    ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
                 )}
               >
                 <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
+                  "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
                   selectedCategory === "activity-log"
-                    ? "bg-white/20 border-white/30 text-primary-foreground"
-                    : "bg-primary/10 text-primary border-primary/20"
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
                 )}>
-                  <Activity className="h-4 w-4" />
+                  <Activity className="h-5 w-5" />
                 </div>
                 {!isCollapsed && (
-                  <div className="flex-1 min-w-0">
+                  <div className="flex flex-col items-start flex-1">
                     <span className={cn(
-                      "block text-sm font-semibold",
+                      "block text-sm font-black uppercase tracking-widest",
                       selectedCategory === "activity-log" ? "text-white" : "text-foreground"
                     )}>
                       Activity Log
                     </span>
                     <span className={cn(
-                      "text-[10px] font-medium",
-                      selectedCategory === "activity-log" ? "text-white/70" : "text-muted-foreground"
-                    )}>
-                      Recent actions and updates
-                    </span>
+                      "text-[9px] font-medium opacity-60",
+                      selectedCategory === "activity-log" ? "text-white" : "text-muted-foreground"
+                    )}>History of updates</span>
                   </div>
                 )}
               </button>
@@ -419,23 +415,47 @@ export function EmployeeSidebar({
 
           {activeTab === "profile" && !isCollapsed && (
             <div className="p-4 space-y-6 animate-in fade-in duration-300">
-              <div className="flex flex-col items-center text-center p-6 rounded-xl bg-secondary/30 border border-border/50 shadow-inner">
-                <div className="relative group">
-                  <Avatar className="h-20 w-20 border-4 border-background shadow-xl mb-4 transition-transform hover:scale-105 cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
-                    {currentUser?.avatar ? (
-                      <AvatarImage src={currentUser.avatar} />
-                    ) : (
-                      <AvatarFallback className="text-xl font-bold bg-primary/10 text-primary uppercase">
-                        {initials}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <p className="text-[10px] text-muted-foreground -mt-2 mb-2 cursor-pointer hover:underline text-center" onClick={() => setIsProfileDialogOpen(true)}>Change photo</p>
+              {/* Premium Internal Profile View */}
+              <div className="relative group p-1.5 rounded-[2.5rem] bg-gradient-to-br from-primary/20 via-emerald-500/10 to-transparent mb-4 shadow-xl">
+                <div className="flex flex-col items-center text-center p-8 rounded-[2.3rem] bg-background/60 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-inner relative overflow-hidden">
+                  {/* Decorative mesh gradient */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(var(--primary),0.15),transparent_50%)] pointer-events-none" />
+                  
+                  <div className="relative mb-6">
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="relative z-10"
+                    >
+                      <div className="p-1 rounded-full bg-gradient-to-br from-primary via-emerald-400 to-primary-foreground shadow-2xl">
+                        <Avatar className="h-24 w-24 border-4 border-background shadow-inner cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
+                          {currentUser?.avatar ? (
+                            <AvatarImage src={currentUser.avatar} className="object-cover" />
+                          ) : (
+                            <AvatarFallback className="text-2xl font-black bg-background text-primary">
+                              {initials}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                      </div>
+                      <motion.button 
+                        whileHover={{ scale: 1.1 }}
+                        className="absolute bottom-1 right-1 h-8 w-8 rounded-full bg-primary text-white border-4 border-background shadow-lg flex items-center justify-center transition-transform"
+                        onClick={() => setIsProfileDialogOpen(true)}
+                      >
+                        <Camera className="h-4 w-4" />
+                      </motion.button>
+                    </motion.div>
+                  </div>
+                  
+                  <h3 className="text-xl font-black text-foreground tracking-tight mb-1 relative z-10">{profileData.name}</h3>
+                  <div className="relative z-10 flex flex-col gap-2">
+                    <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] border border-primary/20 backdrop-blur-md">
+                      {currentUser?.role?.replace('_', ' ').toUpperCase()}
+                    </span>
+                    <span className="text-[11px] font-bold text-muted-foreground opacity-60 italic">{profileData.jobTitle || "Team Member"}</span>
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-foreground">{profileData.name}</h3>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  {currentUser?.role?.toUpperCase() === "SUPERADMIN" ? "Super Admin" : currentUser?.role?.toUpperCase() === "HEAD_ADMIN" ? "Head Admin" : currentUser?.role?.toUpperCase() === "ADMIN" ? "Admin" : "Employee"}
-                </p>
               </div>
 
 

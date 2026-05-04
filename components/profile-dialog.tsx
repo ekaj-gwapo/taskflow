@@ -267,7 +267,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
 
                     {/* Workplace Group */}
                     <div className="space-y-4 flex flex-col justify-between">
-                      <div>
+                      <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-2">
                           <MapPin className="h-4 w-4 text-emerald-500" />
                           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assignment</span>

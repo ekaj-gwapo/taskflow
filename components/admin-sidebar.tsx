@@ -187,22 +187,21 @@ export function AdminSidebar({
 
   return (
     <aside className={cn(
-      "shrink-0 border-r border-border bg-card flex flex-col h-full shadow-lg transition-all duration-300 relative",
-      isCollapsed ? "w-20" : "w-80",
-      isMobile ? "w-80 h-full fixed inset-y-0 left-0 z-50 overflow-hidden" : ""
+      "shrink-0 border-r border-border/50 bg-card/60 backdrop-blur-2xl flex flex-col h-full transition-all duration-500 ease-in-out relative z-40 shadow-[0_0_50px_-12px_rgba(0,0,0,0.1)]",
+      isCollapsed ? "w-24" : "w-80",
+      isMobile ? "w-80 h-full fixed inset-y-0 left-0 z-50 overflow-hidden shadow-2xl" : ""
     )}>
-      {/* Sidebar Header - Modern & Sleek */}
+      {/* Dynamic Background Effect */}
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent opacity-50 pointer-events-none" />
+
       <div className={cn(
-        "p-4 border-b border-border/40 relative overflow-hidden group flex items-center justify-between",
-        isCollapsed ? "justify-center" : "p-8"
+        "p-4 border-b border-border/40 relative group flex items-center justify-between",
+        isCollapsed ? "justify-center" : ""
       )}>
-        {/* Subtle background decoration */}
-        <div className="absolute -top-12 -left-12 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
-        
-        <div className={cn("flex items-center gap-4 relative", isCollapsed ? "justify-center" : "")}>
+        <div className={cn("flex items-center gap-3", isCollapsed ? "flex-col" : "")}>
           <div className={cn(
-            "rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center shadow-sm overflow-hidden transition-transform group-hover:scale-105 duration-300",
-            isCollapsed ? "h-10 w-10" : "h-12 w-12"
+            "rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20",
+            isCollapsed ? "h-8 w-8" : "h-10 w-10"
           )}>
             {currentUser?.organizationLogo ? (
               <img 
@@ -211,41 +210,39 @@ export function AdminSidebar({
                 className="w-full h-full object-contain p-1.5"
               />
             ) : (
-              <LayoutDashboard className="h-6 w-6 text-primary" />
+              <Shield className="h-5 w-5 text-primary" />
             )}
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] leading-none mb-1 opacity-80">
-                Organization
-              </span>
-              <span className="text-xl font-black text-foreground tracking-tighter leading-tight mb-2 drop-shadow-sm">
+              <span className="text-sm font-bold truncate">
                 {currentUser?.organizationName || "TaskFlow"}
               </span>
-              <div className="flex items-center">
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[9px] font-black text-primary uppercase tracking-wider leading-none">
-                    {currentUser?.role?.replace('_', ' ') || "Member"}
-                  </span>
-                </div>
-              </div>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                {currentUser?.role?.replace('_', ' ') || "Member"}
+              </span>
             </div>
           )}
         </div>
 
-        {/* Desktop Collapse Toggle */}
+        {/* Desktop Collapse Toggle - Premium Floating Look */}
         {!isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleCollapse}
-            className={cn(
-              "hidden lg:flex h-8 w-8 rounded-lg border border-border/50 bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all absolute top-8 -right-4 z-50",
-            )}
+          <motion.div
+            initial={false}
+            animate={{ x: isCollapsed ? 0 : 0 }}
           >
-            <ChevronRight className={cn("h-4 w-4 transition-transform", isCollapsed ? "" : "rotate-180")} />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapse}
+              className={cn(
+                "hidden lg:flex h-7 w-7 rounded-full border border-border/50 bg-background/80 backdrop-blur-sm shadow-md hover:bg-primary/10 hover:text-primary transition-all absolute top-1/2 -right-3.5 -translate-y-1/2 z-50",
+                "opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              )}
+            >
+              <ChevronRight className={cn("h-3.5 w-3.5 transition-transform duration-500", isCollapsed ? "" : "rotate-180")} />
+            </Button>
+          </motion.div>
         )}
 
         {/* Mobile Close Button */}
@@ -261,52 +258,57 @@ export function AdminSidebar({
         )}
       </div>
 
-      {/* Tab Navigation */}
-      {!isCollapsed && (
-        <div className="flex gap-1 p-3 border-b border-border bg-background/50">
+      {/* Tab Navigation - Modern Segmented Control */}
+      <div className="px-4 py-4 border-b border-border/30 bg-background/20 backdrop-blur-sm">
+        <div className={cn(
+          "relative flex bg-secondary/30 rounded-[1rem] p-1 border border-border/50",
+          isCollapsed ? "flex-col gap-1" : "gap-1"
+        )}>
+          {/* Animated Background Slide */}
+          {!isCollapsed && (
+            <motion.div
+              layoutId="tab-bg"
+              className="absolute inset-y-1 bg-background rounded-[0.75rem] shadow-sm z-0"
+              initial={false}
+              animate={{
+                left: selectedEmployeeId === "profile" ? "50%" : "4px",
+                right: selectedEmployeeId === "profile" ? "4px" : "50%",
+              }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+            />
+          )}
+
           <button
             onClick={() => onSelectEmployee(null)}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedEmployeeId !== "profile"
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              }`}
+            className={cn(
+              "relative flex-1 flex items-center justify-center gap-2.5 px-3 py-2 rounded-[0.75rem] text-xs font-bold transition-all z-10",
+              isCollapsed ? "h-11 w-11 px-0" : "",
+              selectedEmployeeId !== "profile"
+                ? "text-primary drop-shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title={isCollapsed ? "Workspace" : ""}
           >
-            <Layers className="h-4 w-4" />
-            <span>Workspace</span>
+            <Layers className={cn("h-4 w-4 transition-transform", selectedEmployeeId !== "profile" ? "scale-110" : "opacity-70")} />
+            {!isCollapsed && <span className="uppercase tracking-widest">Workspace</span>}
           </button>
+
           <button
             onClick={() => onSelectEmployee("profile")}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedEmployeeId === "profile"
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              }`}
+            className={cn(
+              "relative flex-1 flex items-center justify-center gap-2.5 px-3 py-2 rounded-[0.75rem] text-xs font-bold transition-all z-10",
+              isCollapsed ? "h-11 w-11 px-0" : "",
+              selectedEmployeeId === "profile"
+                ? "text-primary drop-shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title={isCollapsed ? "Profile" : ""}
           >
-            <User className="h-4 w-4" />
-            <span>Profile</span>
+            <User className={cn("h-4 w-4 transition-transform", selectedEmployeeId === "profile" ? "scale-110" : "opacity-70")} />
+            {!isCollapsed && <span className="uppercase tracking-widest">Profile</span>}
           </button>
         </div>
-      )}
-      {isCollapsed && (
-        <div className="flex flex-col gap-2 p-3 border-b border-border bg-background/50 items-center">
-           <Button
-            variant={selectedEmployeeId !== "profile" ? "default" : "ghost"}
-            size="icon"
-            onClick={() => onSelectEmployee(null)}
-            className="h-10 w-10 rounded-xl"
-            title="Workspace"
-           >
-              <Layers className="h-5 w-5" />
-           </Button>
-           <Button
-            variant={selectedEmployeeId === "profile" ? "default" : "ghost"}
-            size="icon"
-            onClick={() => onSelectEmployee("profile")}
-            className="h-10 w-10 rounded-xl"
-           >
-              <User className="h-5 w-5" />
-           </Button>
-        </div>
-      )}
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
@@ -321,51 +323,58 @@ export function AdminSidebar({
             >
               {/* ALWAYS VISIBLE SYSTEM BUTTONS */}
               {currentUser?.role?.toUpperCase() === "SUPERADMIN" && (
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start gap-2 text-primary hover:text-primary hover:bg-primary/10 mb-1",
-                    isCollapsed ? "justify-center px-0" : ""
-                  )}
+                <button
                   onClick={() => window.location.href = "/dashboard"}
-                  title={isCollapsed ? "User Management" : ""}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group/nav relative overflow-hidden",
+                    isCollapsed ? "justify-center px-0" : "",
+                    "text-primary font-bold hover:bg-primary/10"
+                  )}
                 >
-                  <Shield className="h-4 w-4" />
-                  {!isCollapsed && <span>User Management</span>}
-                </Button>
+                   <Shield className="h-5 w-5 transition-transform group-hover/nav:scale-110" />
+                   {!isCollapsed && <span className="text-sm tracking-tight uppercase tracking-widest">User Management</span>}
+                </button>
               )}
 
               {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "CREATOR") && (
                 <button
                   onClick={() => onSelectEmployee(null)}
-                  title={isCollapsed ? "Dashboard" : ""}
                   className={cn(
-                    "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
-                    isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
+                    "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                    isCollapsed ? "justify-center px-0 h-14" : "gap-4",
                     selectedEmployeeId === null
-                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                      ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
                   )}
                 >
+                  {/* Active Indicator Line */}
+                  {selectedEmployeeId === null && !isCollapsed && (
+                    <motion.div 
+                      layoutId="nav-indicator"
+                      className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-white rounded-r-full"
+                    />
+                  )}
+
                   <div className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
+                    "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500 group-hover/nav:rotate-3",
                     selectedEmployeeId === null
-                      ? "bg-white/20 border-white/30 text-primary-foreground"
-                      : "bg-primary/10 text-primary border-primary/20"
+                      ? "bg-white/20 border-white/30 text-white"
+                      : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
                   )}>
-                    <LayoutDashboard className="h-4 w-4" />
+                    <LayoutDashboard className="h-5 w-5" />
                   </div>
                   {!isCollapsed && (
                     <>
-                      <span className={cn(
-                        "flex-1 text-sm font-semibold",
-                        selectedEmployeeId === null ? "text-primary-foreground" : "text-foreground"
-                      )}>
-                        Dashboard
-                      </span>
+                      <div className="flex flex-col items-start flex-1 min-w-0">
+                        <span className="text-sm font-black uppercase tracking-wider truncate w-full text-left">Dashboard</span>
+                        <span className={cn(
+                          "text-[9px] font-medium opacity-60 truncate w-full text-left",
+                          selectedEmployeeId === null ? "text-white" : "text-muted-foreground"
+                        )}>Overview & Reports</span>
+                      </div>
                       <ChevronRight className={cn(
-                        "h-3.5 w-3.5 shrink-0",
-                        selectedEmployeeId === null ? "text-primary-foreground/70" : "text-muted-foreground"
+                        "h-4 w-4 shrink-0 transition-transform group-hover/nav:translate-x-1",
+                        selectedEmployeeId === null ? "text-white/60" : "text-muted-foreground/30"
                       )} />
                     </>
                   )}
@@ -375,34 +384,34 @@ export function AdminSidebar({
               {currentUser?.role?.toUpperCase() === "CREATOR" && (
                 <button
                   onClick={() => onSelectEmployee('user-management')}
-                  title={isCollapsed ? "User Management" : ""}
                   className={cn(
-                    "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
-                    isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
+                    "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                    isCollapsed ? "justify-center px-0 h-14" : "gap-4",
                     selectedEmployeeId === 'user-management'
-                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                      ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
                   )}
                 >
                   <div className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
+                    "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
                     selectedEmployeeId === 'user-management'
-                      ? "bg-white/20 border-white/30 text-primary-foreground"
-                      : "bg-primary/10 text-primary border-primary/20"
+                      ? "bg-white/20 border-white/30 text-white"
+                      : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
                   )}>
-                    <Shield className="h-4 w-4" />
+                    <Shield className="h-5 w-5" />
                   </div>
                   {!isCollapsed && (
                     <>
-                      <span className={cn(
-                        "flex-1 text-sm font-semibold",
-                        selectedEmployeeId === 'user-management' ? "text-primary-foreground" : "text-foreground"
-                      )}>
-                        User Management
-                      </span>
+                      <div className="flex flex-col items-start flex-1 min-w-0">
+                        <span className="text-sm font-black uppercase tracking-wider truncate w-full text-left">User Management</span>
+                        <span className={cn(
+                          "text-[9px] font-medium opacity-60 truncate w-full text-left",
+                          selectedEmployeeId === 'user-management' ? "text-white" : "text-muted-foreground"
+                        )}>Members & Permissions</span>
+                      </div>
                       <ChevronRight className={cn(
-                        "h-3.5 w-3.5 shrink-0",
-                        selectedEmployeeId === 'user-management' ? "text-primary-foreground/70" : "text-muted-foreground"
+                        "h-4 w-4 shrink-0 transition-transform group-hover/nav:translate-x-1",
+                        selectedEmployeeId === 'user-management' ? "text-white/60" : "text-muted-foreground/30"
                       )} />
                     </>
                   )}
@@ -412,82 +421,84 @@ export function AdminSidebar({
               {(currentUser?.role?.toUpperCase() === "ADMIN") && (
                 <button
                   onClick={() => onSelectEmployee('my-tasks')}
-                  title={isCollapsed ? "My Tasks" : ""}
                   className={cn(
-                    "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-1",
-                    isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
+                    "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                    isCollapsed ? "justify-center px-0 h-14" : "gap-4",
                     selectedEmployeeId === 'my-tasks'
-                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                      ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
                   )}
                 >
                   <div className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
+                    "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
                     selectedEmployeeId === 'my-tasks'
-                      ? "bg-white/20 border-white/30 text-primary-foreground"
-                      : "bg-primary/10 text-primary border-primary/20"
+                      ? "bg-white/20 border-white/30 text-white"
+                      : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
                   )}>
-                    <Clipboard className="h-4 w-4" />
+                    <Clipboard className="h-5 w-5" />
                   </div>
                   {!isCollapsed && (
                     <>
-                      <span className={cn(
-                        "flex-1 text-sm font-semibold",
-                        selectedEmployeeId === 'my-tasks' ? "text-primary-foreground" : "text-foreground"
-                      )}>
-                        My Tasks
-                      </span>
+                      <div className="flex flex-col items-start flex-1 min-w-0">
+                        <span className="text-sm font-black uppercase tracking-wider truncate w-full text-left">My Tasks</span>
+                        <span className={cn(
+                          "text-[9px] font-medium opacity-60 truncate w-full text-left",
+                          selectedEmployeeId === 'my-tasks' ? "text-white" : "text-muted-foreground"
+                        )}>Your individual tasks</span>
+                      </div>
                       {hasUnseenTasks && (
-                        <div className="flex items-center justify-center h-5 px-2 rounded-md bg-primary/10 border border-primary/20 backdrop-blur-sm shadow-sm animate-pulse duration-[3000ms]">
-                          <span className="text-[9px] font-black text-primary uppercase tracking-tighter">
-                            New
-                          </span>
+                        <div className="flex items-center justify-center h-5 px-2 rounded-md bg-white/20 border border-white/30 backdrop-blur-sm shadow-sm animate-pulse shrink-0">
+                          <span className="text-[9px] font-black text-white uppercase tracking-tighter">New</span>
                         </div>
                       )}
                       <ChevronRight className={cn(
-                        "h-3.5 w-3.5 shrink-0",
-                        selectedEmployeeId === 'my-tasks' ? "text-primary-foreground/70" : "text-muted-foreground"
+                        "h-4 w-4 shrink-0 transition-transform group-hover/nav:translate-x-1",
+                        selectedEmployeeId === 'my-tasks' ? "text-white/60" : "text-muted-foreground/30"
                       )} />
                     </>
                   )}
                   {isCollapsed && hasUnseenTasks && (
-                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                    <span className="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-destructive border-2 border-background animate-pulse" />
                   )}
                 </button>
               )}
 
               <div className="h-px bg-border/50 my-2" />
 
+              <div className="h-px bg-border/30 my-4 mx-4" />
+
               <button
                 onClick={() => onSelectEmployee('team-projects')}
-                title={isCollapsed ? (currentUser?.role?.toUpperCase() === 'CREATOR' ? 'All Tasks' : 'Team Projects') : ""}
                 className={cn(
-                  "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-2",
-                  isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
+                  "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                  isCollapsed ? "justify-center px-0 h-14" : "gap-4",
                   selectedEmployeeId === 'team-projects'
-                    ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
-                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                    ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
                 )}
               >
                 <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
+                  "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
                   selectedEmployeeId === 'team-projects'
-                    ? "bg-white/20 border-white/30 text-primary-foreground"
-                    : "bg-primary/10 text-primary border-primary/20"
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
                 )}>
-                  <Users className="h-4 w-4" />
+                  <Users className="h-5 w-5" />
                 </div>
                 {!isCollapsed && (
                   <>
-                    <span className={cn(
-                      "flex-1 text-sm font-semibold",
-                      selectedEmployeeId === 'team-projects' ? "text-white" : "text-foreground"
-                    )}>
-                      {currentUser?.role?.toUpperCase() === 'CREATOR' ? 'All Tasks' : 'Team Projects'}
-                    </span>
+                    <div className="flex flex-col items-start flex-1">
+                      <span className="text-sm font-black uppercase tracking-widest">
+                        {currentUser?.role?.toUpperCase() === 'CREATOR' ? 'All Tasks' : 'Team Projects'}
+                      </span>
+                      <span className={cn(
+                        "text-[9px] font-medium opacity-60",
+                        selectedEmployeeId === 'team-projects' ? "text-white" : "text-muted-foreground"
+                      )}>Collaborative Work</span>
+                    </div>
                     <ChevronRight className={cn(
-                      "h-3.5 w-3.5 shrink-0",
-                      selectedEmployeeId === 'team-projects' ? "text-white/70" : "text-muted-foreground"
+                      "h-4 w-4 transition-transform group-hover/nav:translate-x-1",
+                      selectedEmployeeId === 'team-projects' ? "text-white/60" : "text-muted-foreground/30"
                     )} />
                   </>
                 )}
@@ -496,34 +507,34 @@ export function AdminSidebar({
               {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN" || currentUser?.role?.toUpperCase() === "CREATOR") && (
                 <button
                   onClick={() => onSelectEmployee('archived-tasks')}
-                  title={isCollapsed ? "Archived Tasks" : ""}
                   className={cn(
-                    "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-4",
-                    isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
+                    "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                    isCollapsed ? "justify-center px-0 h-14" : "gap-4",
                     selectedEmployeeId === 'archived-tasks'
-                      ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                      ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
                   )}
                 >
                   <div className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
+                    "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
                     selectedEmployeeId === 'archived-tasks'
-                      ? "bg-white/20 border-white/30 text-primary-foreground"
-                      : "bg-primary/10 text-primary border-primary/20"
+                      ? "bg-white/20 border-white/30 text-white"
+                      : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
                   )}>
-                    <Archive className="h-4 w-4" />
+                    <Archive className="h-5 w-5" />
                   </div>
                   {!isCollapsed && (
                     <>
-                      <span className={cn(
-                        "flex-1 text-sm font-semibold",
-                        selectedEmployeeId === 'archived-tasks' ? "text-white" : "text-foreground"
-                      )}>
-                        Archived Tasks
-                      </span>
+                      <div className="flex flex-col items-start flex-1">
+                        <span className="text-sm font-black uppercase tracking-widest">Archived</span>
+                        <span className={cn(
+                          "text-[9px] font-medium opacity-60",
+                          selectedEmployeeId === 'archived-tasks' ? "text-white" : "text-muted-foreground"
+                        )}>Completed & Hidden</span>
+                      </div>
                       <ChevronRight className={cn(
-                        "h-3.5 w-3.5 shrink-0",
-                        selectedEmployeeId === 'archived-tasks' ? "text-white/70" : "text-muted-foreground"
+                        "h-4 w-4 transition-transform group-hover/nav:translate-x-1",
+                        selectedEmployeeId === 'archived-tasks' ? "text-white/60" : "text-muted-foreground/30"
                       )} />
                     </>
                   )}
@@ -532,34 +543,34 @@ export function AdminSidebar({
 
               <button
                 onClick={() => onSelectEmployee('activity-log')}
-                title={isCollapsed ? "Activity Log" : ""}
                 className={cn(
-                  "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-all border shadow-sm mb-2",
-                  isCollapsed ? "justify-center px-0 gap-0" : "gap-3",
+                  "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                  isCollapsed ? "justify-center px-0 h-14" : "gap-4",
                   selectedEmployeeId === 'activity-log'
-                    ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
-                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border-border bg-background"
+                    ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
                 )}
               >
                 <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md border shrink-0",
+                  "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
                   selectedEmployeeId === 'activity-log'
-                    ? "bg-white/20 border-white/30 text-primary-foreground"
-                    : "bg-primary/10 text-primary border-primary/20"
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
                 )}>
-                  <Activity className="h-4 w-4" />
+                  <Activity className="h-5 w-5" />
                 </div>
                 {!isCollapsed && (
                   <>
-                    <span className={cn(
-                      "flex-1 text-sm font-semibold",
-                      selectedEmployeeId === 'activity-log' ? "text-white" : "text-foreground"
-                    )}>
-                      Activity Log
-                    </span>
+                    <div className="flex flex-col items-start flex-1">
+                      <span className="text-sm font-black uppercase tracking-widest">Logs</span>
+                      <span className={cn(
+                        "text-[9px] font-medium opacity-60",
+                        selectedEmployeeId === 'activity-log' ? "text-white" : "text-muted-foreground"
+                      )}>History of changes</span>
+                    </div>
                     <ChevronRight className={cn(
-                      "h-3.5 w-3.5 shrink-0",
-                      selectedEmployeeId === 'activity-log' ? "text-white/70" : "text-muted-foreground"
+                      "h-4 w-4 transition-transform group-hover/nav:translate-x-1",
+                      selectedEmployeeId === 'activity-log' ? "text-white/60" : "text-muted-foreground/30"
                     )} />
                   </>
                 )}
@@ -568,48 +579,49 @@ export function AdminSidebar({
               {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN" || currentUser?.role?.toUpperCase() === "CREATOR") && (
                 <>
                   {!isCollapsed && (
-                    <button
-                      onClick={() => setIsEmployeesExpanded(!isEmployeesExpanded)}
-                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all text-muted-foreground hover:bg-primary hover:text-white mb-1 group"
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/5 text-primary group-hover:bg-white/20 group-hover:text-white transition-colors">
-                        <User className="h-3 w-3" />
+                    <div className="px-4 py-4 mt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60">
+                          Team Members
+                        </span>
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setIsEmployeesExpanded(!isEmployeesExpanded)}
+                          className="p-1 rounded-lg hover:bg-primary/10 transition-colors"
+                        >
+                          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", !isEmployeesExpanded && "-rotate-90")} />
+                        </motion.button>
                       </div>
-                      <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-white">
-                        Individual Employees
-                      </span>
-                      <motion.div
-                        animate={{ rotate: isEmployeesExpanded ? 90 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-                      </motion.div>
-                    </button>
-                  )}
 
-                  <AnimatePresence>
-                    {isEmployeesExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden space-y-1"
-                      >
-                        {!isCollapsed && (
-                          <div className="px-1 py-2">
-                            <div className="relative">
-                              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-                              <Input
-                                placeholder="Search employees..."
-                                className="pl-8 h-8 text-xs bg-secondary/30 border-transparent focus-visible:bg-background"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                              />
-                            </div>
-                          </div>
+                      <AnimatePresence>
+                        {isEmployeesExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="relative"
+                          >
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+                            <Input
+                              placeholder="Find someone..."
+                              className="pl-9 h-10 text-xs bg-secondary/30 border-transparent focus-visible:bg-background rounded-xl placeholder:text-muted-foreground/50 transition-all"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                          </motion.div>
                         )}
-
+                      </AnimatePresence>
+                    </div>
+                  )}
+                  <AnimatePresence>
+                    {(isEmployeesExpanded || isCollapsed) && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className={cn("space-y-1", isCollapsed ? "px-2" : "px-4")}
+                      >
                         {filteredEmployees.map((employee) => {
                           const stats = getEmployeeTaskStats(employee.id)
                           const empInitials = employee.name.split(" ").map(n => n[0]).join("").toUpperCase()
@@ -621,56 +633,59 @@ export function AdminSidebar({
                               key={employee.id}
                               onClick={() => onSelectEmployee(employee.id)}
                               className={cn(
-                                "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all border group",
+                                "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all relative group/emp mb-1",
+                                isCollapsed ? "justify-center px-0 h-12" : "",
                                 isActive
-                                  ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-[1.01]"
-                                  : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 border-transparent"
+                                  ? "bg-primary shadow-lg shadow-primary/10 text-primary-foreground scale-[1.02]"
+                                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                               )}
                             >
-                              <Avatar className={cn(
-                                "h-7 w-7 border transition-all",
-                                isActive ? "border-white/30 scale-105" : "border-border/50"
-                              )}>
-                                {employee.avatar ? (
-                                  <AvatarImage src={employee.avatar} />
-                                ) : (
-                                  <AvatarFallback className={cn(
-                                    "text-[10px] font-bold",
-                                    isActive ? "bg-white/20 text-primary-foreground" : "bg-primary/10 text-primary"
-                                  )}>
-                                    {empInitials}
-                                  </AvatarFallback>
+                              <div className="relative shrink-0">
+                                <Avatar className={cn(
+                                  "h-8 w-8 border-2 transition-all duration-500",
+                                  isActive ? "border-white/30" : "border-border/50 group-hover/emp:border-primary/50"
+                                )}>
+                                  {employee.avatar ? (
+                                    <AvatarImage src={employee.avatar} className="object-cover" />
+                                  ) : (
+                                    <AvatarFallback className={cn(
+                                      "text-[10px] font-black",
+                                      isActive ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
+                                    )}>
+                                      {empInitials}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                                {stats.overdue > 0 && (
+                                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive border-2 border-background shadow-sm animate-bounce" />
                                 )}
-                              </Avatar>
+                              </div>
+
                               {!isCollapsed && (
                                 <>
                                   <div className="flex-1 min-w-0">
                                     <p className={cn(
-                                      "text-xs font-semibold truncate",
+                                      "text-xs font-black tracking-tight truncate transition-colors",
                                       isActive ? "text-white" : "text-foreground"
                                     )}>
                                       {employee.name}
                                     </p>
-                                    {!isActive && (
-                                      <div className="flex items-center gap-2 mt-0.5">
-                                        {stats.inProgress > 0 && (
-                                          <span className="flex items-center gap-1 text-[10px] text-primary font-medium">
-                                            <span className="h-1 w-1 rounded-full bg-primary" />
-                                            {stats.inProgress}
-                                          </span>
-                                        )}
-                                        {stats.overdue > 0 && (
-                                          <span className="flex items-center gap-1 text-[10px] text-destructive font-medium">
-                                            <span className="h-1 w-1 rounded-full bg-destructive" />
-                                            {stats.overdue}
-                                          </span>
-                                        )}
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className={cn(
+                                        "text-[9px] font-bold uppercase tracking-wider",
+                                        isActive ? "text-white/60" : "text-muted-foreground"
+                                      )}>
+                                        {stats.total} Tasks
+                                      </span>
+                                      <div className="flex items-center gap-1 ml-auto">
+                                        {stats.inProgress > 0 && <div className="h-1 w-1 rounded-full bg-blue-400" title="In Progress" />}
+                                        {stats.completed > 0 && <div className="h-1 w-1 rounded-full bg-emerald-400" title="Completed" />}
                                       </div>
-                                    )}
+                                    </div>
                                   </div>
                                   <ChevronRight className={cn(
-                                    "h-3 w-3 shrink-0 transition-transform",
-                                    isActive ? "text-white translate-x-0.5" : "text-muted-foreground/30"
+                                    "h-3 w-3 shrink-0 transition-all group-hover/emp:translate-x-1",
+                                    isActive ? "text-white/60" : "text-muted-foreground/20"
                                   )} />
                                 </>
                               )}
@@ -692,40 +707,45 @@ export function AdminSidebar({
               transition={{ duration: 0.2 }}
               className="p-4 space-y-6"
             >
-              {/* Refined Internal Profile View */}
-              <div className="relative group p-1 rounded-[2rem] bg-gradient-to-br from-primary/10 to-emerald-500/5 mb-2">
-                <div className="flex flex-col items-center text-center p-6 rounded-[1.9rem] bg-background/40 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-xl">
-                  <div className="relative group/avatar mb-4">
+              {/* Premium Internal Profile View */}
+              <div className="relative group p-1.5 rounded-[2.5rem] bg-gradient-to-br from-primary/20 via-emerald-500/10 to-transparent mb-4 shadow-xl">
+                <div className="flex flex-col items-center text-center p-8 rounded-[2.3rem] bg-background/60 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-inner relative overflow-hidden">
+                  {/* Decorative mesh gradient */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(var(--primary),0.15),transparent_50%)] pointer-events-none" />
+                  
+                  <div className="relative mb-6">
                     <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className="relative"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="relative z-10"
                     >
-                      <Avatar className="h-20 w-20 border-4 border-background shadow-2xl transition-transform cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
-                        {currentUser?.avatar ? (
-                          <AvatarImage src={currentUser.avatar} className="object-cover" />
-                        ) : (
-                          <AvatarFallback className="text-xl font-black bg-gradient-to-br from-primary to-emerald-500 text-white">
-                            {initials}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                        className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white cursor-pointer transition-opacity"
+                      <div className="p-1 rounded-full bg-gradient-to-br from-primary via-emerald-400 to-primary-foreground shadow-2xl">
+                        <Avatar className="h-24 w-24 border-4 border-background shadow-inner cursor-pointer" onClick={() => setIsProfileDialogOpen(true)}>
+                          {currentUser?.avatar ? (
+                            <AvatarImage src={currentUser.avatar} className="object-cover" />
+                          ) : (
+                            <AvatarFallback className="text-2xl font-black bg-background text-primary">
+                              {initials}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                      </div>
+                      <motion.button 
+                        whileHover={{ scale: 1.1 }}
+                        className="absolute bottom-1 right-1 h-8 w-8 rounded-full bg-primary text-white border-4 border-background shadow-lg flex items-center justify-center transition-transform"
                         onClick={() => setIsProfileDialogOpen(true)}
                       >
-                        <Camera className="h-5 w-5" />
-                      </motion.div>
+                        <Camera className="h-4 w-4" />
+                      </motion.button>
                     </motion.div>
-                    <div className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-lg bg-emerald-500 border-2 border-background shadow-lg" title="Online" />
                   </div>
                   
-                  <h3 className="text-lg font-black text-foreground tracking-tight">{profileData.name}</h3>
-                  <div className="mt-1">
-                    <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-black uppercase tracking-widest border border-primary/20">
+                  <h3 className="text-xl font-black text-foreground tracking-tight mb-1 relative z-10">{profileData.name}</h3>
+                  <div className="relative z-10 flex flex-col gap-2">
+                    <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] border border-primary/20 backdrop-blur-md">
                       {currentUser?.role?.replace('_', ' ').toUpperCase()}
                     </span>
+                    <span className="text-[11px] font-bold text-muted-foreground opacity-60 italic">{profileData.jobTitle || "Administrator"}</span>
                   </div>
                 </div>
               </div>
@@ -830,6 +850,19 @@ export function AdminSidebar({
                     </Button>
                   </div>
                 </div>
+
+                {currentUser?.role === 'head_admin' && (
+                  <div className="pt-4 mt-2 border-t border-border/50">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start h-10 rounded-xl border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary transition-colors text-xs font-bold"
+                      onClick={() => window.location.href = "mailto:support@taskflow.com?subject=Platform%20Support%20Request"}
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      Contact Master Admin
+                    </Button>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
