@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
           to: row.userEmail,
           recipientName: row.userName,
           taskTitle: row.title,
+          taskId: row.id,
           dueDate: new Date(row.dueDate).toLocaleDateString("en-PH", {
             weekday: "long", year: "numeric", month: "long", day: "numeric"
           }),
