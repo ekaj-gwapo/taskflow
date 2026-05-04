@@ -69,7 +69,7 @@ export function NotificationBell() {
                     !n.isRead ? "bg-primary/5" : "bg-background"
                   )}
                   onClick={() => {
-                    markNotificationAsRead(n.id)
+                    markNotificationAsRead({ id: n.id })
                     setIsOpen(false)
                     
                     // Extract taskId from link if it exists (e.g. /tasks/[taskId])
