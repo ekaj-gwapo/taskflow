@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import {
   type User,
   type UserRole,
@@ -100,6 +100,22 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [seenCompletedTaskIds, setSeenCompletedTaskIds] = useState<Set<string>>(new Set())
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [targetSection, setTargetSection] = useState<string | null>(null)
+
+  const searchParams = useSearchParams()
+
+  // Sync with URL params on initial load
+  useEffect(() => {
+    const taskId = searchParams.get("taskId")
+    const section = searchParams.get("section")
+    
+    if (taskId) {
+      setSelectedTaskId(taskId)
+    }
+    if (section) {
+      setTargetSection(section)
+    }
+  }, [searchParams])
   
   const markNotificationAsRead = useCallback(async (options?: { id?: string; taskId?: string }) => {
     if (!currentUser) return
@@ -140,8 +156,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       markNotificationAsRead({ taskId })
     }
   }, [markNotificationAsRead])
-
-  const [targetSection, setTargetSection] = useState<string | null>(null)
 
   const login = useCallback((role: UserRole, userId?: string, userData?: any) => {
     if (userData) {
@@ -334,8 +348,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
            return
         }
         
-const url = `/api/tasks/${taskId}`
-      console.debug("Updating task status", { taskId, status, url })
+      const url = `/api/tasks/${taskId}`
       const response = await fetch(url, {
           method: "PUT",
           headers: {
@@ -506,7 +519,6 @@ const url = `/api/tasks/${taskId}`
       try {
         const token = localStorage.getItem("token")
         const url = `/api/tasks/${taskId}/progress-notes`
-      console.debug("Adding progress note", { taskId, url, content })
       const response = await fetch(url, {
         method: "POST",
         headers: {

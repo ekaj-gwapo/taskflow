@@ -156,12 +156,10 @@ export async function PUT(
     }
 
     const { status, priority, assigneeIds, archived, dueDate } = await request.json()
-    console.debug("PUT /api/tasks/:id", { id: taskId, body: { status, priority, assigneeIds, archived, dueDate }, user: auth.user })
 
     // Fetch task using the ID
     const existingTask: any = await db.getOne("SELECT * FROM tasks WHERE id = ?", [taskId])
     if (!existingTask) {
-      console.warn("Task not found in DB", { id: taskId })
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
@@ -377,7 +375,8 @@ export async function PUT(
         notifyTaskCompleted({
           creatorId: existingTask.createdById,
           completedByName: auth.user!.name,
-          taskTitle: existingTask.title
+          taskTitle: existingTask.title,
+          taskId: realTaskId,
         });
       }
     }

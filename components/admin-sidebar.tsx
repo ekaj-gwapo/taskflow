@@ -7,7 +7,7 @@ import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive, Palette, Check, Sun, Moon, LogOut, ExternalLink, Camera } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive, Palette, Check, Sun, Moon, LogOut, ExternalLink, Camera, Layers } from "lucide-react"
 import { ProfileDialog } from "@/components/profile-dialog"
 import {
   Popover,
@@ -105,7 +105,7 @@ export function AdminSidebar({
   onCloseMobile,
 }: AdminSidebarProps) {
   const { allEmployees, tasks, currentUser, login, logout, seenTaskIds } = useTaskContext()
-  const [activeTab, setActiveTab] = useState<"employees" | "profile">("employees")
+  const [activeTab, setActiveTab] = useState<"workspace" | "profile">("workspace")
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
 
   useEffect(() => {
@@ -216,14 +216,19 @@ export function AdminSidebar({
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="text-base font-black text-foreground tracking-tight leading-none mb-1.5">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] leading-none mb-1 opacity-80">
+                Organization
+              </span>
+              <span className="text-xl font-black text-foreground tracking-tighter leading-tight mb-2 drop-shadow-sm">
                 {currentUser?.organizationName || "TaskFlow"}
               </span>
-              <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
-                  {currentUser?.role?.replace('_', ' ') || "Organization"}
-                </span>
+              <div className="flex items-center">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[9px] font-black text-primary uppercase tracking-wider leading-none">
+                    {currentUser?.role?.replace('_', ' ') || "Member"}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -266,8 +271,8 @@ export function AdminSidebar({
                 : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
           >
-            <Users className="h-4 w-4" />
-            <span>Employees</span>
+            <Layers className="h-4 w-4" />
+            <span>Workspace</span>
           </button>
           <button
             onClick={() => onSelectEmployee("profile")}
@@ -288,8 +293,9 @@ export function AdminSidebar({
             size="icon"
             onClick={() => onSelectEmployee(null)}
             className="h-10 w-10 rounded-xl"
+            title="Workspace"
            >
-              <Users className="h-5 w-5" />
+              <Layers className="h-5 w-5" />
            </Button>
            <Button
             variant={selectedEmployeeId === "profile" ? "default" : "ghost"}
@@ -306,7 +312,7 @@ export function AdminSidebar({
         <AnimatePresence mode="wait">
           { (selectedEmployeeId !== "profile" || isCollapsed) ? (
             <motion.div
-              key="employees"
+              key="workspace"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -432,7 +438,11 @@ export function AdminSidebar({
                         My Tasks
                       </span>
                       {hasUnseenTasks && (
-                        <span className="h-2.5 w-2.5 rounded-full bg-destructive border-2 border-background animate-pulse shadow-sm" />
+                        <div className="flex items-center justify-center h-5 px-2 rounded-md bg-primary/10 border border-primary/20 backdrop-blur-sm shadow-sm animate-pulse duration-[3000ms]">
+                          <span className="text-[9px] font-black text-primary uppercase tracking-tighter">
+                            New
+                          </span>
+                        </div>
                       )}
                       <ChevronRight className={cn(
                         "h-3.5 w-3.5 shrink-0",

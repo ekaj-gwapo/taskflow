@@ -11,6 +11,16 @@ import { LayoutDashboard, LogIn } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
+const SQL_INJECTION_PATTERNS = [
+  /'\s*OR\s+/i,
+  /--/,
+  /;\s*DROP\s+/i,
+  /;\s*DELETE\s+/i,
+  /;\s*UPDATE\s+/i,
+  /UNION\s+SELECT/i,
+  /xp_cmdshell/i
+]
+
 export function LoginScreen() {
   const { login } = useTaskContext()
   const router = useRouter()
@@ -78,6 +88,19 @@ export function LoginScreen() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check for SQL injection patterns
+    const isSuspicious = SQL_INJECTION_PATTERNS.some(pattern => 
+      pattern.test(formData.email) || pattern.test(formData.password)
+    )
+
+    if (isSuspicious) {
+      setError("Suspicious login pattern detected. Please use valid credentials.")
+      toast.error("Security Alert: Invalid characters detected.")
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     setError("")
 

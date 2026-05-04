@@ -16,6 +16,10 @@ export async function PUT(
     const { isActive } = await request.json()
     const { id } = await params
 
+    if (id === auth.user!.id) {
+      return NextResponse.json({ error: "You cannot deactivate your own account" }, { status: 400 })
+    }
+
     const isActiveValue = typeof isActive === "boolean" ? isActive : !!isActive;
 
     await db.execute(

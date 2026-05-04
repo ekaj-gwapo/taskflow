@@ -120,11 +120,13 @@ export async function sendExtensionReviewedEmail(opts: {
   to: string
   recipientName: string
   taskTitle: string
+  taskId: string
   approved: boolean
   remark?: string
 }) {
   const statusColor = opts.approved ? "#059669" : "#dc2626"
   const statusText = opts.approved ? "APPROVED" : "REJECTED"
+  const taskUrl = `${APP_URL}/dashboard?taskId=${opts.taskId}&section=extensions`
   
   return sendEmail({
     to: opts.to,
@@ -136,7 +138,7 @@ export async function sendExtensionReviewedEmail(opts: {
         <p>Your request for a deadline extension on <strong>${opts.taskTitle}</strong> has been ${statusText.toLowerCase()}.</p>
         ${opts.remark ? `<p><strong>Admin Remark:</strong> ${opts.remark}</p>` : ""}
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${APP_URL}/dashboard" style="background-color: ${statusColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Go to Dashboard</a>
+          <a href="${taskUrl}" style="background-color: ${statusColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Review Details</a>
         </div>
       </div>
     `
@@ -147,9 +149,11 @@ export async function sendNewDiscussionEmail(opts: {
   to: string
   recipientName: string
   taskTitle: string
+  taskId: string
   authorName: string
   messagePreview: string
 }) {
+  const taskUrl = `${APP_URL}/dashboard?taskId=${opts.taskId}&section=discussion`
   return sendEmail({
     to: opts.to,
     subject: `New Comment on: ${opts.taskTitle}`,
@@ -162,7 +166,7 @@ export async function sendNewDiscussionEmail(opts: {
           "${opts.messagePreview}"
         </div>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${APP_URL}/dashboard" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Reply to Comment</a>
+          <a href="${taskUrl}" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Reply to Comment</a>
         </div>
       </div>
     `
@@ -173,9 +177,11 @@ export async function sendDeadlineReminderEmail(opts: {
   to: string
   recipientName: string
   taskTitle: string
+  taskId: string
   dueDate: string
   status: string
 }) {
+  const taskUrl = `${APP_URL}/dashboard?taskId=${opts.taskId}`
   return sendEmail({
     to: opts.to,
     subject: `REMINDER: Task Due Tomorrow - ${opts.taskTitle}`,
@@ -190,7 +196,7 @@ export async function sendDeadlineReminderEmail(opts: {
           <p style="margin: 5px 0;"><strong>Current Status:</strong> ${opts.status}</p>
         </div>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${APP_URL}/dashboard" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Complete Task Now</a>
+          <a href="${taskUrl}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Complete Task Now</a>
         </div>
       </div>
     `
@@ -201,8 +207,10 @@ export async function sendTaskCompletedEmail(opts: {
   to: string
   recipientName: string
   taskTitle: string
+  taskId: string
   completedBy: string
 }) {
+  const taskUrl = `${APP_URL}/dashboard?taskId=${opts.taskId}&section=discussion`
   return sendEmail({
     to: opts.to,
     subject: `Task Completed: ${opts.taskTitle}`,
@@ -212,8 +220,40 @@ export async function sendTaskCompletedEmail(opts: {
         <p>Hi ${opts.recipientName},</p>
         <p>Good news! The task <strong>${opts.taskTitle}</strong> has been marked as completed by <strong>${opts.completedBy}</strong>.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${APP_URL}/dashboard" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View in Dashboard</a>
+          <a href="${taskUrl}" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Accomplishment</a>
         </div>
+      </div>
+    `
+  })
+}
+
+export async function sendExtensionRequestedEmail(opts: {
+  to: string
+  recipientName: string
+  taskTitle: string
+  requesterName: string
+  proposedDate: string
+  reason: string
+  taskId: string
+}) {
+  const taskUrl = `${APP_URL}/dashboard?taskId=${opts.taskId}&section=extensions`
+  
+  return sendEmail({
+    to: opts.to,
+    subject: `Extension Requested: ${opts.taskTitle}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #059669; margin-top: 0;">Extension Requested</h2>
+        <p>Hi ${opts.recipientName},</p>
+        <p><strong>${opts.requesterName}</strong> has requested a deadline extension for the task: <strong>${opts.taskTitle}</strong></p>
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
+          <p style="margin: 5px 0;"><strong>Proposed New Date:</strong> ${opts.proposedDate}</p>
+          <p style="margin: 5px 0;"><strong>Reason:</strong> ${opts.reason}</p>
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${taskUrl}" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Review Request</a>
+        </div>
+        <p style="color: #64748b; font-size: 14px; text-align: center;">You can approve or reject this request from your dashboard.</p>
       </div>
     `
   })

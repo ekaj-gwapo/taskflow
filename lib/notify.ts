@@ -6,6 +6,7 @@ import db from "@/lib/db"
 import {
   sendTaskAssignedEmail,
   sendExtensionReviewedEmail,
+  sendExtensionRequestedEmail,
   sendNewDiscussionEmail,
   sendTaskCompletedEmail,
 } from "@/lib/email"
@@ -75,6 +76,7 @@ export async function notifyTaskAssigned(opts: {
 export async function notifyExtensionReviewed(opts: {
   requesterId: string
   taskTitle: string
+  taskId: string
   approved: boolean
   remark?: string
 }) {
@@ -85,6 +87,7 @@ export async function notifyExtensionReviewed(opts: {
       to: r.email,
       recipientName: r.name,
       taskTitle: opts.taskTitle,
+      taskId: opts.taskId,
       approved: opts.approved,
       remark: opts.remark,
     }).catch((e) => console.error("notifyExtensionReviewed email failed:", e))
@@ -100,6 +103,7 @@ export async function notifyNewDiscussion(opts: {
   authorId: string
   authorName: string
   taskTitle: string
+  taskId: string
   messageContent: string
 }) {
   try {
@@ -111,6 +115,7 @@ export async function notifyNewDiscussion(opts: {
         to: r.email,
         recipientName: r.name,
         taskTitle: opts.taskTitle,
+        taskId: opts.taskId,
         authorName: opts.authorName,
         messagePreview: opts.messageContent,
       }).catch((e) => console.error("notifyNewDiscussion email failed:", e))
@@ -126,6 +131,7 @@ export async function notifyTaskCompleted(opts: {
   creatorId: string
   completedByName: string
   taskTitle: string
+  taskId: string
 }) {
   try {
     const r = await getVerifiedUser(opts.creatorId)
@@ -134,9 +140,37 @@ export async function notifyTaskCompleted(opts: {
       to: r.email,
       recipientName: r.name,
       taskTitle: opts.taskTitle,
+      taskId: opts.taskId,
       completedBy: opts.completedByName,
     }).catch((e) => console.error("notifyTaskCompleted email failed:", e))
   } catch (e) {
     console.error("notifyTaskCompleted error:", e)
+  }
+}
+// ─── Notify: Extension Requested ───────────────────────────────────────────
+export async function notifyExtensionRequested(opts: {
+  adminId: string
+  requesterName: string
+  taskTitle: string
+  proposedDate: string
+  reason: string
+  taskId: string
+}) {
+  try {
+    const r = await getVerifiedUser(opts.adminId)
+    if (!r || !r.notifyOnExtension) return
+    sendExtensionRequestedEmail({
+      to: r.email,
+      recipientName: r.name,
+      taskTitle: opts.taskTitle,
+      requesterName: opts.requesterName,
+      proposedDate: new Date(opts.proposedDate).toLocaleDateString("en-PH", {
+        weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+      }),
+      reason: opts.reason,
+      taskId: opts.taskId,
+    }).catch((e) => console.error("notifyExtensionRequested email failed:", e))
+  } catch (e) {
+    console.error("notifyExtensionRequested error:", e)
   }
 }

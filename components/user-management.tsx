@@ -469,6 +469,7 @@ export function UserManagement() {
                                     : 'text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10'
                                 }`}
                                 title={user.isActive === false ? "Activate User" : "Deactivate User"}
+                                disabled={user.id === currentUser?.id}
                               >
                                 <Power className="h-4 w-4" />
                               </Button>

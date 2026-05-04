@@ -42,45 +42,30 @@ export function UrgentTasksSection({ tasks, onSelectTask }: UrgentTasksSectionPr
         </h3>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {urgentTasks.map((task) => (
           <button
             key={task.id}
             onClick={() => onSelectTask(task)}
-            className="flex items-center gap-4 p-3 rounded-xl border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-all text-left group overflow-hidden relative"
+            className="flex items-center gap-3 p-2.5 rounded-xl border border-destructive/10 bg-destructive/[0.02] hover:bg-destructive/[0.05] transition-all text-left group relative"
           >
-            {/* Red Dot Indicator */}
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-destructive" />
+            <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+              <Clock className="h-4 w-4" />
+            </div>
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-bold text-foreground truncate">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-foreground truncate">
                   {task.title}
                 </span>
-                <span className="h-2 w-2 rounded-full bg-destructive animate-ping shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-destructive animate-pulse shrink-0" />
               </div>
-              <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span className="font-medium text-destructive">
-                    Due {formatDateTime(task.dueDate)}
-                  </span>
-                </div>
-                <span>•</span>
-                <span>{task.assigneeName || "Unassigned"}</span>
-              </div>
-              {/* Progress Mini-bar */}
-              <div className="mt-2.5 max-w-[150px] space-y-1">
-                <Progress value={calculateTaskProgress(task)} className="h-1 bg-destructive/10" />
-              </div>
+              <p className="text-[10px] text-destructive font-semibold uppercase tracking-tighter">
+                Overdue {formatDateTime(task.dueDate)}
+              </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="hidden sm:block">
-                <PriorityBadge priority={task.priority} />
-              </div>
-              <ChevronRight className="h-4 w-4 text-destructive/40 group-hover:text-destructive group-hover:translate-x-0.5 transition-all" />
-            </div>
+            <ChevronRight className="h-3.5 w-3.5 text-destructive/30 group-hover:text-destructive transition-colors" />
           </button>
         ))}
       </div>

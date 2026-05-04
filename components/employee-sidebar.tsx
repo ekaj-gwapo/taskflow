@@ -6,7 +6,7 @@ import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ClipboardList, User, Mail, Phone, MapPin, Save, X, LayoutDashboard, Search, ChevronRight, Shield, Clipboard, Users, Activity, Palette, Check, Sun, Moon, LogOut } from "lucide-react"
+import { ClipboardList, User, Mail, Phone, MapPin, Save, X, LayoutDashboard, Search, ChevronRight, Shield, Clipboard, Users, Activity, Palette, Check, Sun, Moon, LogOut, Layers } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ProfileDialog } from "@/components/profile-dialog"
 import {
@@ -104,8 +104,8 @@ export function EmployeeSidebar({
       setIsProfileOpen?.(false)
     }
   }, [isProfileOpen, setIsProfileOpen])
-  const [activeTab, setActiveTab] = useState<"tasks" | "profile">(
-    selectedCategory === "profile" ? "profile" : "tasks"
+  const [activeTab, setActiveTab] = useState<"workspace" | "profile">(
+    selectedCategory === "profile" ? "profile" : "workspace"
   )
   const [profileData, setProfileData] = useState({
     name: currentUser?.name || "",
@@ -182,14 +182,19 @@ export function EmployeeSidebar({
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="text-base font-black text-foreground tracking-tight leading-none mb-1.5">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] leading-none mb-1 opacity-80">
+                Organization
+              </span>
+              <span className="text-xl font-black text-foreground tracking-tighter leading-tight mb-2 drop-shadow-sm">
                 {currentUser?.organizationName || "TaskFlow"}
               </span>
-              <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
-                  {currentUser?.role?.replace('_', ' ') || "Employee"}
-                </span>
+              <div className="flex items-center">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[9px] font-black text-primary uppercase tracking-wider leading-none">
+                    {currentUser?.role?.replace('_', ' ') || "Member"}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -226,14 +231,14 @@ export function EmployeeSidebar({
       {!isCollapsed && (
         <div className="flex gap-1 p-3 border-b border-border bg-background/50">
           <button
-            onClick={() => { setActiveTab("tasks"); onSelectCategory("individual"); }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "tasks"
+            onClick={() => { setActiveTab("workspace"); onSelectCategory("individual"); }}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "workspace"
                 ? "bg-primary text-primary-foreground shadow-md"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
           >
-            <ClipboardList className="h-4 w-4" />
-            <span>Tasks</span>
+            <Layers className="h-4 w-4" />
+            <span>Workspace</span>
           </button>
           <button
             onClick={() => { setActiveTab("profile"); onSelectCategory("profile"); }}
@@ -250,12 +255,13 @@ export function EmployeeSidebar({
       {isCollapsed && (
         <div className="flex flex-col gap-2 p-3 border-b border-border bg-background/50 items-center">
            <Button
-            variant={activeTab === "tasks" ? "default" : "ghost"}
+            variant={activeTab === "workspace" ? "default" : "ghost"}
             size="icon"
-            onClick={() => { setActiveTab("tasks"); onSelectCategory("individual"); }}
+            onClick={() => { setActiveTab("workspace"); onSelectCategory("individual"); }}
             className="h-10 w-10 rounded-xl"
+            title="Workspace"
            >
-              <ClipboardList className="h-5 w-5" />
+              <Layers className="h-5 w-5" />
            </Button>
            <Button
             variant={activeTab === "profile" ? "default" : "ghost"}
@@ -270,7 +276,7 @@ export function EmployeeSidebar({
 
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col min-h-full">
-          {(activeTab === "tasks" || isCollapsed) && (
+          {(activeTab === "workspace" || isCollapsed) && (
            <div className="p-3 space-y-2 animate-in slide-in-from-left-1 duration-200">
               {!isCollapsed && <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-2 mt-2">Task Categories</p>}
               
@@ -310,8 +316,10 @@ export function EmployeeSidebar({
                         </span>
                       </div>
                       {hasUnseenIndividualTasks && (
-                        <div className="text-[10px] font-bold px-2 py-1 rounded-full bg-destructive text-white animate-pulse shadow-sm min-w-[38px] text-center">
-                          NEW
+                        <div className="flex items-center justify-center h-5 px-2 rounded-md bg-primary/10 border border-primary/20 backdrop-blur-sm shadow-sm animate-pulse duration-[3000ms]">
+                          <span className="text-[9px] font-black text-primary uppercase tracking-tighter">
+                            New
+                          </span>
                         </div>
                       )}
                   </>
@@ -357,8 +365,10 @@ export function EmployeeSidebar({
                         </span>
                       </div>
                       {hasUnseenTeamTasks && (
-                        <div className="text-[10px] font-bold px-2 py-1 rounded-full bg-destructive text-white animate-pulse shadow-sm min-w-[38px] text-center">
-                          NEW
+                        <div className="flex items-center justify-center h-5 px-2 rounded-md bg-primary/10 border border-primary/20 backdrop-blur-sm shadow-sm animate-pulse duration-[3000ms]">
+                          <span className="text-[9px] font-black text-primary uppercase tracking-tighter">
+                            New
+                          </span>
                         </div>
                       )}
                   </>

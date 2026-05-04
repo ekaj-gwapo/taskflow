@@ -2,19 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db from "@/lib/db";
+import { loginSchema } from "@/lib/validations";
+import { rateLimit } from "@/lib/rate-limit";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const limiter = rateLimit(ip, 5, 60000); // 5 attempts per minute
 
-    if (!email || !password) {
+    if (!limiter.success) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Too many login attempts. Please try again in a minute." },
+        { status: 429 }
+      );
+    }
+
+    const body = await request.json();
+    const validation = loginSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors[0].message },
         { status: 400 }
       );
     }
+
+    const { email, password } = validation.data;
 
     const user: any = await db.getOne(`
       SELECT u.id, u.name, u.email, u.username, u.password, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 

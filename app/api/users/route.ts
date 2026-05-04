@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
       `);
     } else {
       const orgId = auth.user?.orgId;
-      console.log(`FETCH USERS for orgId: ${orgId}, role: ${auth.user?.role}`);
       if (!orgId) {
         return NextResponse.json({ users: [] });
       }

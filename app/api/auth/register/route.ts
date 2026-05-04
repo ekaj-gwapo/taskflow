@@ -4,14 +4,21 @@ import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { logActivity } from "@/lib/activity";
 import { verifyToken } from "@/lib/auth-utils";
+import { registerSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, phone, location, jobTitle, role, orgId, autoVerify } = await request.json();
+    const body = await request.json();
+    const validation = registerSchema.safeParse(body);
 
-    if (!email && !name) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors[0].message },
+        { status: 400 }
+      );
     }
+
+    const { name, email, password, phone, location, jobTitle, role, orgId, autoVerify } = validation.data;
 
     // Check if user already exists
     const existingUser = await db.getOne("SELECT id FROM users WHERE email = ? OR username = ?", [email, email]);

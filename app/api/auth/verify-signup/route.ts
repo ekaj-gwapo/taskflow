@@ -10,16 +10,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/auth/login?email_error=missing_token", request.url));
     }
 
-    console.log("Verifying token:", token);
-
     // Find user by token
     const user = await db.getOne(`
       SELECT id, "emailVerifyToken", "emailVerifyExpiry", "emailVerified"
       FROM users 
       WHERE "emailVerifyToken" = $1
     `, [token]);
-
-    console.log("DB User result:", user);
 
     if (!user) {
       return NextResponse.json({ error: "Invalid token. No user found with this token." }, { status: 400 });

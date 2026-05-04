@@ -53,7 +53,6 @@ export async function PUT(
     // Users can only update their own profile
     const role = auth.user!.role?.toUpperCase()
     if (auth.user!.id !== id && role !== "ADMIN" && role !== "SUPERADMIN") {
-      console.log(`[API] Access denied for user ${auth.user!.id} attempting to update ${id}`)
       return NextResponse.json(
         { error: "Access denied" },
         { status: 403 }
@@ -61,7 +60,6 @@ export async function PUT(
     }
 
     const { name, email, phone, location, jobTitle, theme, mode } = await request.json()
-    console.log(`[API] Updating user ${id}:`, { name, email, phone, location, jobTitle, theme, mode })
 
     // Get current data to check if we should log activity
     const currentUserData = await db.getOne(`

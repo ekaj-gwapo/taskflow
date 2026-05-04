@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-utils"
 import db from "@/lib/db"
 import { logActivity } from "@/lib/activity"
+import { notifyExtensionRequested } from "@/lib/notify"
 import { v4 as uuidv4 } from "uuid"
 
 // POST — Create a new extension request
@@ -163,6 +164,16 @@ export async function POST(
           now
         ]
       );
+
+      // Trigger Email Notification
+      notifyExtensionRequested({
+        adminId: createdById,
+        requesterName: user.name,
+        taskTitle: task.title || task.taskTitle || "Task",
+        proposedDate: proposedDueDate,
+        reason: reason.trim(),
+        taskId: taskId
+      }).catch(err => console.error("notifyExtensionRequested background trigger failed:", err));
     }
 
     return NextResponse.json({ extensionRequest: formattedCreated }, { status: 201 })

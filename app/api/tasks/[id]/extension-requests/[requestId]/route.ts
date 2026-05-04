@@ -144,6 +144,7 @@ export async function PUT(
     notifyExtensionReviewed({
       requesterId: requestedById,
       taskTitle: taskTitle,
+      taskId: taskId,
       approved: action === "APPROVE",
       remark: remark?.trim()
     });

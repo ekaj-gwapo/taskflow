@@ -131,6 +131,7 @@ export async function POST(
           authorId: auth.user!.id,
           authorName: auth.user!.name,
           taskTitle: task.title,
+          taskId: taskId,
           messageContent: content || (attachmentName ? `[Attachment: ${attachmentName}]` : "Sent an attachment")
         });
       }
