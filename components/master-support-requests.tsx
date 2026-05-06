@@ -71,13 +71,16 @@ export function MasterSupportRequests() {
     setSendingReply(true)
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`/api/master/support-requests/${selectedRequest.id}/reply`, {
+      const res = await fetch(`/api/master/support-reply`, {
         method: "POST",
         headers: { 
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ message: replyMessage })
+        body: JSON.stringify({ 
+          id: selectedRequest.id,
+          message: replyMessage 
+        })
       })
 
       if (!res.ok) throw new Error("Failed to send reply")
