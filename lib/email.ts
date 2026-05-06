@@ -258,3 +258,33 @@ export async function sendExtensionRequestedEmail(opts: {
     `
   })
 }
+
+export async function sendContactMasterAdminEmail(opts: {
+  to: string
+  recipientName: string
+  creatorName: string
+  creatorEmail: string
+  organizationName: string
+  message: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `New Concern/Request from Creator: ${opts.creatorName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #059669; margin-top: 0;">Creator Concern/Request</h2>
+        <p>Hi ${opts.recipientName},</p>
+        <p>A creator has sent a message through the system:</p>
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
+          <p style="margin: 5px 0;"><strong>From:</strong> ${opts.creatorName} (${opts.creatorEmail})</p>
+          <p style="margin: 5px 0;"><strong>Organization:</strong> ${opts.organizationName}</p>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;" />
+          <p style="margin: 5px 0;"><strong>Message:</strong></p>
+          <p style="margin: 5px 0; white-space: pre-wrap;">${opts.message}</p>
+        </div>
+        <p style="color: #64748b; font-size: 14px; text-align: center;">You can reply directly to the creator at ${opts.creatorEmail}</p>
+      </div>
+    `
+  })
+}
+

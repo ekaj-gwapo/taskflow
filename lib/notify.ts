@@ -9,6 +9,7 @@ import {
   sendExtensionRequestedEmail,
   sendNewDiscussionEmail,
   sendTaskCompletedEmail,
+  sendContactMasterAdminEmail,
 } from "@/lib/email"
 
 type Recipient = {
@@ -174,3 +175,40 @@ export async function notifyExtensionRequested(opts: {
     console.error("notifyExtensionRequested error:", e)
   }
 }
+
+export async function notifyMasterAdminFromCreator(opts: {
+  creatorName: string
+  creatorEmail: string
+  organizationName: string
+  message: string
+}) {
+  try {
+    // Find all Master Admins and SuperAdmins
+    const admins: Recipient[] = await db.getAll(
+      `SELECT id, name, email, "emailVerified", "notifyOnAssign", "notifyOnDeadline", "notifyOnDiscussion", "notifyOnExtension"
+       FROM users 
+       WHERE role IN ('MASTER_ADMIN', 'SUPERADMIN', 'master_admin', 'superadmin') 
+       AND "emailVerified" = TRUE 
+       AND email IS NOT NULL`
+    )
+
+    if (!admins.length) {
+      console.warn("No verified Master Admins found to notify")
+      return
+    }
+
+    for (const admin of admins) {
+      sendContactMasterAdminEmail({
+        to: admin.email,
+        recipientName: admin.name,
+        creatorName: opts.creatorName,
+        creatorEmail: opts.creatorEmail,
+        organizationName: opts.organizationName,
+        message: opts.message,
+      }).catch((e) => console.error(`notifyMasterAdminFromCreator email failed for ${admin.email}:`, e))
+    }
+  } catch (e) {
+    console.error("notifyMasterAdminFromCreator error:", e)
+  }
+}
+
