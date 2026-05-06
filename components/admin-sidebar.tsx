@@ -466,100 +466,40 @@ export function AdminSidebar({
               )}
 
               {currentUser?.role?.toUpperCase() === "CREATOR" && (
-                <>
-                  <button
-                    onClick={() => setIsContactDialogOpen(true)}
-                    className={cn(
-                      "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden mt-2",
-                      isCollapsed ? "justify-center px-0 h-14" : "gap-4",
-                      "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:translate-x-1 border border-transparent hover:border-amber-200 dark:hover:border-amber-900/50"
-                    )}
-                  >
-                    <div className={cn(
-                      "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
-                      "bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/30 group-hover/nav:bg-amber-600 group-hover/nav:text-white"
-                    )}>
-                      <MessageSquare className="h-5 w-5" />
-                    </div>
-                    {!isCollapsed && (
-                      <>
-                        <div className="flex flex-col items-start flex-1 min-w-0">
-                          <span className="text-sm font-black uppercase tracking-wider truncate w-full text-left">Contact Master Admin</span>
-                          <span className="text-[9px] font-medium opacity-60 truncate w-full text-left">Report concern or request</span>
-                        </div>
-                        <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-hover/nav:translate-x-1 text-amber-400/50" />
-                      </>
-                    )}
-                  </button>
-
-                  <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
-                    <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl rounded-[2rem]">
-                      <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-orange-700 p-8 text-white relative">
-                        <div className="absolute top-0 right-0 p-8 opacity-10">
-                          <MessageSquare size={120} />
-                        </div>
-                        <DialogHeader className="relative z-10">
-                          <DialogTitle className="text-3xl font-black tracking-tight flex items-center gap-3">
-                             <div className="h-10 w-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-                               <Send className="h-5 w-5" />
-                             </div>
-                             Support Request
-                          </DialogTitle>
-                          <DialogDescription className="text-amber-100 font-medium text-lg mt-2 leading-relaxed">
-                            Need help or have a concern? Message the Master Admin directly.
-                          </DialogDescription>
-                        </DialogHeader>
+                <button
+                  onClick={() => onSelectEmployee('support')}
+                  className={cn(
+                    "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
+                    isCollapsed ? "justify-center px-0 h-14" : "gap-4",
+                    selectedEmployeeId === 'support'
+                      ? "bg-amber-600 shadow-[0_10px_25px_-5px_rgba(245,158,11,0.3)] text-white border-amber-600"
+                      : "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:translate-x-1"
+                  )}
+                >
+                  <div className={cn(
+                    "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
+                    selectedEmployeeId === 'support'
+                      ? "bg-white/20 border-white/30 text-white"
+                      : "bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/30 group-hover/nav:bg-amber-600 group-hover/nav:text-white"
+                  )}>
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+                  {!isCollapsed && (
+                    <>
+                      <div className="flex flex-col items-start flex-1 min-w-0">
+                        <span className="text-sm font-black uppercase tracking-wider truncate w-full text-left">Support Center</span>
+                        <span className={cn(
+                          "text-[9px] font-medium opacity-60 truncate w-full text-left",
+                          selectedEmployeeId === 'support' ? "text-white" : "text-muted-foreground"
+                        )}>Message Master Admin</span>
                       </div>
-                      
-                      <div className="p-8 space-y-6 bg-background/50 backdrop-blur-xl">
-                        <div className="space-y-3">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
-                            Your Message
-                          </label>
-                          <Textarea 
-                            placeholder="Describe your concern or request in detail..."
-                            className="min-h-[180px] rounded-2xl bg-secondary/30 border-border/50 focus:border-amber-500/50 focus:ring-amber-500/20 transition-all text-sm leading-relaxed resize-none p-4"
-                            value={contactMessage}
-                            onChange={(e) => setContactMessage(e.target.value)}
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                          <Button 
-                            className="w-full h-14 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-base shadow-xl shadow-amber-600/20 group transition-all"
-                            onClick={handleContactAdmin}
-                            disabled={isSendingMessage}
-                          >
-                            {isSendingMessage ? (
-                              <div className="flex items-center gap-2">
-                                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>Sending...</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Send className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-                                <span>Send Message to Admin</span>
-                              </div>
-                            )}
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            className="w-full h-12 rounded-2xl text-muted-foreground font-bold text-sm"
-                            onClick={() => setIsContactDialogOpen(false)}
-                            disabled={isSendingMessage}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-
-                        <div className="pt-2 flex items-center justify-center gap-2 opacity-40">
-                          <Shield className="h-3 w-3" />
-                          <span className="text-[9px] font-bold uppercase tracking-widest">Secure Admin Channel</span>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </>
+                      <ChevronRight className={cn(
+                        "h-4 w-4 shrink-0 transition-transform group-hover/nav:translate-x-1",
+                        selectedEmployeeId === 'support' ? "text-white/60" : "text-amber-400/50"
+                      )} />
+                    </>
+                  )}
+                </button>
               )}
 
 

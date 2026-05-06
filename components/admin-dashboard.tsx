@@ -33,6 +33,7 @@ import { SmartBriefing } from "@/components/smart-briefing"
 import { EmployeeWeeklyPerformance } from "@/components/employee-weekly-performance"
 import { EmployeeProfileReport } from "@/components/employee-profile-report"
 import { OrgAnalytics } from "@/components/org-analytics"
+import { CreatorSupportRequests } from "@/components/creator-support-requests"
 import { formatDate, formatDateTime, calculateTaskProgress, cn } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 import {
@@ -801,6 +802,16 @@ export function AdminDashboard({
                     transition={{ duration: 0.2 }}
                   >
                     <ActivityLogView />
+                  </motion.div>
+                ) : selectedEmployeeId === 'support' ? (
+                  <motion.div
+                    key="support"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <CreatorSupportRequests />
                   </motion.div>
                 ) : selectedEmployeeId === 'profile' ? (
                   <motion.div

@@ -59,3 +59,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to send message", details: error.message }, { status: 500 })
   }
 }
+
+export async function GET(request: NextRequest) {
+  const auth = requireAuth(request)
+  if (auth.error || !auth.user) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status })
+  }
+
+  try {
+    const requests = await db.query(`
+      SELECT sr.*, u.name as replied_by_name
+      FROM support_requests sr
+      LEFT JOIN users u ON sr.replied_by = u.id
+      WHERE sr.creator_id = ?
+      ORDER BY sr.created_at DESC
+    `, [auth.user.id])
+
+    return NextResponse.json(requests.rows)
+  } catch (error: any) {
+    console.error("API get contact-admin error:", error)
+    return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 })
+  }
+}

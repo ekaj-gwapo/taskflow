@@ -15,6 +15,7 @@ import { MasterOverview } from "@/components/master-overview"
 import { MasterOrgManagement } from "@/components/master-org-management"
 import { MasterSettings } from "@/components/master-settings"
 import { MasterSupportRequests } from "@/components/master-support-requests"
+import { CreatorSupportRequests } from "@/components/creator-support-requests"
 import { Rocket, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
