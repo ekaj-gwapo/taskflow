@@ -1,10 +1,9 @@
-import db from "../lib/db";
+import { NextRequest, NextResponse } from "next/server"
+import db from "@/lib/db"
 
-async function migrate() {
-  console.log("Creating support_requests table...");
-  console.log("Connecting to:", process.env.DATABASE_URL?.split('@')[1]); // Log host part only for security
+export async function GET(request: NextRequest) {
   try {
-    console.log("Executing SQL...");
+    console.log("Running migration from API...");
     await db.execute(`
       CREATE TABLE IF NOT EXISTS support_requests (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -17,11 +16,9 @@ async function migrate() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log("Table support_requests created successfully.");
-  } catch (error) {
-    console.error("Error creating table:", error);
-    process.exit(1);
+    return NextResponse.json({ success: true, message: "Table support_requests created or already exists" });
+  } catch (error: any) {
+    console.error("Migration from API failed:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
-migrate();
