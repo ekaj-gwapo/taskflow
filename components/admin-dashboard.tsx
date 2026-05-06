@@ -325,6 +325,59 @@ export function AdminDashboard({
 } = {}) {
   const { tasks, archivedTasks, fetchArchivedTasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen, selectedTaskId, selectTask } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+
+  // Block dashboard if suspended
+  if (currentUser?.isSuspended && selectedEmployeeId !== 'support' && selectedEmployeeId !== 'profile') {
+    return (
+      <div className="flex flex-col h-full w-full overflow-hidden bg-background">
+        <AppHeader onMenuClick={() => {}} />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-2xl w-full bg-card border-2 border-destructive/20 rounded-[3rem] p-12 text-center space-y-8 shadow-2xl relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-full h-2 bg-destructive" />
+             <div className="mx-auto h-24 w-24 rounded-3xl bg-destructive/10 flex items-center justify-center border-2 border-destructive/20 animate-pulse">
+               <Shield className="h-12 w-12 text-destructive" />
+             </div>
+             <div className="space-y-4">
+               <h1 className="text-4xl font-black tracking-tight text-foreground uppercase">Access Suspended</h1>
+               <p className="text-xl text-muted-foreground font-medium">
+                 Your 31-day free trial has expired or your organization has been suspended. 
+               </p>
+             </div>
+             <div className="p-6 rounded-2xl bg-secondary/30 border border-border/50 text-left space-y-4">
+               <h3 className="font-bold text-lg flex items-center gap-2">
+                 <AlertCircle className="h-5 w-5 text-amber-500" />
+                 What happens now?
+               </h3>
+               <ul className="space-y-2 text-sm text-muted-foreground list-disc pl-5">
+                 <li>Your team cannot access tasks or dashboard reports.</li>
+                 <li>All data is securely preserved and will be restored once reactivated.</li>
+                 <li>You can still contact the Master Admin through the Support Center.</li>
+               </ul>
+             </div>
+             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+               <Button 
+                 size="lg" 
+                 onClick={() => setSelectedEmployeeId('support')}
+                 className="h-16 px-10 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-lg shadow-xl shadow-amber-600/20"
+               >
+                 <MessageSquare className="mr-2 h-6 w-6" />
+                 Go to Support Center
+               </Button>
+               <Button 
+                 variant="outline"
+                 size="lg" 
+                 onClick={() => window.location.href = '/auth/login'}
+                 className="h-16 px-10 rounded-2xl font-bold text-lg border-2"
+               >
+                 Sign Out
+               </Button>
+             </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
   const [showCharts, setShowCharts] = useState(true)
   const [visibleCharts, setVisibleCharts] = useState({
     workload: true,
@@ -341,7 +394,6 @@ export function AdminDashboard({
   const [teamFilterPriority, setTeamFilterPriority] = useState<string>("all")
   const [teamSearchQuery, setTeamSearchQuery] = useState("")
 
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
   const [myTaskTab, setMyTaskTab] = useState<"assigned" | "delegated">("assigned")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -495,9 +547,44 @@ export function AdminDashboard({
     ? allEmployees.find((e) => e.id === selectedEmployeeId) ?? null
     : null
 
+  // Calculate trial remaining
+  const trialDaysLeft = useMemo(() => {
+    if (currentUser?.role !== 'creator' || !currentUser?.trialEndsAt) return null
+    const end = new Date(currentUser.trialEndsAt)
+    const now = new Date()
+    const diff = end.getTime() - now.getTime()
+    return Math.ceil(diff / (1000 * 60 * 60 * 24))
+  }, [currentUser])
+
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
       <AppHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
+
+      {/* Trial Banner */}
+      {trialDaysLeft !== null && trialDaysLeft <= 7 && trialDaysLeft > 0 && (
+        <motion.div 
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+            </div>
+            <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+              Your free trial for <span className="font-bold">{currentUser?.organizationName}</span> ends in <span className="font-bold underline">{trialDaysLeft} days</span>. Upgrade now to keep your team active!
+            </p>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-amber-700 hover:bg-amber-500/20 font-bold shrink-0"
+            onClick={() => setSelectedEmployeeId('support')}
+          >
+            Contact Sales
+          </Button>
+        </motion.div>
+      )}
       
       <div className="flex flex-1 w-full min-h-0 overflow-hidden relative">
         {/* Mobile Sidebar Overlay */}

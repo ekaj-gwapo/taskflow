@@ -19,6 +19,8 @@ export interface User {
   notifyOnDeadline?: boolean
   notifyOnDiscussion?: boolean
   notifyOnExtension?: boolean
+  isSuspended?: boolean
+  trialEndsAt?: string
 }
 
 export type TaskStatus = "todo" | "in-progress" | "completed"

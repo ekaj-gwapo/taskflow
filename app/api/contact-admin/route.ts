@@ -34,13 +34,23 @@ export async function POST(request: NextRequest) {
       [auth.user.id, message]
     )
 
+    // Fetch user and organization details for notification
+    const userInfo = await db.getOne(`
+      SELECT u.name, u.email, o.name as "organizationName"
+      FROM users u
+      JOIN organizations o ON u.orgid = o.id
+      WHERE u.id = ?
+    `, [auth.user.id])
+
     // Send notifications
-    await notifyMasterAdminFromCreator({
-      creatorName: name,
-      creatorEmail: email,
-      organizationName,
-      message,
-    })
+    if (userInfo) {
+      await notifyMasterAdminFromCreator({
+        creatorName: userInfo.name,
+        creatorEmail: userInfo.email,
+        organizationName: userInfo.organizationName,
+        message,
+      })
+    }
 
     // Log the activity using the shared helper
     const { logActivity } = await import("@/lib/activity")

@@ -1032,14 +1032,24 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             orgId: data.user.orgId || data.user.orgid,
             organizationName: data.user.organizationName || data.user.organizationname,
             organizationLogo: data.user.organizationLogo || data.user.organizationlogo,
+            trialEndsAt: data.user.trialEndsAt || data.user.trialendsat,
           }
           setCurrentUser(normalizedUser)
           setCurrentRole(normalizedUser.role)
         } else if (response.status === 403) {
           const data = await response.json();
           if (data.error === "ORGANIZATION_SUSPENDED") {
-            toast.error("Your organization has been suspended. Please contact support.", { duration: 10000 });
-            localStorage.removeItem("token");
+            const normalizedUser = {
+              ...data.user,
+              role: data.user.role.toLowerCase() as UserRole,
+              orgId: data.user.orgId || data.user.orgid,
+              organizationName: data.user.organizationName || data.user.organizationname,
+              organizationLogo: data.user.organizationLogo || data.user.organizationlogo,
+              trialEndsAt: data.user.trialEndsAt || data.user.trialendsat,
+              isSuspended: true
+            }
+            setCurrentUser(normalizedUser)
+            setCurrentRole(normalizedUser.role)
           }
         } else {
           // Token expired or invalid

@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
     const orgId = uuidv4();
     const slug = name.toLowerCase().trim().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
 
-    // Create organization
+    // Create organization with 31-day trial
     await db.execute(`
-      INSERT INTO organizations (id, name, slug, logo_url, createdat, updatedat)
-      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      INSERT INTO organizations (id, name, slug, logo_url, createdat, updatedat, trial_ends_at, subscription_status, status)
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '31 days', 'TRIAL', 'ACTIVE')
     `, [orgId, name.trim(), slug, logoUrl]);
 
     // Update user to be the creator of this org

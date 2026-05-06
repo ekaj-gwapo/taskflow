@@ -14,18 +14,24 @@ export async function GET(request: NextRequest) {
       SELECT u.id, u.name, u.email, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 
              u.avatarUrl as avatar, u.theme, u.mode, u.orgid AS "orgId", 
              u.createdAt as "createdAt", u.updatedAt as "updatedAt",
-             o.name as "organizationName", o.status as "orgStatus", o.logo_url as "organizationLogo"
+             o.name as "organizationName", o.status as "orgStatus", o.logo_url as "organizationLogo", o.trial_ends_at as "trialEndsAt"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id
       WHERE u.id = ?
     `, [userId]);
+    
+    if (user && user.orgId) {
+       const { processTrialCheck } = await import("@/lib/trial");
+       // Run trial check asynchronously (don't block the request)
+       processTrialCheck(user.orgId).catch(e => console.error("Trial check failed:", e));
+    }
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     if (user.orgStatus === 'SUSPENDED' && user.role !== 'master_admin') {
-       return NextResponse.json({ error: "ORGANIZATION_SUSPENDED" }, { status: 403 });
+       return NextResponse.json({ error: "ORGANIZATION_SUSPENDED", user }, { status: 403 });
     }
 
     return NextResponse.json({ user });

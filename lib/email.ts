@@ -315,3 +315,50 @@ export async function sendContactMasterAdminEmail(opts: {
   })
 }
 
+export async function sendTrialReminderEmail(opts: {
+  to: string
+  recipientName: string
+  organizationName: string
+  daysLeft: number
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `Action Required: Your TaskFlow trial expires in ${opts.daysLeft} days`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #ea580c; margin-top: 0;">Trial Ending Soon</h2>
+        <p>Hi ${opts.recipientName},</p>
+        <p>This is a friendly reminder that your free trial for <strong>${opts.organizationName}</strong> will expire in <strong>${opts.daysLeft} days</strong>.</p>
+        <p>To avoid any interruption in your team's productivity, please consider upgrading to a full subscription soon.</p>
+        <div style="background-color: #fff7ed; border: 1px solid #ffedd5; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <p style="margin: 5px 0; font-size: 18px; font-weight: bold;">Upgrade to maintain access</p>
+          <p style="margin: 10px 0; color: #64748b;">Keep all your tasks, employees, and history intact.</p>
+        </div>
+        <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 30px;">Sent by Master Admin via TaskFlow Automated Systems.</p>
+      </div>
+    `
+  })
+}
+
+export async function sendTrialExpiredEmail(opts: {
+  to: string
+  recipientName: string
+  organizationName: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `Your TaskFlow trial for ${opts.organizationName} has expired`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #dc2626; margin-top: 0;">Trial Expired</h2>
+        <p>Hi ${opts.recipientName},</p>
+        <p>The 31-day free trial for <strong>${opts.organizationName}</strong> has expired.</p>
+        <p>Your organization workspace has been <strong>suspended</strong>. Your data is safe, but you and your team will not be able to access the dashboard until a subscription is activated.</p>
+        <div style="background-color: #fef2f2; border: 1px solid #fee2e2; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <p style="margin: 5px 0; font-size: 16px; font-weight: bold; color: #dc2626;">Access Suspended</p>
+          <p style="margin: 10px 0; color: #64748b;">Please contact the Master Admin to renew your access.</p>
+        </div>
+      </div>
+    `
+  })
+}
