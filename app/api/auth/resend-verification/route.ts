@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email already verified" }, { status: 400 });
     }
 
-    const verificationToken = uuidv4();
-    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
     await db.execute(`
       UPDATE users 
@@ -30,11 +30,12 @@ export async function POST(request: NextRequest) {
           "emailVerifyExpiry" = ?,
           updatedAt = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, [verificationToken, verificationExpiry, user.id]);
+    `, [otpCode, verificationExpiry, user.id]);
 
-    await sendVerificationEmail(email, user.name, verificationToken);
+    const { sendVerificationCodeEmail } = await import("@/lib/email");
+    await sendVerificationCodeEmail(email, user.name, otpCode);
 
-    return NextResponse.json({ message: "Verification email sent" });
+    return NextResponse.json({ message: "Verification code sent" });
   } catch (error: any) {
     console.error("RESEND VERIFICATION ERROR:", error);
     return NextResponse.json({ 

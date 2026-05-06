@@ -6,8 +6,9 @@ import { sendEmail } from "@/lib/email" // Wait, does email.ts export sendEmail?
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const auth = requireMasterAdmin(request)
   if (auth.error || !auth.user) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -19,7 +20,7 @@ export async function POST(
       return NextResponse.json({ error: "Reply message is required" }, { status: 400 })
     }
 
-    const { id } = params
+    // Get the request and creator email
 
     // Get the request and creator email
     const supportRequest = await db.getOne(`

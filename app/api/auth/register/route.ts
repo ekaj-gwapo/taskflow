@@ -30,8 +30,10 @@ export async function POST(request: NextRequest) {
     const userId = uuidv4();
     // Use autoVerify if provided (e.g. when an admin adds a user)
     const isVerified = autoVerify === true;
-    const verificationToken = uuidv4();
-    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    
+    // Generate a 6-digit OTP instead of a UUID token
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes expiry
 
     // Default to 'employee' for admin-created users, 'creator' for public signups
     const defaultRole = isVerified ? "employee" : "creator";
@@ -48,17 +50,17 @@ export async function POST(request: NextRequest) {
     `, [
       userId, name, email, email, hashedPassword, role || defaultRole, 
       phone || "", location || "", jobTitle || "", orgId || null,
-      isVerified, isVerified ? null : verificationToken, isVerified ? null : verificationExpiry,
+      isVerified, isVerified ? null : otpCode, isVerified ? null : verificationExpiry,
       new Date().toISOString(), new Date().toISOString()
     ]);
 
     // Only send email if NOT auto-verified
     if (!isVerified) {
-      const { sendVerificationEmail } = await import("@/lib/email");
+      const { sendVerificationCodeEmail } = await import("@/lib/email");
       try {
-        await sendVerificationEmail(email, name, verificationToken);
+        await sendVerificationCodeEmail(email, name, otpCode);
       } catch (emailError) {
-        console.error("Failed to send verification email:", emailError);
+        console.error("Failed to send verification code email:", emailError);
       }
     }
 

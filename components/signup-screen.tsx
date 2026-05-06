@@ -88,8 +88,8 @@ export function SignupScreen() {
         return
       }
 
-      // Redirect to verify email page
-      router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`)
+      // Redirect to OTP verification page
+      router.push(`/auth/verify-otp?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`)
     } catch (err) {
       setError("An error occurred. Please try again.")
     } finally {

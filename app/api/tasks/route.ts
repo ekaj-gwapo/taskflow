@@ -196,6 +196,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
+    if (auth.user!.role.toLowerCase() === 'creator') {
+      return NextResponse.json({ error: "Creators cannot create tasks directly. Please use an Admin or Head Admin account." }, { status: 403 })
+    }
+
     const { title, description, priority, dueDate, assigneeId, assigneeIds, actionSteps } = await request.json()
 
     const uIds = assigneeIds || (assigneeId ? [assigneeId] : [])

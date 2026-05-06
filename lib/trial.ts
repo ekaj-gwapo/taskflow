@@ -49,11 +49,8 @@ export async function processTrialCheck(orgId: string) {
     const diffTime = trialEnd.getTime() - now.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays <= 3 && diffDays > 0) {
-      // Check if we already sent a reminder today (to avoid spamming on every login)
-      // For simplicity, we'll just check a flag in DB or assume login frequency is low enough
-      // Better: Add a 'last_reminder_sent_at' column
-      
+    // Simple check: Only send reminder if subscription_status isn't 'REMINDED'
+    if (diffDays <= 3 && diffDays > 0 && org.subscription_status !== 'REMINDED') {
       const creator = await db.getOne(`
         SELECT name, email FROM users WHERE orgid = ? AND role = 'creator' LIMIT 1
       `, [orgId])
@@ -65,6 +62,11 @@ export async function processTrialCheck(orgId: string) {
           organizationName: org.name,
           daysLeft: diffDays
         }).catch(e => console.error("Failed to send trial reminder email", e))
+
+        // Mark as reminded to avoid spam
+        await db.execute(`
+          UPDATE organizations SET subscription_status = 'REMINDED' WHERE id = ?
+        `, [orgId])
       }
     }
   } catch (error) {

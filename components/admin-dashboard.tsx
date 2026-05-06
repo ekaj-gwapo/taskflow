@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, AlertCircle, MessageSquare } from "lucide-react"
 import { OfficeAccomplishmentReport } from "@/components/office-accomplishment-report"
 import { TopCompletersChart } from "@/components/top-completers-chart"
 import { WorkloadDistribution } from "@/components/workload-distribution"
@@ -838,7 +838,9 @@ export function AdminDashboard({
                           {(currentUser?.role?.toUpperCase() === 'SUPERADMIN' || currentUser?.role?.toUpperCase() === 'HEAD_ADMIN') && (
                             <OfficeAccomplishmentReport />
                           )}
-                          <CreateTaskDialog />
+                          {currentUser?.role?.toUpperCase() !== 'CREATOR' && (
+                            <CreateTaskDialog />
+                          )}
                         </div>
                       </div>
                     </motion.div>
