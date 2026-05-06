@@ -18,6 +18,7 @@ export function MasterSidebar({ activeView, onViewChange }: MasterSidebarProps) 
     { id: "overview", label: "Dashboard Overview", icon: LayoutDashboard },
     { id: "organizations", label: "Organization Management", icon: Building2 },
     { id: "users", label: "Global User Directory", icon: Users },
+    { id: "support", label: "Support Requests", icon: ShieldAlert },
     { id: "logs", label: "System Activity Logs", icon: History },
   ]
 

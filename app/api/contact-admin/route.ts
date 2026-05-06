@@ -28,6 +28,12 @@ export async function POST(request: NextRequest) {
       if (org) organizationName = org.name
     }
 
+    // Save to support_requests table
+    await db.execute(
+      'INSERT INTO support_requests (creator_id, message) VALUES (?, ?)',
+      [auth.user.id, message]
+    )
+
     // Send notifications
     await notifyMasterAdminFromCreator({
       creatorName: name,
@@ -36,15 +42,20 @@ export async function POST(request: NextRequest) {
       message,
     })
 
-    // Log the activity
-    await db.execute(
-      'INSERT INTO activity_logs (user_id, organization_id, action, details) VALUES (?, ?, ?, ?)',
-      [auth.user.id, orgId, 'CONTACT_ADMIN', `Sent a message to Master Admin: ${message.substring(0, 50)}...`]
-    )
+    // Log the activity using the shared helper
+    const { logActivity } = await import("@/lib/activity")
+    await logActivity({
+      action: "SUPPORT_REQUEST_SENT",
+      entityId: auth.user.id,
+      entityType: "SUPPORT_REQUEST",
+      userId: auth.user.id,
+      userName: name,
+      details: { message: message.substring(0, 100) }
+    })
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error("API contact-admin error:", error)
-    return NextResponse.json({ error: "Failed to send message" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to send message", details: error.message }, { status: 500 })
   }
 }

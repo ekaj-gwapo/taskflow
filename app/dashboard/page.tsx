@@ -14,6 +14,7 @@ import { MasterSidebar } from "@/components/master-sidebar"
 import { MasterOverview } from "@/components/master-overview"
 import { MasterOrgManagement } from "@/components/master-org-management"
 import { MasterSettings } from "@/components/master-settings"
+import { MasterSupportRequests } from "@/components/master-support-requests"
 import { Rocket, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -93,6 +94,7 @@ function AppContent() {
               {activeMasterView === "overview" && <MasterOverview />}
               {activeMasterView === "organizations" && <MasterOrgManagement />}
               {activeMasterView === "users" && <MasterUserManagement />}
+              {activeMasterView === "support" && <MasterSupportRequests />}
               {activeMasterView === "logs" && <div className="p-8">Activity Logs Coming Soon</div>}
               {activeMasterView === "settings" && <MasterSettings />}
             </div>

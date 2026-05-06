@@ -28,7 +28,9 @@ export type ActivityAction =
   | "MEMBER_REMOVED"
   | "USER_CREATED"
   | "USER_DELETED"
-  | "ORGANIZATION_CREATED";
+  | "ORGANIZATION_CREATED"
+  | "SUPPORT_REQUEST_SENT"
+  | "SUPPORT_REQUEST_REPLIED";
 
 export interface ActivityLogPayload {
   action: ActivityAction;

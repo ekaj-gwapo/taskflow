@@ -24,7 +24,7 @@ const FROM_NAME = "TaskFlow"
 /**
  * Generic email sender using Nodemailer
  */
-async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   try {
     const transporter = getTransporter();
     const info = await transporter.sendMail({
@@ -38,6 +38,33 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
     console.error(`NODEMAILER ERROR (TO: ${to}):`, error)
     throw error
   }
+}
+
+export async function sendSupportReplyEmail(opts: {
+  to: string
+  recipientName: string
+  originalMessage: string
+  replyMessage: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `RE: Your Support Request - TaskFlow`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #059669; margin-top: 0;">Response to Your Support Request</h2>
+        <p>Hi ${opts.recipientName},</p>
+        <p>A Master Admin has replied to your request:</p>
+        <div style="background-color: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
+          <p style="margin: 5px 0;"><strong>Admin Reply:</strong></p>
+          <p style="margin: 5px 0; white-space: pre-wrap;">${opts.replyMessage}</p>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+        <p style="color: #64748b; font-size: 12px;"><strong>Your original message:</strong></p>
+        <p style="color: #64748b; font-size: 12px; font-style: italic; white-space: pre-wrap;">"${opts.originalMessage}"</p>
+        <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 30px;">This is an automated message. Please do not reply directly to this email.</p>
+      </div>
+    `
+  })
 }
 
 export async function sendVerificationEmail(email: string, name: string, token: string) {
