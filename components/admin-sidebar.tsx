@@ -661,42 +661,6 @@ export function AdminSidebar({
                 )}
               </button>
 
-              {currentUser?.role?.toUpperCase() === 'CREATOR' && (
-                <button
-                  onClick={() => onSelectEmployee('support')}
-                  className={cn(
-                    "w-full flex items-center rounded-2xl px-4 py-3.5 transition-all duration-300 group/nav relative overflow-hidden",
-                    isCollapsed ? "justify-center px-0 h-14" : "gap-4",
-                    selectedEmployeeId === 'support'
-                      ? "bg-amber-500 shadow-[0_10px_25px_-5px_rgba(245,158,11,0.3)] text-white border-amber-500"
-                      : "text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600 hover:translate-x-1"
-                  )}
-                >
-                  <div className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
-                    selectedEmployeeId === 'support'
-                      ? "bg-white/20 border-white/30 text-white"
-                      : "bg-amber-500/10 text-amber-500 border-amber-500/20 group-hover/nav:bg-amber-500 group-hover/nav:text-white"
-                  )}>
-                    <MessageSquare className="h-5 w-5" />
-                  </div>
-                  {!isCollapsed && (
-                    <>
-                      <div className="flex flex-col items-start flex-1">
-                        <span className="text-sm font-black uppercase tracking-widest">Support Center</span>
-                        <span className={cn(
-                          "text-[9px] font-medium opacity-60",
-                          selectedEmployeeId === 'support' ? "text-white" : "text-muted-foreground"
-                        )}>Contact Master Admin</span>
-                      </div>
-                      <ChevronRight className={cn(
-                        "h-4 w-4 transition-transform group-hover/nav:translate-x-1",
-                        selectedEmployeeId === 'support' ? "text-white/60" : "text-muted-foreground/30"
-                      )} />
-                    </>
-                  )}
-                </button>
-              )}
 
               {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN" || currentUser?.role?.toUpperCase() === "CREATOR") && (
                 <>

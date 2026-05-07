@@ -192,6 +192,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       }
       setCurrentUser(user)
       setCurrentRole(userData.role.toLowerCase() as UserRole)
+      setIsLoadingSession(false)
       // Save token or handle session if needed
     }
   }, [])

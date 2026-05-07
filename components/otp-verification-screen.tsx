@@ -9,9 +9,11 @@ import { LayoutDashboard, CheckCircle2, ArrowRight, RefreshCw, AlertCircle } fro
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { useTaskContext } from "@/lib/task-context"
 
 export function OTPVerificationScreen() {
   const router = useRouter()
+  const { login } = useTaskContext()
   const searchParams = useSearchParams()
   const email = searchParams.get("email") || ""
   
@@ -84,10 +86,19 @@ export function OTPVerificationScreen() {
 
       toast.success("Email verified successfully!")
       
-      // Auto-login if token is provided
+      // Auto-login
       if (data.token) {
         localStorage.setItem("token", data.token)
-        router.push("/dashboard?open_profile=1")
+        
+        // Update global state immediately
+        login(data.user.role, data.user.id, data.user)
+        
+        // If it's a new creator with no organization, go to onboarding
+        if (data.user.role?.toLowerCase() === 'creator' && !data.user.orgId) {
+          router.push("/auth/onboarding")
+        } else {
+          router.push("/dashboard?open_profile=1")
+        }
       } else {
         router.push("/auth/login?verified=1")
       }
