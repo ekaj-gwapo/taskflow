@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has an organization
-    const user = await db.getOne('SELECT orgid, role FROM users WHERE id = $1', [decoded.id]);
+    const user = await db.getOne('SELECT orgid, role FROM users WHERE id = ?', [decoded.id]);
     if (user && user.orgid) {
       return NextResponse.json({ error: "You already belong to an organization" }, { status: 400 });
     }
@@ -36,12 +36,12 @@ export async function POST(request: NextRequest) {
     // Create organization with 31-day trial
     await db.execute(`
       INSERT INTO organizations (id, name, slug, logo_url, createdat, updatedat, trial_ends_at, subscription_status, status)
-      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '31 days', 'TRIAL', 'ACTIVE')
-    `, [orgId, name.trim(), slug, logoUrl]);
+      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '31 days', 'TRIAL', 'ACTIVE')
+    `, [orgId, name.trim(), slug, logoUrl || null]);
 
     // Update user to be the creator of this org
     await db.execute(`
-      UPDATE users SET orgid = $1, role = 'creator' WHERE id = $2
+      UPDATE users SET orgid = ?, role = 'creator' WHERE id = ?
     `, [orgId, decoded.id]);
 
     // Generate a fresh token with the new orgId and role
