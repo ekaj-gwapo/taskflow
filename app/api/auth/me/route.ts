@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       SELECT u.id, u.name, u.email, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 
              u.avatarUrl as avatar, u.theme, u.mode, u.orgid AS "orgId", 
              u.createdAt as "createdAt", u.updatedAt as "updatedAt",
-             o.name as "organizationName", o.status as "orgStatus", o.logo_url as "organizationLogo", o.trial_ends_at as "trialEndsAt"
+             o.name as "organizationName", o.status as "orgStatus", o.logo_url as "organizationLogo", o.trial_ends_at as "trialEndsAt", o.subscription_status as "subscriptionStatus"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id
       WHERE u.id = ?

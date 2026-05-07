@@ -16,6 +16,7 @@ import { MasterOrgManagement } from "@/components/master-org-management"
 import { MasterSettings } from "@/components/master-settings"
 import { MasterSupportRequests } from "@/components/master-support-requests"
 import { CreatorSupportRequests } from "@/components/creator-support-requests"
+import { TrialExpiredScreen } from "@/components/trial-expired-screen"
 import { Rocket, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -87,6 +88,20 @@ function AppContent() {
         <span className="inline-block h-6 w-6 border-2 border-primary border-r-transparent animate-spin rounded-full" />
       </div>
     )
+  }
+
+  // Trial expiration lockout (skip for master_admin)
+  if (currentRole !== "master_admin" && currentUser.orgId) {
+    const subStatus = (currentUser as any).subscriptionStatus?.toUpperCase()
+    const trialEndsAt = (currentUser as any).trialEndsAt
+
+    if (subStatus !== "ACTIVE" && trialEndsAt) {
+      const trialEnd = new Date(trialEndsAt)
+      const now = new Date()
+      if (now > trialEnd) {
+        return <TrialExpiredScreen />
+      }
+    }
   }
 
   return (

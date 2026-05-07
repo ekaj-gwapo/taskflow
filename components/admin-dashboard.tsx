@@ -762,7 +762,7 @@ export function AdminDashboard({
             <div className="flex-1 min-w-0 space-y-6">
               {/* SEARCH & FILTER */}
               <AnimatePresence mode="wait">
-                {!['activity-log', 'profile', 'user-management'].includes(selectedEmployeeId as string) &&
+                {!['activity-log', 'profile', 'user-management', 'support'].includes(selectedEmployeeId as string) &&
                   !(currentUser?.role === 'creator' && !selectedEmployeeId) && (
                     <motion.div
                       key="search-filter-section"

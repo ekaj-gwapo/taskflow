@@ -141,7 +141,10 @@ export function EmployeeProfileReport({ onEditProfile }: { onEditProfile?: () =>
   if (isHeadAdmin || isCreator) {
     // Head Admin & Creator: org-wide overview
     metrics.push(
+      { icon: <Users className="h-4 w-4 text-indigo-500" />, label: "Team Members", value: allEmployees.length, description: "Active employees", color: "purple" },
       { icon: <Target className="h-4 w-4 text-blue-500" />, label: isCreator ? "Total Org Tasks" : "Total Overseen", value: stats.total, description: "System volume", color: "blue" },
+      { icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />, label: "Completed", value: stats.completed, description: `${stats.completionRate}% completion rate`, color: "emerald" },
+      { icon: <AlertCircle className="h-4 w-4 text-red-500" />, label: "Overdue", value: stats.overdue, description: stats.overdue > 0 ? "Needs attention" : "All on track", color: "amber" },
     )
   } else {
     // Admin and Employee: personal task stats
@@ -153,7 +156,7 @@ export function EmployeeProfileReport({ onEditProfile }: { onEditProfile?: () =>
     )
   }
 
-  if (stats.isAdmin || stats.isHeadAdmin || stats.isCreator) {
+  if (stats.isAdmin || stats.isHeadAdmin) {
     metrics.push(
       { icon: <PlusCircle className="h-4 w-4 text-sky-500" />, label: "Tasks Created", value: stats.createdTasksCount, description: "Total initialized", color: "blue" },
       { icon: <RefreshCw className="h-4 w-4 text-orange-500" />, label: "Delegated", value: stats.delegatedTasksCount, description: "Tasks Delegated", color: "amber" }
