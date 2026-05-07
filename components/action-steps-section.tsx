@@ -31,6 +31,7 @@ interface ActionStepsSectionProps {
   onUpdateStepActed?: (stepId: string, isActed: boolean) => void
   userRole?: UserRole
   taskStatus?: string
+  isCreator?: boolean
 }
 
 export function ActionStepsSection({
@@ -42,6 +43,7 @@ export function ActionStepsSection({
   onUpdateStepActed,
   userRole = "employee",
   taskStatus,
+  isCreator = false,
 }: ActionStepsSectionProps) {
   const [newStepTitle, setNewStepTitle] = useState("")
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set())
@@ -142,8 +144,8 @@ export function ActionStepsSection({
         </div>
       )}
 
-      {/* Add new step - Only for admins/superadmins, and not if task is completed */}
-      {(userRole === "admin" || userRole === "superadmin") && taskStatus !== "completed" && (
+      {/* Add new step - Only for admins/superadmins, creator, and not if task is completed */}
+      {(userRole === "admin" || userRole === "superadmin" || isCreator) && taskStatus !== "completed" && (
         <div className="flex gap-2">
           <input
             type="text"
@@ -246,7 +248,7 @@ export function ActionStepsSection({
                     />
                   </button>
                 </div>
-                {(userRole === "admin" || userRole === "superadmin") && taskStatus !== "completed" && (
+                {(userRole === "admin" || userRole === "superadmin" || isCreator) && taskStatus !== "completed" && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -370,8 +372,8 @@ export function ActionStepsSection({
                     </div>
                   )}
 
-                  {/* Add note input - for employees and admin assignees */}
-                  {(userRole === "employee" || userRole === "admin" || userRole === "head_admin") && (
+                  {/* Add note input - for employees, admins, and task creators */}
+                  {(userRole === "employee" || userRole === "admin" || userRole === "head_admin" || isCreator) && (
 
                     <div className="space-y-2 pt-2 border-t border-border">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">

@@ -1083,7 +1083,7 @@ export function TaskDetailPanel({
           </div>
 
           {/* Action Required Section */}
-          {task.actionSteps && task.actionSteps.length > 0 ? (
+          {(task.actionSteps && task.actionSteps.length > 0) || (currentRole === "admin" || currentRole === "superadmin" || currentUser?.id === task.createdById) ? (
             <div className="px-6 py-5 border-b border-border/50 bg-background/30">
               <ActionStepsSection
                 steps={task.actionSteps || []}
@@ -1094,6 +1094,7 @@ export function TaskDetailPanel({
                 onAddStepNote={handleAddStepNote}
                 userRole={isEmployeeLike ? "employee" : currentRole || undefined}
                 taskStatus={task.status}
+                isCreator={currentUser?.id === task.createdById}
               />
             </div>
           ) : null}

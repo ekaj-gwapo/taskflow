@@ -3,10 +3,6 @@ import Stripe from "stripe";
 import { requireAuth } from "@/lib/auth-utils";
 import db from "@/lib/db";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-04-22.dahlia",
-});
-
 export async function POST(request: NextRequest) {
   try {
     const auth = requireAuth(request);
@@ -31,6 +27,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check Stripe configuration
+    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
+      return NextResponse.json(
+        { error: "Payment system is not configured. Please contact the administrator." },
+        { status: 503 }
+      );
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-04-22.dahlia",
+    });
+
     // Get the organization info
     const org: any = await db.getOne(
       `SELECT id, name, subscription_status FROM organizations WHERE id = ?`,
@@ -53,7 +61,7 @@ export async function POST(request: NextRequest) {
       mode: "subscription",
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID!,
+          price: process.env.STRIPE_PRICE_ID,
           quantity: 1,
         },
       ],
