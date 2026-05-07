@@ -34,6 +34,7 @@ export function MasterOrgManagement() {
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
   const [details, setDetails] = useState<OrgDetails | null>(null)
   const [loadingDetails, setLoadingDetails] = useState(false)
+  const [orgToDelete, setOrgToDelete] = useState<{id: string, name: string} | null>(null)
 
   useEffect(() => {
     fetchOrgs()
@@ -104,6 +105,35 @@ export function MasterOrgManagement() {
       }
     } catch (err) {
       toast.error("An error occurred")
+    }
+  }
+
+  const confirmDeleteOrg = async () => {
+    if (!orgToDelete) return
+    
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`/api/master/organizations/${orgToDelete.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      const data = await res.json()
+      
+      if (res.ok) {
+        toast.success(`Organization "${orgToDelete.name}" deleted successfully`)
+        setOrgs(prev => prev.filter(o => o.id !== orgToDelete.id))
+        if (selectedOrgId === orgToDelete.id) {
+          setSelectedOrgId(null)
+          setDetails(null)
+        }
+      } else {
+        toast.error(data.error || "Failed to delete organization")
+      }
+    } catch (err) {
+      toast.error("An error occurred while deleting the organization")
+    } finally {
+      setOrgToDelete(null)
     }
   }
 
@@ -321,7 +351,12 @@ export function MasterOrgManagement() {
                         </>
                       )}
                     </Button>
-                    <Button variant="destructive" size="icon" className="h-10 w-10 shadow-lg shadow-red-500/20">
+                    <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      className="h-10 w-10 shadow-lg shadow-red-500/20"
+                      onClick={() => setOrgToDelete({ id: org.id, name: org.name })}
+                    >
                       <Trash2 className="h-5 w-5" />
                     </Button>
                     <Button 
@@ -340,6 +375,54 @@ export function MasterOrgManagement() {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {orgToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setOrgToDelete(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-card border border-red-500/20 shadow-2xl rounded-3xl z-[101] overflow-hidden"
+            >
+              <div className="h-2 w-full bg-gradient-to-r from-red-500 to-red-600" />
+              <div className="p-6 sm:p-8">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 mb-6">
+                  <ShieldAlert className="h-8 w-8 text-red-600" />
+                </div>
+                <h2 className="text-2xl font-black text-center mb-2">Delete Organization?</h2>
+                <p className="text-center text-muted-foreground mb-8 text-sm">
+                  You are about to permanently delete <strong className="text-foreground">{orgToDelete.name}</strong>. This will detach all users and cannot be undone. Are you absolutely sure?
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 font-bold h-12 rounded-xl"
+                    onClick={() => setOrgToDelete(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    className="flex-1 font-bold h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white"
+                    onClick={confirmDeleteOrg}
+                  >
+                    Yes, Delete
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

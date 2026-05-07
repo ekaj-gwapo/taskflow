@@ -33,6 +33,12 @@ export async function POST(request: NextRequest) {
     const orgId = uuidv4();
     const slug = name.toLowerCase().trim().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
 
+    // Check if organization name or slug already exists
+    const existingOrg = await db.getOne('SELECT id FROM organizations WHERE slug = ? OR name = ?', [slug, name.trim()]);
+    if (existingOrg) {
+      return NextResponse.json({ error: "An organization with this name already exists. Please choose a different name." }, { status: 400 });
+    }
+
     // Create organization with 31-day trial
     await db.execute(`
       INSERT INTO organizations (id, name, slug, logo_url, createdat, updatedat, trial_ends_at, subscription_status, status)

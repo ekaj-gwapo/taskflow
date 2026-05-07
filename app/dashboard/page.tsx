@@ -31,8 +31,7 @@ function AppContent() {
 
       if (!currentUser || !currentRole) {
         router.replace(`/auth/login${window.location.search}`)
-      } else if (currentRole !== "master_admin" && currentRole !== "creator" && !currentUser.orgId) {
-
+      } else if (currentRole !== "master_admin" && !currentUser.orgId) {
         router.replace("/auth/onboarding")
       }
     }
@@ -74,6 +73,15 @@ function AppContent() {
   }, [searchParams, router, currentUser, login])
 
   if (isLoadingSession || !currentUser || !currentRole) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <span className="inline-block h-6 w-6 border-2 border-primary border-r-transparent animate-spin rounded-full" />
+      </div>
+    )
+  }
+
+  // Prevent dashboard flash while redirecting users without an organization
+  if (currentRole !== "master_admin" && !currentUser.orgId) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <span className="inline-block h-6 w-6 border-2 border-primary border-r-transparent animate-spin rounded-full" />

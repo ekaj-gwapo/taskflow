@@ -565,23 +565,29 @@ export function AdminDashboard({
         <motion.div 
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
-          className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2 flex items-center justify-between"
+          className="bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent border-b border-orange-500/20 px-6 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between relative overflow-hidden gap-4"
         >
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-orange-500 to-amber-500" />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center shrink-0">
+              <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
             </div>
-            <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
-              Your free trial for <span className="font-bold">{currentUser?.organizationName}</span> ends in <span className="font-bold underline">{trialDaysLeft} days</span>. Upgrade now to keep your team active!
-            </p>
+            <div className="flex flex-col">
+              <p className="text-sm font-semibold text-orange-900 dark:text-orange-200 tracking-tight">
+                Trial Expiring Soon
+              </p>
+              <p className="text-xs font-medium text-orange-800/80 dark:text-orange-200/80 mt-0.5">
+                Your free trial for <span className="font-bold text-orange-900 dark:text-orange-100">{currentUser?.organizationName}</span> ends in <span className="font-bold text-orange-900 dark:text-orange-100">{trialDaysLeft} days</span>. Don't lose access to your workspace.
+              </p>
+            </div>
           </div>
           <Button 
-            variant="ghost" 
+            variant="default" 
             size="sm" 
-            className="text-amber-700 hover:bg-amber-500/20 font-bold shrink-0"
+            className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-semibold shadow-md shadow-orange-500/20 border-0 shrink-0 w-full sm:w-auto rounded-xl transition-all hover:scale-105 active:scale-95"
             onClick={() => setSelectedEmployeeId('support')}
           >
-            Contact Sales
+            Upgrade Workspace
           </Button>
         </motion.div>
       )}

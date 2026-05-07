@@ -124,7 +124,12 @@ export function LoginScreen() {
       // Store token and login user
       localStorage.setItem("token", data.token)
       login(data.user.role.toLowerCase(), data.user.id, data.user)
-      router.replace(`/dashboard${window.location.search}`)
+      
+      if (data.user.role.toLowerCase() !== 'master_admin' && !data.user.orgId) {
+        router.replace(`/auth/onboarding`)
+      } else {
+        router.replace(`/dashboard${window.location.search}`)
+      }
     } catch (err) {
       setError("An error occurred. Please try again.")
     } finally {

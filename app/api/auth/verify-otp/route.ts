@@ -12,7 +12,9 @@ export async function POST(request: NextRequest) {
 
     // Find user by email and code
     const user = await db.getOne(`
-      SELECT id, name, email, role, orgid as "orgId", "emailVerifyToken", "emailVerifyExpiry", "emailVerified"
+      SELECT id, name, email, role, orgid as "orgId", "emailVerifyToken", 
+             ("emailVerifyExpiry" < NOW()) as is_expired, 
+             "emailVerified"
       FROM users 
       WHERE email = ? AND "emailVerifyToken" = ?
     `, [email.toLowerCase(), code]);
@@ -25,10 +27,7 @@ export async function POST(request: NextRequest) {
        return NextResponse.json({ message: "Email already verified" }, { status: 200 });
     }
 
-    const expiry = new Date(user.emailVerifyExpiry);
-    const now = new Date();
-
-    if (expiry < now) {
+    if (user.is_expired) {
       return NextResponse.json({ error: "Verification code has expired. Please request a new one." }, { status: 400 });
     }
 
