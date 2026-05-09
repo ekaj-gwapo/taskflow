@@ -27,3 +27,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch support requests", details: error.message }, { status: 500 })
   }
 }
+
