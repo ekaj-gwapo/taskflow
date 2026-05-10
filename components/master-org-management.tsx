@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Organization {
   id: string
@@ -25,6 +26,76 @@ interface OrgDetails {
   organization: Organization
   users: any[]
   tasks: any[]
+}
+
+function OrgRowSkeleton() {
+  return (
+    <div className="border border-border bg-card/40 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden animate-pulse">
+      <div className="flex flex-col lg:flex-row">
+        <div className="flex-1 p-6 flex items-center gap-6 border-b lg:border-b-0 lg:border-r border-border">
+          <Skeleton className="h-16 w-16 rounded-2xl shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-64" />
+            <div className="flex gap-4 pt-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-secondary/20 p-6 flex items-center gap-3 justify-end lg:w-80">
+          <Skeleton className="h-10 w-24 rounded-md" />
+          <Skeleton className="h-10 w-10 rounded-md" />
+          <Skeleton className="h-10 w-10 rounded-md" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function OrgDetailSkeleton() {
+  return (
+    <div className="p-8 space-y-8 max-w-7xl mx-auto animate-pulse">
+      <Skeleton className="h-10 w-40" />
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="lg:w-80 space-y-6">
+          <Card className="p-0 border-border overflow-hidden">
+            <Skeleton className="h-32 w-full" />
+            <CardContent className="p-6 space-y-4">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-20" />
+              <div className="space-y-2 pt-4">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            </CardContent>
+          </Card>
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
+        </div>
+        <div className="flex-1 space-y-8">
+          <Card className="p-6">
+            <Skeleton className="h-6 w-48 mb-6" />
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
+            </div>
+          </Card>
+          <Card className="p-6">
+            <Skeleton className="h-6 w-48 mb-6" />
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function MasterOrgManagement() {
@@ -141,6 +212,10 @@ export function MasterOrgManagement() {
     o.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (o.ownerEmail && o.ownerEmail.toLowerCase().includes(searchTerm.toLowerCase()))
   )
+
+  if (loadingDetails) {
+    return <OrgDetailSkeleton />
+  }
 
   if (selectedOrgId && details) {
     return (
@@ -283,10 +358,9 @@ export function MasterOrgManagement() {
 
       <div className="grid grid-cols-1 gap-6">
         {loading ? (
-          <div className="p-20 flex flex-col items-center justify-center text-muted-foreground">
-            <div className="h-12 w-12 border-4 border-primary border-r-transparent animate-spin rounded-full mb-4" />
-            <p className="text-lg font-bold">Scanning organizations...</p>
-          </div>
+          <>
+            {[1, 2, 3, 4, 5].map(i => <OrgRowSkeleton key={i} />)}
+          </>
         ) : filteredOrgs.length === 0 ? (
           <div className="p-20 text-center text-muted-foreground bg-secondary/20 rounded-3xl border-2 border-dashed border-border">
             <Building2 className="h-20 w-20 mx-auto mb-6 opacity-10" />

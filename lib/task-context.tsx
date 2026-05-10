@@ -22,6 +22,8 @@ interface TaskContextType {
   currentUser: User | null
   currentRole: UserRole | null
   isLoadingSession: boolean
+  isLoadingTasks: boolean
+  isLoadingEmployees: boolean
   login: (role: UserRole, userId?: string, userData?: any) => void
   logout: () => void
 
@@ -116,6 +118,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null)
   const [isLoadingSession, setIsLoadingSession] = useState(true)
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true)
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(true)
   const [tasks, setTasks] = useState<Task[]>([])
   const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
   const [reports, setReports] = useState<WeeklyReport[]>([])
@@ -1067,8 +1071,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refreshUsers = useCallback(async () => {
-    if (!currentUser || (currentRole !== 'admin' && currentRole !== 'master_admin' && currentRole !== 'head_admin' && currentRole !== 'creator')) return;
+    if (!currentUser || (currentRole !== 'admin' && currentRole !== 'master_admin' && currentRole !== 'head_admin' && currentRole !== 'creator')) {
+      setIsLoadingEmployees(false)
+      return;
+    }
     try {
+      setIsLoadingEmployees(true);
       const token = localStorage.getItem('token');
       const headers = { 'Authorization': `Bearer ${token}` };
       const usersRes = await fetch('/api/users', { headers });
@@ -1084,6 +1092,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
+    } finally {
+      setIsLoadingEmployees(false);
     }
   }, [currentUser, currentRole]);
 
@@ -1096,12 +1106,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const token = localStorage.getItem('token');
         const headers = { 'Authorization': `Bearer ${token}` };
 
-        // Fetch Tasks (Only if not already fetched or to refresh)
+        // Fetch Tasks
+        setIsLoadingTasks(true);
         const tasksRes = await fetch('/api/tasks', { headers });
         if (tasksRes.ok) {
           const data = await tasksRes.json();
           setTasks(data.tasks || []);
         }
+        setIsLoadingTasks(false);
 
         // Fetch Employees
         await refreshUsers();
@@ -1110,6 +1122,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         await fetchNotifications();
       } catch (error) {
         console.error('Failed to fetch data:', error);
+        setIsLoadingTasks(false);
       }
     };
 
@@ -1129,6 +1142,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         currentUser,
         currentRole,
         isLoadingSession,
+        isLoadingTasks,
+        isLoadingEmployees,
         login,
         logout,
         tasks,

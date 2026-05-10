@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, AlertCircle, MessageSquare } from "lucide-react"
 import { OfficeAccomplishmentReport } from "@/components/office-accomplishment-report"
 import { TopCompletersChart } from "@/components/top-completers-chart"
@@ -48,6 +49,62 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+
+function TaskRowSkeleton() {
+  return (
+    <div className="w-full flex items-center px-4 py-3 border-b border-border animate-pulse">
+      <div className="flex-1 min-w-0">
+        <Skeleton className="h-4 w-1/3 mb-2" />
+        <Skeleton className="h-3 w-1/2" />
+        <div className="mt-3 max-w-[200px] space-y-1.5">
+          <Skeleton className="h-2 w-12" />
+          <Skeleton className="h-1.5 w-full rounded-full" />
+        </div>
+      </div>
+      <div className="hidden md:flex items-center shrink-0 gap-6">
+        <div className="w-24 flex justify-center"><Skeleton className="h-6 w-16 rounded-full" /></div>
+        <div className="w-32 flex justify-center"><Skeleton className="h-6 w-20 rounded-full" /></div>
+        <div className="w-40 flex items-center gap-1.5 pl-1">
+          <div className="flex -space-x-2">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-6 w-6 rounded-full" />)}
+          </div>
+          <Skeleton className="h-3 w-16 ml-2" />
+        </div>
+        <div className="w-24"><Skeleton className="h-3 w-16 ml-auto" /></div>
+      </div>
+      <div className="ml-4 w-12 flex justify-end">
+        <Skeleton className="h-4 w-4" />
+      </div>
+    </div>
+  )
+}
+
+function TeamProjectCardSkeleton() {
+  return (
+    <div className="flex flex-col min-h-[160px] rounded-[2rem] border-2 border-border p-6 space-y-4 animate-pulse bg-card/40">
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+        <Skeleton className="h-6 w-16 rounded-full" />
+      </div>
+      <div className="space-y-2 flex-1">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-3/4" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-1 w-full rounded-full" />
+      </div>
+      <div className="flex justify-between items-center pt-2 border-t border-border/50">
+        <Skeleton className="h-6 w-20 rounded-full" />
+        <div className="flex -space-x-2">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-7 w-7 rounded-full" />)}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function TaskRow({
   task,
@@ -323,7 +380,7 @@ export function AdminDashboard({
   isProfileOpen?: boolean;
   setIsProfileOpen?: (open: boolean) => void
 } = {}) {
-  const { tasks, archivedTasks, fetchArchivedTasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen, selectedTaskId, selectTask } = useTaskContext()
+  const { tasks, archivedTasks, fetchArchivedTasks, allEmployees, currentUser, deleteTask, updateTaskAssignees, seenTaskIds, markAsSeen, seenCompletedTaskIds, markCompletedAsSeen, selectedTaskId, selectTask, isLoadingTasks } = useTaskContext()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
 
@@ -678,6 +735,7 @@ export function AdminDashboard({
                       markAsSeen(task.id);
                       markCompletedAsSeen(task.id);
                     }}
+                    isLoadingTasks={isLoadingTasks}
                   />
                 </motion.div>
               )}
@@ -930,7 +988,9 @@ export function AdminDashboard({
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
                       <AnimatePresence>
-                        {paginatedTasks.length > 0 ? (
+                        {isLoadingTasks ? (
+                          [1, 2, 3, 4, 5, 6, 7, 8].map(i => <TeamProjectCardSkeleton key={i} />)
+                        ) : paginatedTasks.length > 0 ? (
                           paginatedTasks.map(task => (
                             <TeamProjectCard
                               key={task.id}
@@ -1036,7 +1096,9 @@ export function AdminDashboard({
                       {/* ROWS */}
                       <div className="flex flex-col flex-1">
                         <AnimatePresence>
-                          {paginatedTasks.length > 0 ? (
+                          {isLoadingTasks ? (
+                            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => <TaskRowSkeleton key={i} />)
+                          ) : paginatedTasks.length > 0 ? (
                             paginatedTasks.map((task) => (
                               <TaskRow
                                 key={task.id}

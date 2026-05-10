@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { AlertTriangle, Clock, ChevronRight } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { formatDate, formatDateTime, cn, calculateTaskProgress } from "@/lib/utils"
 import { Progress } from "@/components/ui/progress"
@@ -10,9 +11,10 @@ import type { Task } from "@/lib/store"
 interface UrgentTasksSectionProps {
   tasks: Task[]
   onSelectTask: (task: Task) => void
+  isLoadingTasks?: boolean
 }
 
-export function UrgentTasksSection({ tasks, onSelectTask }: UrgentTasksSectionProps) {
+export function UrgentTasksSection({ tasks, onSelectTask, isLoadingTasks }: UrgentTasksSectionProps) {
   const urgentTasks = useMemo(() => {
     const now = new Date().getTime()
     const oneDayInMs = 24 * 60 * 60 * 1000
@@ -43,7 +45,17 @@ export function UrgentTasksSection({ tasks, onSelectTask }: UrgentTasksSectionPr
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {urgentTasks.map((task) => (
+        {isLoadingTasks ? (
+          [1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl border border-border bg-card/50 animate-pulse">
+              <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-2 w-1/2" />
+              </div>
+            </div>
+          ))
+        ) : urgentTasks.map((task) => (
           <button
             key={task.id}
             onClick={() => onSelectTask(task)}

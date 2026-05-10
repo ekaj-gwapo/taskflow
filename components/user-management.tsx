@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { UserPlus, Users, Mail, Shield, Smartphone, Trash2, Loader2, Search, Power, KeyRound, MapPin } from "lucide-react"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface User {
   id: string
@@ -28,6 +29,38 @@ interface User {
   location?: string
   avatar?: string
   isActive?: boolean
+}
+
+function UserRowSkeleton() {
+  return (
+    <tr className="animate-pulse">
+      <td className="py-5 px-8">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+        </div>
+      </td>
+      <td className="py-5 px-4">
+        <Skeleton className="h-6 w-24 rounded-lg" />
+      </td>
+      <td className="py-5 px-4">
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-2 w-24" />
+        </div>
+      </td>
+      <td className="py-5 px-8 text-right">
+        <div className="flex justify-end gap-2">
+          <Skeleton className="h-9 w-9 rounded-xl" />
+          <Skeleton className="h-9 w-9 rounded-xl" />
+          <Skeleton className="h-9 w-9 rounded-xl" />
+        </div>
+      </td>
+    </tr>
+  )
 }
 
 export function UserManagement() {
@@ -362,11 +395,20 @@ export function UserManagement() {
             </CardHeader>
             <CardContent className="p-0">
               {isLoading ? (
-                <div className="p-32 flex flex-col items-center justify-center text-muted-foreground">
-                  <div className="h-16 w-16 rounded-3xl bg-primary/5 flex items-center justify-center mb-6 animate-pulse">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                  <p className="font-bold tracking-widest uppercase text-[10px]">Accessing Database...</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-muted/30">
+                        <th className="text-left py-6 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">User Profile</th>
+                        <th className="text-left py-6 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">System Role</th>
+                        <th className="text-left py-6 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Connectivity</th>
+                        <th className="text-right py-6 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Management</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {[1, 2, 3, 4, 5].map(i => <UserRowSkeleton key={i} />)}
+                    </tbody>
+                  </table>
                 </div>
               ) : filteredUsers.length === 0 ? (
                 <div className="p-32 text-center text-muted-foreground">

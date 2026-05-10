@@ -3,6 +3,7 @@
 import { useTaskContext } from "@/lib/task-context"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, AlertCircle, CheckCircle2, Clock } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 // Animated Sun Component
 function AnimatedSun({ className, size = 24, isBackground = false }: { className?: string, size?: number, isBackground?: boolean }) {
@@ -210,8 +211,20 @@ function AnimatedMoon({ className, size = 24 }: { className?: string, size?: num
   )
 }
 
+function StatBoxSkeleton() {
+  return (
+    <div className="px-6 py-5 rounded-[2rem] bg-secondary/10 border border-border flex items-center gap-5 min-w-[160px] animate-pulse">
+      <Skeleton className="h-12 w-12 rounded-2xl" />
+      <div className="space-y-2">
+        <Skeleton className="h-6 w-12" />
+        <Skeleton className="h-3 w-16" />
+      </div>
+    </div>
+  )
+}
+
 export function SmartBriefing() {
-  const { currentUser, tasks, allEmployees } = useTaskContext()
+  const { currentUser, tasks, allEmployees, isLoadingTasks } = useTaskContext()
   
   if (!currentUser) return null
 
@@ -287,79 +300,106 @@ export function SmartBriefing() {
       
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-16">
         <div className="max-w-xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 rounded-2xl bg-white/50 dark:bg-black/20 flex items-center justify-center shadow-lg backdrop-blur-md border border-white/50 dark:border-white/10">
-              <AnimatedIcon size={32} />
+          {isLoadingTasks ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-12 w-12 rounded-2xl" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-1 w-8" />
+                </div>
+              </div>
+              <Skeleton className="h-12 w-full max-w-md" />
+              <Skeleton className="h-4 w-3/4" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] leading-none mb-1">{greeting}</span>
-              <div className="h-1 w-8 bg-primary/30 rounded-full" />
-            </div>
-          </div>
-          <h1 className="text-3xl md:text-5xl font-black text-foreground tracking-tight leading-tight">
-            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-500">{currentUser.name.split(" ")[0]}</span>!
-          </h1>
-          <p className="text-muted-foreground mt-4 text-sm md:text-lg font-medium leading-relaxed max-w-lg">
-            {isManagement ? (
-              <>
-                You are currently overseeing <span className="text-foreground font-bold">{totalTasks} tasks</span>. 
-                {pendingExtensions > 0 && (
-                  <span className="block mt-2 text-primary font-bold">
-                    🔔 {pendingExtensions} pending extensions await review.
-                  </span>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-12 w-12 rounded-2xl bg-white/50 dark:bg-black/20 flex items-center justify-center shadow-lg backdrop-blur-md border border-white/50 dark:border-white/10">
+                  <AnimatedIcon size={32} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] leading-none mb-1">{greeting}</span>
+                  <div className="h-1 w-8 bg-primary/30 rounded-full" />
+                </div>
+              </div>
+              <h1 className="text-3xl md:text-5xl font-black text-foreground tracking-tight leading-tight">
+                Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-500">{currentUser.name.split(" ")[0]}</span>!
+              </h1>
+              <p className="text-muted-foreground mt-4 text-sm md:text-lg font-medium leading-relaxed max-w-lg">
+                {isManagement ? (
+                  <>
+                    You are currently overseeing <span className="text-foreground font-bold">{totalTasks} tasks</span>. 
+                    {pendingExtensions > 0 && (
+                      <span className="block mt-2 text-primary font-bold">
+                        🔔 {pendingExtensions} pending extensions await review.
+                      </span>
+                    )}
+                    {overdueTasks > 0 && (
+                      <span className="block mt-1">
+                        <span className="text-destructive font-bold">{overdueTasks} critical items</span> require attention.
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    You have <span className="text-foreground font-bold">{tasksDueToday} tasks</span> due today. 
+                    {overdueTasks > 0 && <span className="block mt-1"> Heads up! <span className="text-destructive font-bold">{overdueTasks} tasks</span> are overdue.</span>}
+                  </>
                 )}
-                {overdueTasks > 0 && (
-                  <span className="block mt-1">
-                    <span className="text-destructive font-bold">{overdueTasks} critical items</span> require attention.
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                You have <span className="text-foreground font-bold">{tasksDueToday} tasks</span> due today. 
-                {overdueTasks > 0 && <span className="block mt-1"> Heads up! <span className="text-destructive font-bold">{overdueTasks} tasks</span> are overdue.</span>}
-              </>
-            )}
-          </p>
+              </p>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 lg:ml-auto">
-          <div className="contents">
-            <StatBox 
-              icon={<Calendar className="h-5 w-5" />} 
-              label={isManagement ? "Total Tasks" : "Due Today"} 
-              value={isManagement ? totalTasks : tasksDueToday} 
-              color="text-primary"
-              bg="bg-primary/10"
-              borderColor="border-primary/20"
-            />
-            <StatBox 
-              icon={<AlertCircle className="h-5 w-5" />} 
-              label={isManagement ? "Overdue Tasks" : "Overdue"} 
-              value={overdueTasks} 
-              color="text-destructive"
-              bg="bg-destructive/10"
-              borderColor="border-destructive/20"
-            />
-          </div>
-          <div className="contents">
-            <StatBox 
-              icon={<Clock className="h-5 w-5" />} 
-              label={isManagement ? "In Progress" : "In Progress"} 
-              value={isManagement ? (totalTasks - completedLifetime) : inProgressTasks} 
-              color="text-amber-600"
-              bg="bg-amber-500/10"
-              borderColor="border-amber-500/20"
-            />
-            <StatBox 
-              icon={<CheckCircle2 className="h-5 w-5" />} 
-              label={isManagement ? "Completed" : "Completed Today"} 
-              value={isManagement ? completedLifetime : completedToday} 
-              color="text-emerald-600"
-              bg="bg-emerald-500/10"
-              borderColor="border-emerald-500/20"
-            />
-          </div>
+          {isLoadingTasks ? (
+            <>
+              <StatBoxSkeleton />
+              <StatBoxSkeleton />
+              <StatBoxSkeleton />
+              <StatBoxSkeleton />
+            </>
+          ) : (
+            <>
+              <div className="contents">
+                <StatBox 
+                  icon={<Calendar className="h-5 w-5" />} 
+                  label={isManagement ? "Total Tasks" : "Due Today"} 
+                  value={isManagement ? totalTasks : tasksDueToday} 
+                  color="text-primary"
+                  bg="bg-primary/10"
+                  borderColor="border-primary/20"
+                />
+                <StatBox 
+                  icon={<AlertCircle className="h-5 w-5" />} 
+                  label={isManagement ? "Overdue Tasks" : "Overdue"} 
+                  value={overdueTasks} 
+                  color="text-destructive"
+                  bg="bg-destructive/10"
+                  borderColor="border-destructive/20"
+                />
+              </div>
+              <div className="contents">
+                <StatBox 
+                  icon={<Clock className="h-5 w-5" />} 
+                  label={isManagement ? "In Progress" : "In Progress"} 
+                  value={isManagement ? (totalTasks - completedLifetime) : inProgressTasks} 
+                  color="text-amber-600"
+                  bg="bg-amber-500/10"
+                  borderColor="border-amber-500/20"
+                />
+                <StatBox 
+                  icon={<CheckCircle2 className="h-5 w-5" />} 
+                  label={isManagement ? "Completed" : "Completed Today"} 
+                  value={isManagement ? completedLifetime : completedToday} 
+                  color="text-emerald-600"
+                  bg="bg-emerald-500/10"
+                  borderColor="border-emerald-500/20"
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </motion.div>

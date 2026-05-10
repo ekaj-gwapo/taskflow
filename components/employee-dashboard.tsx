@@ -17,6 +17,7 @@ import { EmployeeProfileReport } from "@/components/employee-profile-report"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Task, User } from "@/lib/store"
 
 function NoteReminder({ task }: { task: Task }) {
@@ -174,6 +175,32 @@ function EmployeeTaskCard({
   )
 }
 
+function EmployeeTaskCardSkeleton() {
+  return (
+    <div className="w-full rounded-[1.5rem] border border-border/50 p-4 space-y-4 animate-pulse glass-card">
+      <div className="flex justify-between items-start">
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+        <Skeleton className="h-4 w-4" />
+      </div>
+      <div className="flex gap-2">
+        <Skeleton className="h-6 w-16 rounded-full" />
+        <Skeleton className="h-6 w-16 rounded-full" />
+        <Skeleton className="h-3 w-24 ml-auto mt-2" />
+      </div>
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Skeleton className="h-2 w-20" />
+          <Skeleton className="h-2 w-8" />
+        </div>
+        <Skeleton className="h-1 w-full rounded-full" />
+      </div>
+    </div>
+  )
+}
+
 export function EmployeeDashboard({ 
   isProfileOpen, 
   setIsProfileOpen 
@@ -181,7 +208,7 @@ export function EmployeeDashboard({
   isProfileOpen?: boolean; 
   setIsProfileOpen?: (open: boolean) => void 
 } = {}) {
-  const { tasks, currentUser, canAccessTask, seenTaskIds, markAsSeen, selectedTaskId, selectTask } = useTaskContext()
+  const { tasks, currentUser, canAccessTask, seenTaskIds, markAsSeen, selectedTaskId, selectTask, isLoadingTasks } = useTaskContext()
   const [selectedCategory, setSelectedCategory] = useState<"individual" | "team" | "profile" | "activity-log">("individual")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -341,6 +368,7 @@ export function EmployeeDashboard({
                       selectTask(selectedTaskId === task.id ? null : task.id);
                       markAsSeen(task.id);
                     }}
+                    isLoadingTasks={isLoadingTasks}
                   />
                 )}
 
@@ -388,7 +416,9 @@ export function EmployeeDashboard({
                                 <div className="flex flex-col gap-4 mt-4">
                                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <AnimatePresence mode="popLayout">
-                                      {paginatedTasks.map((task) => (
+                                      {isLoadingTasks ? (
+                                        [1, 2, 3, 4, 5, 6].map(i => <TeamProjectCardSkeleton key={i} />)
+                                      ) : paginatedTasks.map((task) => (
                                         <motion.div
                                           layout
                                           initial={{ opacity: 0, scale: 0.9 }}
@@ -503,7 +533,9 @@ export function EmployeeDashboard({
                               ) : (
                                 <div className="flex flex-col gap-4 mt-4">
                                   <div className="grid gap-3">
-                                    {paginatedTasks.map((task) => (
+                                    {isLoadingTasks ? (
+                                      [1, 2, 3, 4, 5].map(i => <EmployeeTaskCardSkeleton key={i} />)
+                                    ) : paginatedTasks.map((task) => (
                                       <EmployeeTaskCard
                                         key={task.id}
                                         task={task}
@@ -591,6 +623,35 @@ export function EmployeeDashboard({
             )}
           </AnimatePresence>
         </motion.div>
+      </div>
+    </div>
+  )
+}
+
+function TeamProjectCardSkeleton() {
+  return (
+    <div className="flex flex-col p-5 rounded-[2rem] border-2 border-border/20 space-y-4 animate-pulse bg-card/40">
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-20 rounded-full" />
+          <Skeleton className="h-5 w-32" />
+        </div>
+        <Skeleton className="h-6 w-16 rounded-full" />
+      </div>
+      <Skeleton className="h-3 w-full" />
+      <Skeleton className="h-3 w-3/4" />
+      <div className="space-y-2 pt-2">
+        <div className="flex justify-between">
+          <Skeleton className="h-2 w-16" />
+          <Skeleton className="h-2 w-8" />
+        </div>
+        <Skeleton className="h-1 w-full rounded-full" />
+      </div>
+      <div className="flex justify-between items-center pt-2 border-t border-border/50">
+        <div className="flex -space-x-2">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-6 w-6 rounded-full" />)}
+        </div>
+        <Skeleton className="h-2 w-16" />
       </div>
     </div>
   )

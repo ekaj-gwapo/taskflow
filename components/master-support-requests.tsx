@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface SupportRequest {
   id: string
@@ -28,6 +29,66 @@ interface SupportRequest {
   creator_name: string
   creator_email: string
   organization_name: string
+}
+
+function SupportRequestSkeleton() {
+  return (
+    <div className="w-full px-4 py-3 rounded-lg border border-border bg-card">
+      <div className="flex items-start justify-between mb-1">
+        <div className="flex items-center gap-2 w-full">
+          <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        </div>
+        <Skeleton className="h-4 w-16 rounded-full" />
+      </div>
+      <div className="mt-3 pl-10 space-y-1.5">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-2/3" />
+        <Skeleton className="h-2 w-16 mt-2" />
+      </div>
+    </div>
+  )
+}
+
+function SupportDetailSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="px-5 py-4 border-b border-border bg-secondary/5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-5 w-32" />
+              <div className="flex gap-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          </div>
+          <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+        <div className="bg-background rounded-lg border border-border p-4 space-y-3">
+          <Skeleton className="h-3 w-16" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+          <Skeleton className="h-2 w-24" />
+        </div>
+      </div>
+      <div className="p-5 space-y-4">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-36 w-full rounded-lg" />
+        <div className="flex justify-end">
+          <Skeleton className="h-9 w-28 rounded-lg" />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function MasterSupportRequests() {
@@ -46,11 +107,14 @@ export function MasterSupportRequests() {
       const res = await fetch("/api/master/support-requests", {
         headers: { "Authorization": `Bearer ${token}` }
       })
-      if (!res.ok) throw new Error("Failed to fetch")
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || "Failed to fetch")
+      }
       const data = await res.json()
       setRequests(data)
-    } catch (error) {
-      toast.error("Could not load support requests")
+    } catch (error: any) {
+      toast.error(error.message || "Could not load support requests")
       console.error(error)
     } finally {
       setLoading(false)
@@ -155,8 +219,8 @@ export function MasterSupportRequests() {
         {/* Request List */}
         <div className="lg:col-span-5 space-y-2">
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map(i => <SupportRequestSkeleton key={i} />)}
             </div>
           ) : filteredRequests.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 border border-dashed border-border rounded-xl bg-secondary/5 text-center">
@@ -207,7 +271,9 @@ export function MasterSupportRequests() {
 
         {/* Request Detail & Reply */}
         <div className="lg:col-span-7">
-          {selectedRequest ? (
+          {loading ? (
+            <SupportDetailSkeleton />
+          ) : selectedRequest ? (
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               {/* Detail Header */}
               <div className="px-5 py-4 border-b border-border bg-secondary/5">

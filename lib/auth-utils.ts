@@ -75,8 +75,10 @@ export function requireHeadAdmin(request: NextRequest) {
 
 export function requireMasterAdmin(request: NextRequest) {
   const auth = requireAuth(request)
+  if (auth.error) return auth
+  
   const role = auth.user?.role?.toLowerCase()
-  if (auth.error || (role !== "master_admin" && role !== "superadmin")) {
+  if (role !== "master_admin" && role !== "superadmin") {
     return { error: "Master Admin access required", status: 403, user: null }
   }
   return auth

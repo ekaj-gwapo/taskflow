@@ -1127,6 +1127,13 @@ export function TaskDetailPanel({
               <div className="p-5 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="flex flex-col flex-1 gap-2 pb-4 mb-3 border-b border-border/40">
                     <div className="flex gap-3 relative">
+                      <input
+                        type="file"
+                        ref={commentFileInputRef}
+                        className="hidden"
+                        onChange={handleCommentFileChange}
+                        accept="image/*,application/pdf"
+                      />
                       <Button
                         size="icon"
                         variant="outline"
@@ -1434,13 +1441,7 @@ export function TaskDetailPanel({
               onChange={handleFileChange}
               accept="image/*,application/pdf"
             />
-            <input
-              type="file"
-              ref={commentFileInputRef}
-              className="hidden"
-              onChange={handleCommentFileChange}
-              accept="image/*,application/pdf"
-            />
+
             <Button
               size="icon"
               variant="outline"
