@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Trophy, Medal, Award, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { LockedOverlay } from "@/components/ui/locked-overlay"
 import {
   BarChart,
   Bar,
@@ -103,7 +104,13 @@ export function TopCompletersChart({ onHide }: { onHide?: () => void }) {
   const maxScore = Math.max(...leaderboard.map((e) => e.score), 1)
 
   return (
-    <Card className="border-border bg-card/40 backdrop-blur-xl shadow-xl h-full flex flex-col max-h-[400px] overflow-hidden">
+    <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl h-full flex flex-col max-h-[400px] overflow-hidden">
+      {(currentUser?.plan === "FREE" || !currentUser?.plan || currentUser?.plan === "STARTER") && (
+        <LockedOverlay 
+          title="Team Leaderboard" 
+          description="Identify your top performers with point-based rankings and productivity scores."
+        />
+      )}
       <CardHeader className="pb-3 shrink-0 border-b border-border/50 bg-muted/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

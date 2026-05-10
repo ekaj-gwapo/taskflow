@@ -22,6 +22,7 @@ export interface User {
   notifyOnDiscussion?: boolean
   notifyOnExtension?: boolean
   isSuspended?: boolean
+  isActive?: boolean
   trialEndsAt?: string
 }
 

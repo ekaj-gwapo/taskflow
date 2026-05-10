@@ -66,6 +66,14 @@ export default function Home() {
 
       {/* HERO */}
       <section className="lp-hero">
+        <div className="lp-galaxy-container">
+          <div className="lp-stars-layer-1" />
+          <div className="lp-stars-layer-2" />
+          <div className="lp-stars-layer-3" />
+          <div className="lp-galaxy-core">
+            <div className="lp-galaxy-spiral" />
+          </div>
+        </div>
         <div className="lp-hero-glow" />
         <div className="lp-badge"><span className="lp-badge-dot" /> Now in public beta — free to try</div>
         <h1 className="lp-h1">Monitor tasks.<br />Drive <span className="accent">results</span>.</h1>
@@ -336,11 +344,12 @@ export default function Home() {
           <h2 className="lp-h2">Simple, transparent pricing</h2>
           <p className="lp-section-sub" style={{ margin: '0 auto' }}>No hidden fees. Cancel anytime. Scale as your team grows.</p>
         </div>
-        <div className="lp-pricing-grid">
+        <div className="lp-pricing-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', maxWidth: '1200px' }}>
           {[
-            { name: 'Starter', price: '$0', sub: '/mo', desc: 'Perfect for solo developers and small teams.', features: ['Up to 3 team members', '50 tasks per month', 'Basic dashboard', 'Email alerts'], cta: 'Get started', featured: false },
-            { name: 'Pro', price: '$18', sub: '/mo', desc: 'For teams that move fast and need full visibility.', features: ['Up to 25 team members', 'Unlimited tasks', 'Full monitoring dashboard', 'Kanban + list views', 'Audit trail & reporting', 'Priority support'], cta: 'Start free trial', featured: true, badge: 'Most popular' },
-            { name: 'Enterprise', price: 'Custom', sub: '', desc: 'For organizations that need total control and SLA.', features: ['Unlimited members', 'SSO & advanced roles', 'Custom integrations', 'Dedicated support', 'SLA guarantee'], cta: 'Contact sales', featured: false },
+            { name: 'Free', price: '₱0', sub: '/mo', desc: 'Perfect for individuals and small startups.', features: ['Up to 5 Users', 'Basic Features', 'Community Support', 'Core Analytics'], cta: 'Start for Free', featured: false },
+            { name: 'Starter', price: '₱1,499', sub: '/mo', desc: 'Growing teams needing structure.', features: ['Up to 10 Users', 'All Basic Features', 'Email Support', 'Advanced Analytics'], cta: 'Get Starter', featured: false },
+            { name: 'Pro', price: '₱2,999', sub: '/mo', desc: 'Full power for scaling organizations.', features: ['Up to 25 Users', 'Priority Support', 'Team Performance Reports', 'Smart Briefings'], cta: 'Go Pro', featured: true, badge: 'Most popular' },
+            { name: 'Enterprise', price: '₱4,999', sub: '+', desc: 'Maximum control for large scale ops.', features: ['Unlimited Users', 'Dedicated Support', 'Custom Integrations', 'Full API Access'], cta: 'Contact Sales', featured: false },
           ].map((plan, i) => (
             <div key={i} className={`lp-pricing-card lp-reveal${i > 0 ? ' lp-reveal-d' + i : ''}${plan.featured ? ' featured' : ''}`}>
               {plan.badge && <div className="lp-plan-badge">{plan.badge}</div>}

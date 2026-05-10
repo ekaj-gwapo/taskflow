@@ -91,28 +91,28 @@ export function PricingModal({ open, onOpenChange, currentPlan }: PricingModalPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl p-0 bg-zinc-950 border-zinc-800 overflow-hidden">
-        <div className="relative p-8 md:p-12">
+      <DialogContent className="max-w-4xl p-0 bg-background border-border overflow-hidden">
+        <div className="relative p-6 md:p-10">
           {/* Background decoration */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1),transparent_50%)] pointer-events-none" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.05),transparent_50%)] pointer-events-none" />
           
-          <div className="relative text-center mb-12">
-            <DialogTitle className="text-4xl font-black text-white mb-4 tracking-tight">
+          <div className="relative text-center mb-10">
+            <DialogTitle className="text-3xl font-black text-foreground mb-3 tracking-tight">
               Scale Your Workflow
             </DialogTitle>
-            <DialogDescription className="text-zinc-400 max-w-lg mx-auto">
+            <DialogDescription className="text-muted-foreground max-w-md mx-auto text-sm">
               Choose the plan that fits your team's needs. Upgrade or downgrade anytime.
             </DialogDescription>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 relative z-10">
+          <div className="grid md:grid-cols-3 gap-5 relative z-10">
             {plans.map((plan) => (
               <div
                 key={plan.name}
                 className={cn(
-                  "relative group flex flex-col p-6 rounded-3xl border transition-all duration-500 bg-zinc-900/50 backdrop-blur-xl",
+                  "relative group flex flex-col p-5 rounded-3xl border transition-all duration-500 bg-card/50 backdrop-blur-xl",
                   plan.borderColor,
-                  plan.popular ? "scale-105 shadow-2xl shadow-emerald-500/10 ring-1 ring-emerald-500/20" : "hover:scale-[1.02]"
+                  plan.popular ? "scale-105 shadow-2xl shadow-emerald-500/5 ring-1 ring-emerald-500/20" : "hover:scale-[1.01]"
                 )}
               >
                 {plan.popular && (
@@ -125,23 +125,23 @@ export function PricingModal({ open, onOpenChange, currentPlan }: PricingModalPr
                   <plan.icon className={cn("w-6 h-6", plan.iconColor)} />
                 </div>
 
-                <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
+                <h3 className="text-lg font-bold text-foreground mb-1">{plan.name}</h3>
                 <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-3xl font-black text-white">{plan.price}</span>
-                  <span className="text-zinc-500 text-sm">/mo</span>
+                  <span className="text-2xl font-black text-foreground">{plan.price}</span>
+                  <span className="text-muted-foreground text-[10px]">/mo</span>
                 </div>
                 
-                <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
+                <p className="text-muted-foreground text-xs mb-6 leading-relaxed">
                   {plan.description}
                 </p>
 
-                <div className="space-y-4 mb-8 flex-1">
+                <div className="space-y-3 mb-6 flex-1">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3">
-                      <div className="shrink-0 w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-emerald-500" />
+                    <div key={feature} className="flex items-center gap-2.5">
+                      <div className="shrink-0 w-4 h-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 text-emerald-500" />
                       </div>
-                      <span className="text-zinc-300 text-sm font-medium">{feature}</span>
+                      <span className="text-foreground/80 text-xs font-medium">{feature}</span>
                     </div>
                   ))}
                 </div>

@@ -5,6 +5,7 @@ import { useTaskContext } from "@/lib/task-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Activity, AlertCircle, ChevronDown } from "lucide-react"
+import { LockedOverlay } from "@/components/ui/locked-overlay"
 
 export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
   const { tasks, allEmployees, currentUser } = useTaskContext()
@@ -45,7 +46,13 @@ export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
   const maxScore = Math.max(...workloadData.map((e) => e.score), 1)
 
   return (
-    <Card className="border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-full flex flex-col max-h-[400px]">
+    <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-full flex flex-col max-h-[400px]">
+      {(currentUser?.plan === "FREE" || !currentUser?.plan || currentUser?.plan === "STARTER") && (
+        <LockedOverlay 
+          title="Workload Insights" 
+          description="Identify team bottlenecks and optimize task distribution across your entire organization."
+        />
+      )}
       <CardHeader className="pb-3 bg-muted/30 border-b border-border shrink-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">

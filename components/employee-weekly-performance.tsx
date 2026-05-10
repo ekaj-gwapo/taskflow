@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   CalendarDays
 } from "lucide-react"
+import { LockedOverlay } from "@/components/ui/locked-overlay"
 import { Progress } from "@/components/ui/progress"
 
 export function EmployeeWeeklyPerformance({ onHide }: { onHide?: () => void }) {
@@ -52,7 +53,13 @@ export function EmployeeWeeklyPerformance({ onHide }: { onHide?: () => void }) {
   }, [tasks, allEmployees])
 
   return (
-    <Card className="border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-full flex flex-col max-h-[400px]">
+    <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-full flex flex-col max-h-[400px]">
+      {(currentUser?.plan === "FREE" || !currentUser?.plan || currentUser?.plan === "STARTER") && (
+        <LockedOverlay 
+          title="Team Productivity" 
+          description="Track weekly performance trends, completion rates, and individual employee efficiency."
+        />
+      )}
       <CardHeader className="pb-3 border-b border-border/50 bg-muted/30 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

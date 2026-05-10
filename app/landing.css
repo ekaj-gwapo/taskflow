@@ -65,11 +65,84 @@
   align-items: center; justify-content: center; text-align: center;
   padding: 120px 48px 80px; overflow: hidden; position: relative;
 }
+/* GALAXY ANIMATION */
+.lp-galaxy-container {
+  position: absolute; inset: 0; pointer-events: none; z-index: -1;
+  overflow: hidden; perspective: 1000px;
+  background: radial-gradient(circle at 50% 50%, #060c07 0%, #020402 100%);
+}
+
+.lp-stars-layer-1, .lp-stars-layer-2, .lp-stars-layer-3 {
+  position: absolute; top: -100%; left: -100%; width: 300%; height: 300%;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 50px 160px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 130px 80px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 160px 120px, #fff, rgba(0,0,0,0));
+  background-repeat: repeat;
+}
+
+.lp-stars-layer-1 {
+  opacity: 0.3;
+  animation: lp-rotateGalaxy 100s linear infinite;
+}
+
+.lp-stars-layer-2 {
+  opacity: 0.4;
+  animation: lp-rotateGalaxy 150s linear infinite reverse;
+  filter: blur(1px);
+}
+
+.lp-stars-layer-3 {
+  opacity: 0.5;
+  animation: lp-rotateGalaxy 200s linear infinite;
+}
+
+.lp-galaxy-core {
+  position: absolute; top: 50%; left: 50%;
+  width: 1400px; height: 800px;
+  transform: translate(-50%, -50%) rotateX(65deg) rotateY(-15deg);
+  background: radial-gradient(circle at center, 
+    rgba(34,197,94,0.25) 0%, 
+    rgba(59,130,246,0.15) 30%, 
+    rgba(168,85,247,0.05) 60%, 
+    transparent 80%);
+  filter: blur(80px);
+  opacity: 0.8;
+  animation: lp-nebulaPulse 10s ease-in-out infinite;
+}
+
+.lp-galaxy-spiral {
+  position: absolute; inset: 0;
+  background: conic-gradient(from 0deg, 
+    transparent 0deg, 
+    rgba(34,197,94,0.1) 60deg, 
+    transparent 120deg, 
+    rgba(59,130,246,0.1) 180deg, 
+    transparent 240deg, 
+    rgba(34,197,94,0.1) 300deg, 
+    transparent 360deg);
+  animation: lp-rotateGalaxy 40s linear infinite;
+}
+
+@keyframes lp-rotateGalaxy {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes lp-nebulaPulse {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) rotateX(65deg) rotateY(-15deg) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) rotateX(65deg) rotateY(-15deg) scale(1.15); }
+}
+
 .lp-hero-glow {
   position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
   width: 800px; height: 500px;
-  background: radial-gradient(ellipse at center, rgba(34,197,94,0.12) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(34,197,94,0.15) 0%, transparent 70%);
   pointer-events: none; animation: lp-pulseGlow 6s ease-in-out infinite;
+  z-index: 1;
 }
 @keyframes lp-pulseGlow {
   0%,100% { opacity: 0.8; transform: translateX(-50%) scale(1); }

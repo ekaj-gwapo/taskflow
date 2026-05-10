@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, AlertCircle, MessageSquare } from "lucide-react"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, AlertCircle, MessageSquare, Zap } from "lucide-react"
 import { OfficeAccomplishmentReport } from "@/components/office-accomplishment-report"
 import { TopCompletersChart } from "@/components/top-completers-chart"
 import { WorkloadDistribution } from "@/components/workload-distribution"
@@ -35,6 +35,7 @@ import { EmployeeWeeklyPerformance } from "@/components/employee-weekly-performa
 import { EmployeeProfileReport } from "@/components/employee-profile-report"
 import { OrgAnalytics } from "@/components/org-analytics"
 import { CreatorSupportRequests } from "@/components/creator-support-requests"
+import { PricingModal } from "@/components/pricing-modal"
 import { formatDate, formatDateTime, calculateTaskProgress, cn } from "@/lib/utils"
 import type { Task } from "@/lib/store"
 import {
@@ -613,6 +614,22 @@ export function AdminDashboard({
     return Math.ceil(diff / (1000 * 60 * 60 * 24))
   }, [currentUser])
 
+  // Calculate if over limit
+  const isOverLimit = useMemo(() => {
+    if (currentUser?.role !== 'creator' && currentUser?.role !== 'head_admin') return false
+    
+    let limit = 5;
+    const plan = currentUser?.plan || 'FREE'
+    if (plan === 'STARTER') limit = 10;
+    else if (plan === 'PRO') limit = 25;
+    else if (plan === 'ENTERPRISE') limit = 999999;
+    
+    const activeUsers = allEmployees.filter(e => e.isActive !== false).length
+    return activeUsers > limit
+  }, [currentUser, allEmployees])
+
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
+
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
       <AppHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
@@ -648,6 +665,47 @@ export function AdminDashboard({
           </Button>
         </motion.div>
       )}
+
+      {/* Over Limit Banner */}
+      {isOverLimit && (
+        <motion.div 
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          className="bg-gradient-to-r from-red-500/10 via-destructive/5 to-transparent border-b border-destructive/20 px-6 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between relative overflow-hidden gap-4"
+        >
+          <div className="absolute top-0 left-0 w-1 h-full bg-destructive" />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center shrink-0">
+              <div className="p-1.5 rounded-lg bg-destructive/10">
+                <Users className="h-4 w-4 text-destructive" />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <p className="text-sm font-semibold text-destructive tracking-tight uppercase">
+                User Limit Exceeded
+              </p>
+              <p className="text-xs font-medium text-muted-foreground mt-0.5">
+                Your organization is currently over its <span className="font-bold text-foreground">{currentUser?.plan || 'Free'} Plan</span> limit. Some management features are restricted until you upgrade or remove members.
+              </p>
+            </div>
+          </div>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            className="font-bold shadow-lg shadow-destructive/20 shrink-0 w-full sm:w-auto rounded-xl transition-all hover:scale-105 active:scale-95"
+            onClick={() => setIsPricingModalOpen(true)}
+          >
+            <Zap className="mr-2 h-4 w-4" />
+            Upgrade to Restore
+          </Button>
+        </motion.div>
+      )}
+
+      <PricingModal 
+        open={isPricingModalOpen} 
+        onOpenChange={setIsPricingModalOpen} 
+        currentPlan={currentUser?.plan} 
+      />
       
       <div className="flex flex-1 w-full min-h-0 overflow-hidden relative">
         {/* Mobile Sidebar Overlay */}
