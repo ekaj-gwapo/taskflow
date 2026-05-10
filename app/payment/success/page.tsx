@@ -49,8 +49,8 @@ function SuccessContent() {
           Payment Successful!
         </h1>
         <p className="text-muted-foreground text-lg">
-          Your organization has been upgraded to the <strong className="text-primary">Pro Plan</strong>. 
-          Full access has been restored for you and your entire team.
+          Your organization has been upgraded to the <strong className="text-primary capitalize">{searchParams.get('plan')?.toLowerCase() || 'Pro'} Plan</strong>. 
+          Thank you for your purchase! All features for this tier are now unlocked.
         </p>
 
         <div className="pt-4">

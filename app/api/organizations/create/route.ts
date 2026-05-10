@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "An organization with this name already exists. Please choose a different name." }, { status: 400 });
     }
 
-    // Create organization with 31-day trial
+    // Create organization with 14-day trial and FREE_TRIAL plan
     await db.execute(`
-      INSERT INTO organizations (id, name, slug, logo_url, createdat, updatedat, trial_ends_at, subscription_status, status)
-      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '31 days', 'TRIAL', 'ACTIVE')
+      INSERT INTO organizations (id, name, slug, logo_url, createdat, updatedat, trial_ends_at, subscription_status, status, plan)
+      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '14 days', 'TRIAL', 'ACTIVE', 'FREE_TRIAL')
     `, [orgId, name.trim(), slug, logoUrl || null]);
 
     // Update user to be the creator of this org

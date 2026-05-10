@@ -1,42 +1,42 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { XCircle, ArrowLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { XCircle } from 'lucide-react'
 
 export default function PaymentCancelPage() {
   const router = useRouter()
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md text-center space-y-6"
-      >
-        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-destructive/10">
-          <XCircle className="h-14 w-14 text-destructive" />
-        </div>
+  useEffect(() => {
+    // Automatically redirect back to dashboard after a few seconds
+    const timer = setTimeout(() => {
+      router.push('/dashboard')
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [router])
 
-        <h1 className="text-3xl font-black tracking-tight text-foreground">
-          Payment Cancelled
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          No worries! Your payment was not processed. You can try again anytime from your dashboard.
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
+      <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
+        <div className="flex justify-center mb-6">
+          <div className="bg-red-500/10 p-4 rounded-full">
+            <XCircle className="w-12 h-12 text-red-500" />
+          </div>
+        </div>
+        
+        <h1 className="text-2xl font-bold mb-2">Payment Cancelled</h1>
+        <p className="text-zinc-400 mb-8">
+          Your payment was not completed and you haven't been charged. 
+          You'll be redirected back to the dashboard shortly.
         </p>
 
-        <div className="pt-4">
-          <Button
-            onClick={() => router.replace("/dashboard")}
-            className="w-full h-12 text-base font-bold rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all group"
-          >
-            <ArrowLeft className="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-            Back to Dashboard
-          </Button>
-        </div>
-      </motion.div>
+        <button 
+          onClick={() => router.push('/dashboard')}
+          className="w-full bg-white text-black font-semibold py-3 rounded-xl hover:bg-zinc-200 transition-colors"
+        >
+          Return to Dashboard
+        </button>
+      </div>
     </div>
   )
 }

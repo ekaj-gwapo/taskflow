@@ -26,6 +26,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Username or Email already exists" }, { status: 400 });
     }
 
+    // Enforce User Limits if joining an organization
+    if (orgId) {
+      const org = await db.getOne("SELECT plan FROM organizations WHERE id = ?", [orgId]);
+      if (org) {
+        const userCountResult = await db.getOne(`SELECT COUNT(*) as count FROM users WHERE orgid = ? AND isactive = TRUE`, [orgId]);
+        const userCount = parseInt(userCountResult.count || "0", 10);
+        
+        let limit = 0;
+        switch (org.plan) {
+          case 'FREE_TRIAL': limit = 5; break;
+          case 'STARTER': limit = 10; break;
+          case 'PRO': limit = 25; break;
+          case 'ENTERPRISE': limit = 999999; break;
+          default: limit = 5; // Default fallback
+        }
+
+        if (userCount >= limit) {
+          return NextResponse.json(
+            { error: `User limit reached for the current plan (${org.plan}). Please upgrade to add more users.` },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const userId = uuidv4();
     // Use autoVerify if provided (e.g. when an admin adds a user)

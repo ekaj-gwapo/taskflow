@@ -15,7 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { UserPlus, Users, Mail, Shield, Smartphone, Trash2, Loader2, Search, Power, KeyRound, MapPin } from "lucide-react"
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden"
+import { UserPlus, Users, Mail, Shield, Smartphone, Trash2, Loader2, Search, Power, KeyRound, MapPin, Zap, Crown, Building2, CheckCircle2, X, ArrowRight } from "lucide-react"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -88,6 +89,8 @@ export function UserManagement() {
 
   const [statusUpdateUser, setStatusUpdateUser] = useState<{ id: string, name: string, currentStatus: boolean } | null>(null)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [isUpgrading, setIsUpgrading] = useState<string | false>(false)
 
   const handleDeleteUser = async (id: string) => {
     try {
@@ -215,6 +218,9 @@ export function UserManagement() {
         setNewUser({ name: "", email: "", password: "", role: "EMPLOYEE", phone: "", location: "" })
         await fetchUsers()
         await refreshUsers()
+      } else if (res.status === 403 && data.error?.includes("User limit")) {
+        // Show the premium upgrade modal instead of a plain toast
+        setShowUpgradeModal(true)
       } else {
         toast.error(data.error || "Failed to create user")
       }
@@ -223,6 +229,28 @@ export function UserManagement() {
       toast.error("An error occurred")
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  const handleUpgradePlan = async (plan: string) => {
+    setIsUpgrading(plan)
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ plan })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to start checkout")
+      if (data.url) window.location.href = data.url
+      else throw new Error("No checkout URL returned")
+    } catch (err: any) {
+      toast.error(err.message)
+      setIsUpgrading(false)
     }
   }
 
@@ -651,6 +679,137 @@ export function UserManagement() {
                 {isUpdatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : (statusUpdateUser?.currentStatus ? "Confirm Deactivation" : "Confirm Activation")}
               </Button>
             </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* ─── Upgrade Modal ─── */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-4xl rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+          <VisuallyHidden.Root>
+            <DialogTitle>Upgrade Your Plan</DialogTitle>
+          </VisuallyHidden.Root>
+          {/* Header */}
+          <div className="relative bg-gradient-to-br from-primary/20 via-primary/5 to-transparent p-8 pb-6 border-b border-border/30">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                <Zap className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-foreground">Upgrade Your Plan</h2>
+                <p className="text-muted-foreground font-medium text-sm mt-0.5">You've reached the user limit. Upgrade to add more team members.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              
+              {/* Starter */}
+              <div className="relative p-6 rounded-2xl border border-border bg-card flex flex-col hover:border-primary/30 hover:shadow-lg transition-all duration-300 group">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                    <Zap className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg leading-none">Starter</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Perfect for small teams</p>
+                  </div>
+                </div>
+                <div className="mb-5">
+                  <span className="text-3xl font-black text-foreground">₱1,499</span>
+                  <span className="text-muted-foreground text-sm">/month</span>
+                </div>
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  {["Up to 10 users", "Task management & assignments", "Basic analytics dashboard", "Email notifications", "Standard support"].map(f => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  variant="outline"
+                  className="w-full h-11 font-bold rounded-xl group-hover:border-blue-500/50 group-hover:text-blue-600 transition-all"
+                  onClick={() => handleUpgradePlan("STARTER")}
+                  disabled={isUpgrading !== false}
+                >
+                  {isUpgrading === "STARTER" ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ArrowRight className="h-4 w-4 mr-2" /> Choose Starter</>}
+                </Button>
+              </div>
+
+              {/* Pro – highlighted */}
+              <div className="relative p-6 rounded-2xl border-2 border-primary bg-primary/5 flex flex-col shadow-xl shadow-primary/10">
+                <div className="absolute -top-3 right-5">
+                  <span className="bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow">
+                    Most Popular
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <Crown className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg leading-none">Pro</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">For growing businesses</p>
+                  </div>
+                </div>
+                <div className="mb-5">
+                  <span className="text-3xl font-black text-foreground">₱2,999</span>
+                  <span className="text-muted-foreground text-sm">/month</span>
+                </div>
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  {["Up to 25 users", "Everything in Starter", "Advanced analytics & reports", "Task extension requests", "Progress notes & discussions", "Priority email support"].map(f => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full h-11 font-bold rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                  onClick={() => handleUpgradePlan("PRO")}
+                  disabled={isUpgrading !== false}
+                >
+                  {isUpgrading === "PRO" ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Zap className="h-4 w-4 mr-2" /> Choose Pro</>}
+                </Button>
+              </div>
+
+              {/* Enterprise */}
+              <div className="relative p-6 rounded-2xl border border-border bg-card flex flex-col hover:border-primary/30 hover:shadow-lg transition-all duration-300 group">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl bg-violet-500/10 text-violet-600 flex items-center justify-center">
+                    <Building2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg leading-none">Enterprise</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">For large organizations</p>
+                  </div>
+                </div>
+                <div className="mb-5">
+                  <span className="text-3xl font-black text-foreground">₱4,999+</span>
+                  <span className="text-muted-foreground text-sm">/month</span>
+                </div>
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  {["Unlimited users", "Everything in Pro", "Custom integrations & API access", "Dedicated account manager", "SLA-backed uptime guarantee", "24/7 dedicated support"].map(f => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-violet-500 mt-0.5 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  variant="outline"
+                  className="w-full h-11 font-bold rounded-xl group-hover:border-violet-500/50 group-hover:text-violet-600 transition-all"
+                  onClick={() => handleUpgradePlan("ENTERPRISE")}
+                  disabled={isUpgrading !== false}
+                >
+                  {isUpgrading === "ENTERPRISE" ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ArrowRight className="h-4 w-4 mr-2" /> Choose Enterprise</>}
+                </Button>
+              </div>
+
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-6">All plans include a secure Stripe checkout. Cancel anytime.</p>
           </div>
         </DialogContent>
       </Dialog>

@@ -2,13 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import db from "@/lib/db";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-04-22.dahlia",
-});
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
-
 export async function POST(request: NextRequest) {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecretKey) {
+    return NextResponse.json({ error: "Configuration error" }, { status: 500 });
+  }
+
+  const stripe = new Stripe(stripeSecretKey, {
+    apiVersion: "2026-04-22.dahlia" as any,
+  });
+
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+
   const body = await request.text();
   const sig = request.headers.get("stripe-signature");
 
@@ -32,6 +37,7 @@ export async function POST(request: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const orgId = session.metadata?.orgId;
+    const plan = session.metadata?.plan || 'PRO'; // fallback to PRO if not provided
 
     if (orgId) {
       try {
@@ -41,16 +47,18 @@ export async function POST(request: NextRequest) {
            SET subscription_status = 'ACTIVE', 
                stripe_customer_id = ?,
                stripe_subscription_id = ?,
+               plan = ?,
                updatedat = CURRENT_TIMESTAMP
            WHERE id = ?`,
           [
             session.customer as string,
             session.subscription as string,
+            plan,
             orgId,
           ]
         );
 
-        console.log(`✅ Organization ${orgId} upgraded to ACTIVE`);
+        console.log(`✅ Organization ${orgId} upgraded to ACTIVE on ${plan} plan`);
       } catch (dbError) {
         console.error("Failed to update organization:", dbError);
         return NextResponse.json(

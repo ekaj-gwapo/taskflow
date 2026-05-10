@@ -5,6 +5,9 @@ import db from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json().catch(() => ({}));
+    const { plan } = body;
+
     const auth = requireAuth(request);
     if (auth.error) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -28,9 +31,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Check Stripe configuration
-    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { error: "Payment system is not configured. Please contact the administrator." },
+        { status: 503 }
+      );
+    }
+
+    if (!plan || !['STARTER', 'PRO', 'ENTERPRISE'].includes(plan)) {
+      return NextResponse.json({ error: "Invalid plan selected." }, { status: 400 });
+    }
+
+    let priceId = "";
+    if (plan === "STARTER") priceId = process.env.STRIPE_PRICE_ID_STARTER || process.env.STRIPE_PRICE_ID || "";
+    if (plan === "PRO") priceId = process.env.STRIPE_PRICE_ID_PRO || process.env.STRIPE_PRICE_ID || "";
+    if (plan === "ENTERPRISE") priceId = process.env.STRIPE_PRICE_ID_ENTERPRISE || process.env.STRIPE_PRICE_ID || "";
+
+    if (!priceId) {
+      return NextResponse.json(
+        { error: `Pricing not configured for ${plan} plan.` },
         { status: 503 }
       );
     }
@@ -49,8 +68,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Organization not found." }, { status: 404 });
     }
 
-    if (org.subscription_status === "ACTIVE") {
-      return NextResponse.json({ error: "Organization already has an active subscription." }, { status: 400 });
+    if (org.subscription_status === "ACTIVE" && org.plan === plan) {
+      return NextResponse.json({ error: "Organization is already on this active subscription plan." }, { status: 400 });
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -61,7 +80,7 @@ export async function POST(request: NextRequest) {
       mode: "subscription",
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID,
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -69,9 +88,10 @@ export async function POST(request: NextRequest) {
         orgId: decoded.orgId,
         orgName: org.name,
         userId: decoded.id,
+        plan: plan,
       },
       customer_email: decoded.email,
-      success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
       cancel_url: `${appUrl}/payment/cancel`,
     });
 
