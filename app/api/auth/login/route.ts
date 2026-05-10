@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
              u."emailVerified", u."notifyOnAssign", u."notifyOnDeadline", 
              u."notifyOnDiscussion", u."notifyOnExtension", u.isActive as "isActive",
              o.name as "organizationName", o.status as "orgStatus", o.logo_url as "organizationLogo",
-             o.trial_ends_at as "trialEndsAt", o.subscription_status as "subscriptionStatus"
+             o.trial_ends_at as "trialEndsAt", o.subscription_status as "subscriptionStatus",
+             o.plan as "plan"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id
       WHERE u.email = ? OR u.username = ?

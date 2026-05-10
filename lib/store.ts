@@ -15,6 +15,8 @@ export interface User {
   orgId?: string
   organizationName?: string
   organizationLogo?: string
+  plan?: "FREE" | "STARTER" | "PRO" | "ENTERPRISE"
+  subscriptionStatus?: "TRIALING" | "ACTIVE" | "EXPIRED" | "CANCELLED"
   notifyOnAssign?: boolean
   notifyOnDeadline?: boolean
   notifyOnDiscussion?: boolean

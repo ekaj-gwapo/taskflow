@@ -193,6 +193,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         orgId: userData.orgId || userData.orgid,
         organizationName: userData.organizationName || userData.organizationname,
         organizationLogo: userData.organizationLogo || userData.organizationlogo,
+        plan: userData.plan,
+        subscriptionStatus: userData.subscriptionStatus || userData.subscriptionstatus,
       }
       setCurrentUser(user)
       setCurrentRole(userData.role.toLowerCase() as UserRole)

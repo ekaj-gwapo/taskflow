@@ -7,8 +7,9 @@ import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive, Palette, Check, Sun, Moon, LogOut, ExternalLink, Camera, Layers, MessageSquare, Send } from "lucide-react"
 import { ProfileDialog } from "@/components/profile-dialog"
+import { PricingModal } from "@/components/pricing-modal"
+import { Users, ChevronRight, ChevronDown, ClipboardList, ArrowLeft, User, Mail, Phone, MapPin, Save, X, Shield, Search, Clipboard, Share2, Trash2, Filter, FileText, Activity, LayoutDashboard, CalendarClock, Archive, Palette, Check, Sun, Moon, LogOut, ExternalLink, Camera, Layers, MessageSquare, Send, Zap } from "lucide-react"
 import {
   Popover,
   PopoverContent,
@@ -117,6 +118,7 @@ export function AdminSidebar({
   const { allEmployees, tasks, currentUser, login, logout, seenTaskIds } = useTaskContext()
   const [activeTab, setActiveTab] = useState<"workspace" | "profile">("workspace")
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
 
   useEffect(() => {
     if (isProfileOpen) {
@@ -661,6 +663,39 @@ export function AdminSidebar({
                 )}
               </button>
 
+              {/* Upgrade Plan Card - For Creator/Head Admin */}
+              {(currentUser?.role?.toUpperCase() === "CREATOR" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN") && currentUser?.plan !== "ENTERPRISE" && (
+                <div className={cn("mt-6 px-2", isCollapsed ? "hidden" : "block")}>
+                  <div className="relative group p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-primary/5 to-transparent border border-primary/20 overflow-hidden shadow-xl shadow-primary/5">
+                    {/* Animated Glow */}
+                    <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-primary/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 rounded-lg bg-primary/20">
+                          <Zap className="h-3.5 w-3.5 text-primary animate-pulse" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                          {currentUser?.plan === 'FREE' || !currentUser?.plan ? 'Free Plan' : `${currentUser.plan} Plan`}
+                        </span>
+                      </div>
+                      
+                      <p className="text-[11px] text-muted-foreground font-medium mb-4 leading-relaxed">
+                        Unlock unlimited users, advanced analytics and priority support.
+                      </p>
+                      
+                      <Button 
+                        size="sm" 
+                        onClick={() => setIsPricingModalOpen(true)}
+                        className="w-full h-8 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95"
+                      >
+                        Upgrade Now
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
 
               {(currentUser?.role?.toUpperCase() === "ADMIN" || currentUser?.role?.toUpperCase() === "HEAD_ADMIN" || currentUser?.role?.toUpperCase() === "SUPERADMIN" || currentUser?.role?.toUpperCase() === "CREATOR") && (
                 <>
@@ -957,6 +992,11 @@ export function AdminSidebar({
 
 
       <ProfileDialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen} />
+      <PricingModal 
+        open={isPricingModalOpen} 
+        onOpenChange={setIsPricingModalOpen} 
+        currentPlan={currentUser?.plan} 
+      />
     </aside>
   )
 }
