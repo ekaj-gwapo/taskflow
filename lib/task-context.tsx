@@ -59,6 +59,7 @@ interface TaskContextType {
   // Employees
   allEmployees: User[]
   refreshUsers: () => Promise<void>
+  refreshUserPlan: () => Promise<void>
 
   // Access Control & Employee Action Tracking
   getEmployeeVisibleTasks: () => Task[]
@@ -200,6 +201,50 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setCurrentRole(userData.role.toLowerCase() as UserRole)
       setIsLoadingSession(false)
       // Save token or handle session if needed
+    }
+  }, [])
+
+  const refreshUserPlan = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) return
+
+      const response = await fetch("/api/auth/session", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.user) {
+          const updatedUser: User = {
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            role: data.user.role.toLowerCase() as UserRole,
+            phone: data.user.phone || data.user.phone_number,
+            location: data.user.location,
+            avatar: data.user.avatar || data.user.avatarUrl,
+            theme: data.user.theme || "emerald",
+            mode: data.user.mode || "light",
+            jobTitle: data.user.jobTitle,
+            emailVerified: data.user.emailVerified || data.user.emailverified || false,
+            notifyOnAssign: data.user.notifyOnAssign ?? data.user.notifyonassign ?? true,
+            notifyOnDeadline: data.user.notifyOnDeadline ?? data.user.notifyondeadline ?? true,
+            notifyOnDiscussion: data.user.notifyOnDiscussion ?? data.user.notifyondiscussion ?? true,
+            notifyOnExtension: data.user.notifyOnExtension ?? data.user.notifyonextension ?? true,
+            orgId: data.user.orgId || data.user.orgid,
+            organizationName: data.user.organizationName || data.user.organizationname,
+            organizationLogo: data.user.organizationLogo || data.user.organizationlogo,
+            plan: data.user.plan,
+            subscriptionStatus: data.user.subscriptionStatus || data.user.subscriptionstatus,
+          }
+          setCurrentUser(updatedUser)
+        }
+      }
+    } catch (error) {
+      console.error("Failed to refresh user plan:", error)
     }
   }, [])
 
@@ -1180,6 +1225,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         notifications,
         fetchNotifications,
         markNotificationAsRead,
+        refreshUserPlan,
         selectedTaskId,
         selectTask,
         targetSection,

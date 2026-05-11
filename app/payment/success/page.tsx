@@ -6,13 +6,18 @@ import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { Suspense } from "react"
+import { useTaskContext } from "@/lib/task-context"
 
 function SuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { refreshUserPlan } = useTaskContext()
   const [countdown, setCountdown] = useState(5)
 
   useEffect(() => {
+    // Refresh the user plan immediately on success
+    refreshUserPlan()
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
