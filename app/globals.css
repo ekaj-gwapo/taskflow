@@ -265,6 +265,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 0.875rem; /* 14px base font for a leaner look */
+    line-height: 1.4;
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--border)) transparent;
   }

@@ -30,7 +30,9 @@ export type ActivityAction =
   | "USER_DELETED"
   | "ORGANIZATION_CREATED"
   | "SUPPORT_REQUEST_SENT"
-  | "SUPPORT_REQUEST_REPLIED";
+  | "SUPPORT_REQUEST_REPLIED"
+  | "PROMO_CODE_GENERATED"
+  | "PROMO_CODE_REDEEMED";
 
 export interface ActivityLogPayload {
   action: ActivityAction;

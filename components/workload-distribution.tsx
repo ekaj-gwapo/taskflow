@@ -46,7 +46,7 @@ export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
   const maxScore = Math.max(...workloadData.map((e) => e.score), 1)
 
   return (
-    <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-full flex flex-col max-h-[400px]">
+    <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-[400px] flex flex-col">
       {(currentUser?.plan === "FREE" || !currentUser?.plan || currentUser?.plan === "STARTER") && (
         <LockedOverlay 
           title="Workload Insights" 
@@ -92,15 +92,15 @@ export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
             return (
               <div
                 key={person.id}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors border ${bgClass}`}
+                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors border ${bgClass}`}
               >
                 
                 {/* Avatar + Name */}
-                <Avatar className="h-9 w-9 shrink-0 shadow-sm border border-border/50">
+                <Avatar className="h-8 w-8 shrink-0 shadow-sm border border-border/50">
                   {person.avatar ? (
                     <AvatarImage src={person.avatar} />
                   ) : (
-                    <AvatarFallback className="text-[11px] font-bold bg-primary/10 text-primary">
+                    <AvatarFallback className="text-[10px] font-black bg-primary/10 text-primary">
                       {person.initials}
                     </AvatarFallback>
                   )}
@@ -108,19 +108,19 @@ export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className={`text-sm truncate font-semibold ${nameClass}`}>
+                    <p className={`text-xs truncate font-bold ${nameClass}`}>
                       {person.name}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2.5 mt-1 text-[11px] text-muted-foreground font-medium">
+                  <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground font-medium">
                     <span className="flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-red-400 border border-red-500/20" /> {person.high} High
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-400 border border-red-500/20" /> {person.high} High
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-yellow-400 border border-yellow-500/20" /> {person.medium} Med
+                      <span className="h-1.5 w-1.5 rounded-full bg-yellow-400 border border-yellow-500/20" /> {person.medium} Med
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400 border border-emerald-500/20" /> {person.low} Low
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 border border-emerald-500/20" /> {person.low} Low
                     </span>
                   </div>
                 </div>
@@ -128,10 +128,10 @@ export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
                 {/* Stats */}
                 <div className="flex flex-col items-end justify-center shrink-0 pl-2">
                   <div className="text-right">
-                    <p className={`text-lg font-bold leading-none ${textClass}`}>
+                    <p className={`text-base font-black leading-none ${textClass}`}>
                       {person.activeCount}
                     </p>
-                    <p className="text-[10px] mt-1 font-medium text-muted-foreground uppercase tracking-wider">
+                    <p className="text-[9px] mt-1 font-bold text-muted-foreground uppercase tracking-widest">
                       active tasks
                     </p>
                   </div>
@@ -140,9 +140,9 @@ export function WorkloadDistribution({ onHide }: { onHide?: () => void }) {
             )
           })}
           {workloadData.length === 0 && (
-            <div className="text-center py-8">
-              <Activity className="h-8 w-8 text-emerald-100 mx-auto mb-2" />
-              <p className="text-sm font-medium text-emerald-900 border border-emerald-100 bg-emerald-50/50 rounded-lg p-3 inline-block">
+            <div className="flex flex-col items-center justify-center h-[320px] text-center">
+              <Activity className="h-8 w-8 text-emerald-500/30 mb-3 animate-pulse" />
+              <p className="text-xs font-bold text-muted-foreground border border-emerald-500/10 bg-emerald-500/5 rounded-lg px-4 py-2">
                 No active tasks found.
               </p>
             </div>

@@ -22,7 +22,7 @@ export function RecentlyCompletedTasks({ onSelectTask, onHide }: RecentlyComplet
   }, [tasks])
   
   return (
-    <Card className="border-border bg-card/40 backdrop-blur-xl shadow-xl flex flex-col max-h-[400px] overflow-hidden">
+    <Card className="border-border bg-card/40 backdrop-blur-xl shadow-xl flex flex-col h-[400px] overflow-hidden">
       <CardHeader className="pb-3 bg-muted/30 border-b border-border shrink-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -67,7 +67,7 @@ export function RecentlyCompletedTasks({ onSelectTask, onHide }: RecentlyComplet
                     }
                     markCompletedAsSeen(task.id)
                   }}
-                  className="w-full flex items-start gap-3 p-3 rounded-lg border border-border bg-secondary/30 hover:bg-emerald-50/50 hover:border-emerald-200/50 transition-all text-left relative group"
+                  className="w-full flex items-start gap-2.5 p-2.5 rounded-lg border border-border bg-secondary/30 hover:bg-emerald-50/50 hover:border-emerald-200/50 transition-all text-left relative group"
                 >
                   {isUnseen && (
                     <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)] z-10" />
@@ -76,25 +76,25 @@ export function RecentlyCompletedTasks({ onSelectTask, onHide }: RecentlyComplet
                   {displayAssignees.length > 0 ? (
                     <div className="flex -space-x-3 overflow-hidden shrink-0 items-center">
                       {displayAssignees.slice(0, 3).map((a) => (
-                        <Avatar key={a.id} className="h-8 w-8 shrink-0 border-2 border-background ring-1 ring-emerald-500/30">
+                        <Avatar key={a.id} className="h-7 w-7 shrink-0 border-2 border-background ring-1 ring-emerald-500/30">
                           {a.avatar ? (
                             <AvatarImage src={a.avatar} />
                           ) : (
-                            <AvatarFallback className="text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                            <AvatarFallback className="text-[9px] font-black bg-emerald-100 text-emerald-800">
                               {a.name.split(" ").map(n => n[0]).join("").toUpperCase()}
                             </AvatarFallback>
                           )}
                         </Avatar>
                       ))}
                       {displayAssignees.length > 3 && (
-                        <div className="flex items-center justify-center h-8 w-8 shrink-0 rounded-full border-2 border-background ring-1 ring-emerald-500/30 bg-secondary text-[10px] font-medium text-foreground z-10">
+                        <div className="flex items-center justify-center h-7 w-7 shrink-0 rounded-full border-2 border-background ring-1 ring-emerald-500/30 bg-secondary text-[9px] font-bold text-foreground z-10">
                           +{displayAssignees.length - 3}
                         </div>
                       )}
                     </div>
                   ) : (
-                    <Avatar className="h-8 w-8 shrink-0 border border-emerald-500/30">
-                      <AvatarFallback className="text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                    <Avatar className="h-7 w-7 shrink-0 border border-emerald-500/30">
+                      <AvatarFallback className="text-[9px] font-black bg-emerald-100 text-emerald-800">
                         UN
                       </AvatarFallback>
                     </Avatar>
@@ -102,12 +102,12 @@ export function RecentlyCompletedTasks({ onSelectTask, onHide }: RecentlyComplet
                   
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <p className={cn(
-                      "text-sm font-semibold truncate transition-colors",
+                      "text-xs font-bold truncate transition-colors",
                       isUnseen ? "text-emerald-700" : "text-foreground"
                     )}>
                       {task.title}
                     </p>
-                    <p className="text-[11px] text-muted-foreground truncate font-medium">
+                    <p className="text-[10px] text-muted-foreground truncate font-medium">
                       {displayAssignees.filter(a => {
                         const role = currentUser?.role?.toLowerCase()
                         const isAdminRole = role === "head_admin" || role === "admin"
@@ -134,9 +134,12 @@ export function RecentlyCompletedTasks({ onSelectTask, onHide }: RecentlyComplet
             })}
           </div>
         ) : (
-          <div className="py-8 text-center text-sm text-muted-foreground flex flex-col items-center">
-            <CheckCircle2 className="h-8 w-8 opacity-20 mb-2" />
-            <p>No recently completed tasks</p>
+          <div className="h-[320px] flex flex-col items-center justify-center text-center p-6">
+            <div className="p-3 rounded-full bg-emerald-500/10 mb-3">
+              <CheckCircle2 className="h-6 w-6 text-emerald-500/30" />
+            </div>
+            <p className="text-xs font-black text-foreground uppercase tracking-tight">No Recent Activity</p>
+            <p className="text-[10px] text-muted-foreground mt-1 max-w-[160px] font-medium">Completed tasks will appear here as they are finished.</p>
           </div>
         )}
         </div>

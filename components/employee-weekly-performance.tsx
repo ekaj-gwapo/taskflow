@@ -53,7 +53,7 @@ export function EmployeeWeeklyPerformance({ onHide }: { onHide?: () => void }) {
   }, [tasks, allEmployees])
 
   return (
-    <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-full flex flex-col max-h-[400px]">
+    <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-[400px] flex flex-col">
       {(currentUser?.plan === "FREE" || !currentUser?.plan || currentUser?.plan === "STARTER") && (
         <LockedOverlay 
           title="Team Productivity" 
@@ -101,48 +101,48 @@ export function EmployeeWeeklyPerformance({ onHide }: { onHide?: () => void }) {
               )}>
                 {/* Summary Row */}
                 <div 
-                  className="flex items-center gap-4 p-4 cursor-pointer"
+                  className="flex items-center gap-3 p-3 cursor-pointer"
                   onClick={() => setExpandedEmployee(isExpanded ? null : data.employee.id)}
                 >
-                  <Avatar className="h-10 w-10 border-2 border-background shadow-sm shrink-0">
+                  <Avatar className="h-8 w-8 border-2 border-background shadow-sm shrink-0">
                     <AvatarImage src={data.employee.avatar} />
-                    <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
+                    <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-black">
                       {data.employee.name.split(" ").map(n => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-foreground truncate">{data.employee.name}</h4>
-                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">
+                      <h4 className="text-xs font-bold text-foreground truncate">{data.employee.name}</h4>
+                      <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">
                         {data.employee.role}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 mt-1.5">
+                    <div className="flex items-center gap-3 mt-1">
                       <div className="flex items-center gap-1">
-                        <ClipboardList className="h-3 w-3 text-blue-500" />
-                        <span className="text-xs font-bold text-foreground">{data.assignedCount}</span>
-                        <span className="text-[10px] text-muted-foreground font-medium">Assigned</span>
+                        <ClipboardList className="h-2.5 w-2.5 text-blue-500" />
+                        <span className="text-[10px] font-bold text-foreground">{data.assignedCount}</span>
+                        <span className="text-[9px] text-muted-foreground font-medium">Assigned</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                        <span className="text-xs font-bold text-foreground">{data.completedCount}</span>
-                        <span className="text-[10px] text-muted-foreground font-medium">Completed</span>
+                        <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500" />
+                        <span className="text-[10px] font-bold text-foreground">{data.completedCount}</span>
+                        <span className="text-[9px] text-muted-foreground font-medium">Completed</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-amber-500" />
-                        <span className="text-xs font-bold text-foreground">{data.inProgressCount}</span>
-                        <span className="text-[10px] text-muted-foreground font-medium">Active</span>
+                        <Clock className="h-2.5 w-2.5 text-amber-500" />
+                        <span className="text-[10px] font-bold text-foreground">{data.inProgressCount}</span>
+                        <span className="text-[9px] text-muted-foreground font-medium">Active</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="hidden sm:flex flex-col items-end gap-1.5 mr-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase">Rate</span>
-                      <span className="text-xs font-bold text-foreground">{data.completionRate}%</span>
+                  <div className="hidden sm:flex flex-col items-end gap-1 mr-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-bold text-muted-foreground uppercase">Rate</span>
+                      <span className="text-[10px] font-bold text-foreground">{data.completionRate}%</span>
                     </div>
-                    <Progress value={data.completionRate} className="h-1 w-20 bg-secondary" />
+                    <Progress value={data.completionRate} className="h-1 w-14 bg-secondary" />
                   </div>
 
                   <div className="p-1 rounded-full bg-muted/50 text-muted-foreground">
@@ -212,12 +212,12 @@ export function EmployeeWeeklyPerformance({ onHide }: { onHide?: () => void }) {
           })}
 
           {weeklyData.length === 0 && (
-            <div className="flex flex-col items-center justify-center p-12 text-center">
-              <div className="p-4 rounded-full bg-muted mb-4">
-                <LayoutDashboard className="h-8 w-8 text-muted-foreground/30" />
+            <div className="flex flex-col items-center justify-center h-[320px] text-center p-6">
+              <div className="p-3 rounded-full bg-muted/50 mb-3">
+                <LayoutDashboard className="h-6 w-6 text-muted-foreground/30" />
               </div>
-              <p className="text-sm font-bold text-foreground">No Performance Data</p>
-              <p className="text-xs text-muted-foreground mt-1 max-w-[200px]">Data will appear here once tasks are assigned to employees.</p>
+              <p className="text-xs font-black text-foreground uppercase tracking-tight">No Performance Data</p>
+              <p className="text-[10px] text-muted-foreground mt-1 max-w-[180px] font-medium">Data will appear here once tasks are assigned to employees.</p>
             </div>
           )}
         </div>

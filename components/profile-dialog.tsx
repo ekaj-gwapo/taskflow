@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, X, Crop as CropIcon, Save, Sun, Moon, Palette, Check, User, Mail, Phone, MapPin, Camera, Loader2, Building2 } from "lucide-react"
+import { Upload, X, Crop as CropIcon, Save, Sun, Moon, Palette, Check, User, Mail, Phone, MapPin, Camera, Loader2, Building2, Code2, Copy, Key } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import Cropper, { Point, Area } from "react-easy-crop"
@@ -34,6 +34,8 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [phone, setPhone] = useState("")
   const [location, setLocation] = useState("")
   const [jobTitle, setJobTitle] = useState("")
+  const [apiKey, setApiKey] = useState<string | null>(null)
+  const [generatingKey, setGeneratingKey] = useState(false)
 
   useEffect(() => {
     if (currentUser) {
@@ -131,6 +133,26 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGenerateKey = async () => {
+    setGeneratingKey(true)
+    try {
+      // For now, we simulate the generation. In production, this would call /api/organizations/api-key
+      await new Promise(resolve => setTimeout(resolve, 1200))
+      const newKey = `tf_live_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+      setApiKey(newKey)
+      toast.success("New API Key generated successfully!")
+    } catch (error) {
+      toast.error("Failed to generate API Key")
+    } finally {
+      setGeneratingKey(false)
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success("Copied to clipboard!")
   }
 
   const initials = currentUser?.name
@@ -316,6 +338,56 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                   <div className="w-full">
                     <EmailSettingsCard />
                   </div>
+
+                  {/* Enterprise API Settings */}
+                  {currentUser?.role === "creator" && currentUser?.plan === "ENTERPRISE" && (
+                    <div className="mt-8">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-amber-500/10 rounded-xl">
+                          <Code2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Developer API</span>
+                          <h4 className="text-xs font-bold text-foreground">Custom Integrations</h4>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-amber-500/5 rounded-3xl border border-amber-500/10 p-6 space-y-4">
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Use this Secret Key to connect your external government systems to TaskFlow. 
+                          <span className="text-amber-600 dark:text-amber-400 font-bold ml-1">Do not share this key with anyone.</span>
+                        </p>
+                        
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
+                            <Input
+                              readOnly
+                              value={apiKey || "••••••••••••••••••••••••••••••••"}
+                              className="h-12 pl-12 pr-12 rounded-xl bg-background border-border font-mono text-xs"
+                            />
+                            {apiKey && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => copyToClipboard(apiKey)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <Button
+                            onClick={handleGenerateKey}
+                            disabled={generatingKey}
+                            className="h-12 px-6 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-black text-xs uppercase tracking-wider"
+                          >
+                            {generatingKey ? <Loader2 className="h-4 w-4 animate-spin" /> : (apiKey ? "Regenerate" : "Generate Key")}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="w-full space-y-6">

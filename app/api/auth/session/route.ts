@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       SELECT 
         u.*, 
         o.name as organizationName, 
-        o.logo as organizationLogo, 
+        o.logo_url as organizationLogo, 
         o.plan, 
         o.subscription_status as subscriptionStatus
       FROM users u

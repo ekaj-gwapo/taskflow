@@ -54,15 +54,19 @@ import { toast } from "sonner"
 function TaskRowSkeleton() {
   return (
     <div className="w-full flex items-center px-4 py-3 border-b border-border animate-pulse">
-      <div className="flex-1 min-w-0">
-        <Skeleton className="h-4 w-1/3 mb-2" />
-        <Skeleton className="h-3 w-1/2" />
-        <div className="mt-3 max-w-[200px] space-y-1.5">
-          <Skeleton className="h-2 w-12" />
-          <Skeleton className="h-1.5 w-full rounded-full" />
-        </div>
+      <div className="flex-1 flex flex-col min-w-0 bg-background/30 overflow-hidden relative">
+        <main className="flex-1 overflow-y-auto p-4 md:p-5 scroll-smooth custom-scrollbar relative z-10">
+          <div className="max-w-[1600px] mx-auto space-y-4">
+            <Skeleton className="h-4 w-1/3 mb-2" />
+            <Skeleton className="h-3 w-1/2" />
+            <div className="mt-3 max-w-[200px] space-y-1.5">
+              <Skeleton className="h-2 w-12" />
+              <Skeleton className="h-1.5 w-full rounded-full" />
+            </div>
+          </div>
+        </main>
       </div>
-      <div className="hidden md:flex items-center shrink-0 gap-6">
+      <div className="hidden md:flex items-center shrink-0 gap-4">
         <div className="w-24 flex justify-center"><Skeleton className="h-6 w-16 rounded-full" /></div>
         <div className="w-32 flex justify-center"><Skeleton className="h-6 w-20 rounded-full" /></div>
         <div className="w-40 flex items-center gap-1.5 pl-1">
@@ -810,7 +814,7 @@ export function AdminDashboard({
                 transition={{ duration: 0.5, ease: "easeInOut" }}
                 className="space-y-6 overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                   <AnimatePresence mode="popLayout">
                     {visibleCharts.workload && (
                       <motion.div
@@ -873,9 +877,9 @@ export function AdminDashboard({
           <motion.div
             layout
             transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="flex gap-6 items-start"
+            className="flex gap-4 items-start"
           >
-            <div className="flex-1 min-w-0 space-y-6">
+            <div className="flex-1 min-w-0 space-y-4">
               {/* SEARCH & FILTER */}
               <AnimatePresence mode="wait">
                 {!['activity-log', 'profile', 'user-management', 'support'].includes(selectedEmployeeId as string) &&
@@ -886,9 +890,9 @@ export function AdminDashboard({
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="sticky -top-6 z-30 bg-background/80 backdrop-blur-xl pb-4 pt-7 -mx-6 px-6 border-b border-border/50"
+                      className="sticky -top-4 z-30 bg-background/80 backdrop-blur-xl pb-3 pt-5 -mx-4 px-4 border-b border-border/50"
                     >
-                      <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center py-2">
+                      <div className="flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center py-1.5">
                         <div className="w-full flex flex-col sm:flex-row gap-3 items-center flex-1 min-w-0">
                           <div className="relative w-full sm:w-auto sm:flex-1 min-w-[150px] max-w-sm shrink">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

@@ -104,7 +104,7 @@ export function TopCompletersChart({ onHide }: { onHide?: () => void }) {
   const maxScore = Math.max(...leaderboard.map((e) => e.score), 1)
 
   return (
-    <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl h-full flex flex-col max-h-[400px] overflow-hidden">
+    <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl h-[400px] flex flex-col overflow-hidden">
       {(currentUser?.plan === "FREE" || !currentUser?.plan || currentUser?.plan === "STARTER") && (
         <LockedOverlay 
           title="Team Leaderboard" 
@@ -151,7 +151,7 @@ export function TopCompletersChart({ onHide }: { onHide?: () => void }) {
       <CardContent className="p-0 flex-1 overflow-y-auto">
         <div className="p-4">
           {/* Chart */}
-          <div className="h-40 mb-5">
+          <div className="h-32 mb-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={leaderboard.slice(0, 5)}
@@ -185,67 +185,77 @@ export function TopCompletersChart({ onHide }: { onHide?: () => void }) {
           </div>
 
           {/* Ranked List */}
-          <div className="flex flex-col gap-2">
-            {leaderboard.slice(0, 10).map((person, index) => {
-              const RankIcon = RANK_ICONS[index]
-              return (
-                <div
-                  key={person.id}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 bg-secondary/50 border border-border/50"
-                >
-                  {/* Rank */}
-                  <div className="flex h-6 w-6 items-center justify-center shrink-0">
-                    {RankIcon ? (
-                      <RankIcon
-                        className="h-4 w-4"
-                        style={{ color: RANK_COLORS[index] }}
-                      />
-                    ) : (
-                      <span className="text-xs font-bold text-muted-foreground">
-                        #{index + 1}
-                      </span>
-                    )}
-                  </div>
+          {leaderboard.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {leaderboard.slice(0, 10).map((person, index) => {
+                const RankIcon = RANK_ICONS[index]
+                return (
+                  <div
+                    key={person.id}
+                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 bg-secondary/50 border border-border/50"
+                  >
+                    {/* Rank */}
+                    <div className="flex h-5 w-5 items-center justify-center shrink-0">
+                      {RankIcon ? (
+                        <RankIcon
+                          className="h-3.5 w-3.5"
+                          style={{ color: RANK_COLORS[index] }}
+                        />
+                      ) : (
+                        <span className="text-[10px] font-black text-muted-foreground">
+                          #{index + 1}
+                        </span>
+                      )}
+                    </div>
 
-                  {/* Avatar + Name */}
-                  <Avatar className="h-7 w-7 shrink-0">
-                    <AvatarFallback
-                      className="text-[10px] font-medium"
-                      style={{
-                        backgroundColor:
-                          index === 0
-                            ? "hsl(45, 93%, 47%)"
-                            : "hsl(240, 4%, 14%)",
-                        color: index === 0 ? "hsl(0, 0%, 0%)" : "hsl(0, 0%, 95%)",
-                      }}
-                    >
-                      {isRevealed ? person.initials : "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm font-medium transition-all duration-300",
-                      isRevealed ? "text-foreground" : "text-transparent bg-muted/40 rounded blur-[4px] select-none"
-                    )}>
-                      {person.name}
-                    </p>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-foreground">
-                        {person.score}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground leading-none">
-                        pts
+                    {/* Avatar + Name */}
+                    <Avatar className="h-6 w-6 shrink-0">
+                      <AvatarFallback
+                        className="text-[9px] font-black"
+                        style={{
+                          backgroundColor:
+                            index === 0
+                              ? "hsl(45, 93%, 47%)"
+                              : "hsl(240, 4%, 14%)",
+                          color: index === 0 ? "hsl(0, 0%, 0%)" : "hsl(0, 0%, 95%)",
+                        }}
+                      >
+                        {isRevealed ? person.initials : "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-xs font-bold transition-all duration-300",
+                        isRevealed ? "text-foreground" : "text-transparent bg-muted/40 rounded blur-[4px] select-none"
+                      )}>
+                        {person.name}
                       </p>
                     </div>
+
+                    {/* Stats */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="text-right">
+                        <p className="text-xs font-black text-foreground">
+                          {person.score}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground leading-none">
+                          pts
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="h-[320px] flex flex-col items-center justify-center text-center p-6">
+              <div className="p-3 rounded-full bg-amber-500/10 mb-3">
+                <Trophy className="h-6 w-6 text-amber-500/30" />
+              </div>
+              <p className="text-xs font-black text-foreground uppercase tracking-tight">No Rankings Yet</p>
+              <p className="text-[10px] text-muted-foreground mt-1 max-w-[160px] font-medium">Rankings will be calculated once tasks are completed.</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

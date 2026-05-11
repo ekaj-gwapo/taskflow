@@ -17,6 +17,7 @@ import { MasterSettings } from "@/components/master-settings"
 import { MasterSupportRequests } from "@/components/master-support-requests"
 import { CreatorSupportRequests } from "@/components/creator-support-requests"
 import { TrialExpiredScreen } from "@/components/trial-expired-screen"
+import { PromoFactory } from "@/components/master/promo-factory"
 import { Rocket, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -118,6 +119,7 @@ function AppContent() {
               {activeMasterView === "overview" && <MasterOverview />}
               {activeMasterView === "organizations" && <MasterOrgManagement />}
               {activeMasterView === "users" && <MasterUserManagement />}
+              {activeMasterView === "promo" && <PromoFactory />}
               {activeMasterView === "support" && <MasterSupportRequests />}
               {activeMasterView === "logs" && <div className="p-8">Activity Logs Coming Soon</div>}
               {activeMasterView === "settings" && <MasterSettings />}

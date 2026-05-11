@@ -24,7 +24,7 @@ export function AppHeader({ onMenuClick }: { onMenuClick?: () => void }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center justify-between px-4 lg:px-6">
+      <div className="flex h-12 items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
           {onMenuClick && (
             <Button
@@ -37,8 +37,8 @@ export function AppHeader({ onMenuClick }: { onMenuClick?: () => void }) {
             </Button>
           )}
           {/* Logo Placeholder - Replace with your logo */}
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary hover:bg-primary/90 transition-colors" title="Click to upload your logo">
-            <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary hover:bg-primary/90 transition-colors" title="Click to upload your logo">
+            <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
           </div>
           {/* To add your logo: Replace the above div with: <img src="/logo.png" alt="Logo" className="h-10 w-10 rounded-lg object-contain" /> */}
 
@@ -53,35 +53,35 @@ export function AppHeader({ onMenuClick }: { onMenuClick?: () => void }) {
               variant="outline"
               size="sm"
               onClick={() => window.location.href = "/super-admin"}
-              className="hidden md:flex h-9 rounded-lg"
+              className="hidden md:flex h-8 rounded-lg text-xs"
             >
-              <Shield className="h-4 w-4 mr-2" />
+              <Shield className="h-3.5 w-3.5 mr-2" />
               Users
             </Button>
           )}
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button
+            <Button
                 variant="ghost"
-                className="h-9 px-4 rounded-full bg-secondary/40 hover:bg-destructive/10 hover:text-destructive transition-all gap-2 text-[11px] font-black text-muted-foreground uppercase tracking-widest border border-border/50 hover:border-destructive/30 shadow-sm"
+                className="h-8 px-3 rounded-full bg-secondary/40 hover:bg-destructive/10 hover:text-destructive transition-all gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-widest border border-border/50 hover:border-destructive/30 shadow-sm"
               >
-                <LogOut className="h-3.5 w-3.5" />
+                <LogOut className="h-3 w-3" />
                 <span>Logout</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="bg-background/95 backdrop-blur-3xl border border-white/10 dark:border-white/5 sm:max-w-md rounded-[2rem] p-0 overflow-hidden shadow-2xl">
               <div className="p-8 pb-6 bg-gradient-to-br from-destructive/10 via-transparent to-transparent">
-                <AlertDialogHeader className="space-y-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive shadow-inner border border-destructive/20 mx-auto sm:mx-0">
-                    <LogOut className="h-8 w-8" />
+                <AlertDialogHeader className="space-y-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-destructive/10 text-destructive shadow-inner border border-destructive/20 mx-auto sm:mx-0">
+                    <LogOut className="h-6 w-6" />
                   </div>
-                  <div className="space-y-2 text-center sm:text-left">
-                    <AlertDialogTitle className="text-2xl font-black tracking-tight text-foreground">
+                  <div className="space-y-1.5 text-center sm:text-left">
+                    <AlertDialogTitle className="text-xl font-black tracking-tight text-foreground">
                       End Session?
                     </AlertDialogTitle>
-                    <AlertDialogDescription className="text-sm font-medium text-muted-foreground">
-                      Are you sure you want to sign out of your account? You will need to log in again to access your dashboard.
+                    <AlertDialogDescription className="text-xs font-medium text-muted-foreground">
+                      Are you sure you want to sign out?
                     </AlertDialogDescription>
                   </div>
                 </AlertDialogHeader>

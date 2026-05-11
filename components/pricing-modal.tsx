@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Zap, Sparkles, Rocket, Loader2 } from "lucide-react"
+import { Check, Zap, Sparkles, Rocket, Loader2, Ticket } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTaskContext } from "@/lib/task-context"
 import {
   Dialog,
   DialogContent,
@@ -62,6 +63,9 @@ const plans = [
 
 export function PricingModal({ open, onOpenChange, currentPlan }: PricingModalProps) {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [promoCode, setPromoCode] = useState("")
+  const [redeeming, setRedeeming] = useState(false)
+  const { refreshUserPlan } = useTaskContext()
 
   const handleUpgrade = async (plan: string) => {
     setLoadingPlan(plan)
@@ -89,18 +93,45 @@ export function PricingModal({ open, onOpenChange, currentPlan }: PricingModalPr
     }
   }
 
+  const handleRedeemPromo = async () => {
+    if (!promoCode.trim()) return
+    setRedeeming(true)
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch("/api/stripe/promo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ code: promoCode })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      
+      toast.success(data.message)
+      setPromoCode("")
+      await refreshUserPlan()
+      onOpenChange(false)
+    } catch (error: any) {
+      toast.error(error.message || "Invalid promo code")
+    } finally {
+      setRedeeming(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl p-0 bg-background border-border overflow-hidden">
-        <div className="relative p-6 md:p-10">
+        <div className="relative p-5 md:p-8">
           {/* Background decoration */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.05),transparent_50%)] pointer-events-none" />
           
-          <div className="relative text-center mb-10">
-            <DialogTitle className="text-3xl font-black text-foreground mb-3 tracking-tight">
+          <div className="relative text-center mb-6">
+            <DialogTitle className="text-2xl font-black text-foreground mb-1 tracking-tight">
               Scale Your Workflow
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground max-w-md mx-auto text-sm">
+            <DialogDescription className="text-muted-foreground max-w-md mx-auto text-[11px]">
               Choose the plan that fits your team's needs. Upgrade or downgrade anytime.
             </DialogDescription>
           </div>
@@ -121,27 +152,27 @@ export function PricingModal({ open, onOpenChange, currentPlan }: PricingModalPr
                   </div>
                 )}
 
-                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-6 bg-gradient-to-br shadow-inner", plan.color)}>
-                  <plan.icon className={cn("w-6 h-6", plan.iconColor)} />
+                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-gradient-to-br shadow-inner", plan.color)}>
+                  <plan.icon className={cn("w-5 h-5", plan.iconColor)} />
                 </div>
 
-                <h3 className="text-lg font-bold text-foreground mb-1">{plan.name}</h3>
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-2xl font-black text-foreground">{plan.price}</span>
-                  <span className="text-muted-foreground text-[10px]">/mo</span>
+                <h3 className="text-base font-bold text-foreground mb-0.5">{plan.name}</h3>
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="text-xl font-black text-foreground">{plan.price}</span>
+                  <span className="text-muted-foreground text-[9px]">/mo</span>
                 </div>
                 
-                <p className="text-muted-foreground text-xs mb-6 leading-relaxed">
+                <p className="text-muted-foreground text-[10px] mb-4 leading-normal">
                   {plan.description}
                 </p>
 
-                <div className="space-y-3 mb-6 flex-1">
+                <div className="space-y-2 mb-5 flex-1">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-2.5">
-                      <div className="shrink-0 w-4 h-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                        <Check className="w-2.5 h-2.5 text-emerald-500" />
+                    <div key={feature} className="flex items-center gap-2">
+                      <div className="shrink-0 w-3.5 h-3.5 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                        <Check className="w-2 h-2 text-emerald-500" />
                       </div>
-                      <span className="text-foreground/80 text-xs font-medium">{feature}</span>
+                      <span className="text-foreground/80 text-[10px] font-medium">{feature}</span>
                     </div>
                   ))}
                 </div>
@@ -150,14 +181,14 @@ export function PricingModal({ open, onOpenChange, currentPlan }: PricingModalPr
                   onClick={() => handleUpgrade(plan.planId)}
                   disabled={loadingPlan !== null || currentPlan === plan.planId}
                   className={cn(
-                    "w-full h-12 rounded-2xl font-bold transition-all duration-300",
+                    "w-full h-10 rounded-xl font-bold transition-all duration-300 text-xs",
                     plan.popular
                       ? "bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg shadow-emerald-500/20"
                       : "bg-white text-black hover:bg-zinc-200"
                   )}
                 >
                   {loadingPlan === plan.planId ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : currentPlan === plan.planId ? (
                     "Current Plan"
                   ) : (
@@ -168,10 +199,42 @@ export function PricingModal({ open, onOpenChange, currentPlan }: PricingModalPr
             ))}
           </div>
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-12 mb-8">
             <p className="text-zinc-500 text-xs">
               All plans include a 14-day money-back guarantee. Prices in PHP.
             </p>
+          </div>
+
+          {/* Promo Code Section */}
+          <div className="relative z-10 border-t border-border/50 pt-6 mt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-emerald-500/5 p-3 rounded-2xl border border-emerald-500/10">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-emerald-500/10 rounded-lg">
+                  <Ticket className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div className="text-left">
+                  <h4 className="text-xs font-bold text-foreground">Have a promo code?</h4>
+                  <p className="text-[9px] text-muted-foreground">Unlock special organization trials.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="Enter code..."
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  className="bg-background/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 w-full sm:w-36 transition-all text-foreground"
+                />
+                <Button 
+                  size="sm" 
+                  onClick={handleRedeemPromo}
+                  disabled={redeeming || !promoCode.trim()}
+                  className="h-8 bg-emerald-500 hover:bg-emerald-400 text-black font-black whitespace-nowrap rounded-lg px-3 text-[10px]"
+                >
+                  {redeeming ? "..." : "Redeem"}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>

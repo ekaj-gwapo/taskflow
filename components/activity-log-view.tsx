@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityLog } from "@/lib/store";
-import { FileText, Users, MessageSquare, AlertCircle, Trash2, CheckCircle2, PlusCircle, Paperclip, UserCog, UserCircle, Key, ShieldCheck, UserCheck, Share2, Archive, RotateCcw, UserPlus } from "lucide-react";
+import { FileText, Users, MessageSquare, AlertCircle, Trash2, CheckCircle2, PlusCircle, Paperclip, UserCog, UserCircle, Key, ShieldCheck, UserCheck, Share2, Archive, RotateCcw, UserPlus, Ticket, Sparkles } from "lucide-react";
 import { useTaskContext } from "@/lib/task-context";
 
 export function ActivityLogView() {
@@ -80,6 +80,10 @@ export function ActivityLogView() {
         return { icon: <Archive className="h-4 w-4 text-amber-600" />, bg: "bg-amber-50 border-amber-200" };
       case "TASK_RESTORED":
         return { icon: <RotateCcw className="h-4 w-4 text-emerald-600" />, bg: "bg-emerald-50 border-emerald-200" };
+      case "PROMO_CODE_GENERATED":
+        return { icon: <Sparkles className="h-4 w-4 text-amber-500" />, bg: "bg-amber-50 border-amber-200" };
+      case "PROMO_CODE_REDEEMED":
+        return { icon: <Ticket className="h-4 w-4 text-primary" />, bg: "bg-primary/5 border-primary/20" };
       default:
         return { icon: <AlertCircle className="h-4 w-4 text-muted-foreground" />, bg: "bg-secondary/50 border-border" };
     }
@@ -180,6 +184,18 @@ export function ActivityLogView() {
             {log.details?.to && (
               <span> to <strong>{new Date(log.details.to).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</strong></span>
             )}
+          </span>
+        );
+      case "PROMO_CODE_GENERATED":
+        return (
+          <span>
+            Generated promo code <code className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono font-black">{log.details?.code}</code> for <strong>{log.details?.plan}</strong> plan ({log.details?.days} days)
+          </span>
+        );
+      case "PROMO_CODE_REDEEMED":
+        return (
+          <span>
+            Redeemed promo code <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[10px] font-mono font-black">{log.details?.code}</code> activating <strong>{log.details?.plan}</strong> access
           </span>
         );
       default:
