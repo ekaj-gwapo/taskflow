@@ -189,7 +189,7 @@ export function ActionStepsSection({
                     }
                   }}
                   className="h-4 w-4"
-                  disabled={userRole !== "employee"}
+                  disabled={userRole !== "employee" || taskStatus !== "in-progress"}
                 />
 
 

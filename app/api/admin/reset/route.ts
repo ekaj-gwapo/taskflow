@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
 
     console.log("SYSTEM RESET INITIATED BY MASTER ADMIN:", user.email);
 
-    // Order of deletion matters due to foreign keys if they exist
     // 1. Delete dependent task data
     await db.execute("DELETE FROM task_assignments");
     await db.execute("DELETE FROM step_notes");
@@ -36,12 +35,17 @@ export async function POST(request: NextRequest) {
     // 3. Delete logs and notifications
     await db.execute("DELETE FROM activity_logs");
     await db.execute("DELETE FROM notifications");
+    await db.execute("DELETE FROM audit_log");
+    await db.execute("DELETE FROM support_requests");
     
-    // 4. Delete users (EXCEPT the current master admin)
+    // 4. Delete promo codes
+    await db.execute("DELETE FROM promo_codes");
+    
+    // 5. Delete users (EXCEPT the current master admin)
     // We keep the master admin so they stay logged in and the system is still accessible
     await db.execute("DELETE FROM users WHERE id != ?", [user.id]);
     
-    // 5. Delete organizations
+    // 6. Delete organizations
     await db.execute("DELETE FROM organizations");
 
     // Optional: Reset master admin's orgId since the organization was deleted

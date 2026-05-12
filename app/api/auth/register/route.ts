@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, password, phone, location, jobTitle, role, orgId, autoVerify } = validation.data;
+    const { name, email, password, phone, location, jobTitle, jobDescription, role, orgId, autoVerify } = validation.data;
 
     // Check if user already exists
     const existingUser = await db.getOne("SELECT id FROM users WHERE email = ? OR username = ?", [email, email]);
@@ -35,11 +35,12 @@ export async function POST(request: NextRequest) {
         
         let limit = 0;
         switch (org.plan) {
+          case 'FREE':
           case 'FREE_TRIAL': limit = 5; break;
           case 'STARTER': limit = 10; break;
           case 'PRO': limit = 25; break;
           case 'ENTERPRISE': limit = 999999; break;
-          default: limit = 5; // Default fallback
+          default: limit = 5;
         }
 
         if (userCount >= limit) {
@@ -67,14 +68,14 @@ export async function POST(request: NextRequest) {
     await db.execute(`
       INSERT INTO users (
         id, name, email, username, password, role, 
-        phone, location, jobtitle, orgid,
+        phone, location, jobtitle, jobdescription, orgid,
         "emailVerified", "emailVerifyToken", "emailVerifyExpiry",
         createdAt, updatedAt
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       userId, name, email, email, hashedPassword, role || defaultRole, 
-      phone || "", location || "", jobTitle || "", orgId || null,
+      phone || "", location || "", jobTitle || "", jobDescription || "", orgId || null,
       isVerified, isVerified ? null : otpCode, isVerified ? null : verificationExpiry,
       new Date().toISOString(), new Date().toISOString()
     ]);

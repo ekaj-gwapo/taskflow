@@ -19,6 +19,7 @@ export const registerSchema = z.object({
   phone: z.string().optional(),
   location: z.string().optional(),
   jobTitle: z.string().optional(),
+  jobDescription: z.string().optional(),
   role: z.string().optional(),
   orgId: z.string().optional(),
   autoVerify: z.boolean().optional(),

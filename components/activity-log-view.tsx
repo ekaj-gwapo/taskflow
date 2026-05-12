@@ -250,7 +250,7 @@ export function ActivityLogView() {
                     const config = getActionConfig(log.action);
                     const userName = log.userName || "Unknown";
                     const date = log.createdAt ? new Date(log.createdAt) : new Date();
-                    const formattedDate = format(date, 'MMM d, h:mm a');
+                    const formattedDate = isNaN(date.getTime()) ? "Unknown date" : format(date, 'MMM d, h:mm a');
                     
                     return (
                       <tr key={log.id} className="hover:bg-muted/20 transition-colors group">
@@ -266,7 +266,7 @@ export function ActivityLogView() {
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
-                            <div className={`p-1 rounded-md ${config.bg} border/50`}>
+                            <div className={`p-1 rounded-md ${config.bg} border`}>
                               {config.icon}
                             </div>
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">{log.action.replace(/_/g, ' ')}</span>

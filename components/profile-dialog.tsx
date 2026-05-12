@@ -34,6 +34,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [phone, setPhone] = useState("")
   const [location, setLocation] = useState("")
   const [jobTitle, setJobTitle] = useState("")
+  const [jobDescription, setJobDescription] = useState("")
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [generatingKey, setGeneratingKey] = useState(false)
 
@@ -43,6 +44,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
       setPhone(currentUser.phone || "")
       setLocation(currentUser.location || "")
       setJobTitle(currentUser.jobTitle || "")
+      setJobDescription(currentUser.jobDescription || "")
     }
   }, [currentUser, open])
 
@@ -114,7 +116,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ name, phone, location, jobTitle })
+        body: JSON.stringify({ name, phone, location, jobTitle, jobDescription })
       })
 
       if (response.ok) {
@@ -261,15 +263,27 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                             placeholder="Your Name"
                           />
                         </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="jobTitle" className="text-[11px] font-bold text-muted-foreground ml-1">Job Title / Position</Label>
-                          <Input
-                            id="jobTitle"
-                            value={jobTitle}
-                            onChange={(e) => setJobTitle(e.target.value)}
-                            className="h-14 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
-                            placeholder="e.g. Senior Manager"
-                          />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="jobTitle" className="text-[11px] font-bold text-muted-foreground ml-1">Job Title / Position</Label>
+                            <Input
+                              id="jobTitle"
+                              value={jobTitle}
+                              onChange={(e) => setJobTitle(e.target.value)}
+                              className="h-14 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
+                              placeholder="e.g. Senior Manager"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="jobDescription" className="text-[11px] font-bold text-muted-foreground ml-1">Job Description</Label>
+                            <Input
+                              id="jobDescription"
+                              value={jobDescription}
+                              onChange={(e) => setJobDescription(e.target.value)}
+                              className="h-14 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
+                              placeholder="Describe your role"
+                            />
+                          </div>
                         </div>
                         <div className="space-y-1.5">
                           <Label htmlFor="phone" className="text-[11px] font-bold text-muted-foreground ml-1">Phone Number</Label>

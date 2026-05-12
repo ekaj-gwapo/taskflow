@@ -117,7 +117,7 @@ export function EmployeeSidebar({
   })
   const [theme, setTheme] = useState(currentUser?.theme || "emerald")
   const [mode, setMode] = useState<"light" | "dark">(currentUser?.mode || "light")
- 
+
   const [isEmployeesExpanded, setIsEmployeesExpanded] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -139,7 +139,7 @@ export function EmployeeSidebar({
   const { allEmployees } = useTaskContext()
 
   const getEmployeeTaskStats = (employeeId: string) => {
-    const employeeTasks = tasks.filter((t) => 
+    const employeeTasks = tasks.filter((t) =>
       t.assigneeId === employeeId || t.assignees?.some(a => a.id === employeeId)
     )
     const total = employeeTasks.length
@@ -152,7 +152,7 @@ export function EmployeeSidebar({
   const filteredEmployees = allEmployees.filter(e =>
     e.id !== currentUser?.id &&
     (e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    e.email.toLowerCase().includes(searchQuery.toLowerCase()))
+      e.email.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   const individualTasks = tasks.filter((t) =>
@@ -193,9 +193,9 @@ export function EmployeeSidebar({
             isCollapsed ? "h-8 w-8" : "h-10 w-10"
           )}>
             {currentUser?.organizationLogo ? (
-              <img 
-                src={currentUser.organizationLogo} 
-                alt={currentUser.organizationName || "Logo"} 
+              <img
+                src={currentUser.organizationLogo}
+                alt={currentUser.organizationName || "Logo"}
                 className="w-full h-full object-contain p-1.5"
               />
             ) : (
@@ -302,39 +302,44 @@ export function EmployeeSidebar({
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col min-h-full">
           {(activeTab === "workspace" || isCollapsed) && (
-           <div className="p-3 space-y-2 animate-in slide-in-from-left-1 duration-200">
+            <div className="p-3 space-y-2 animate-in slide-in-from-left-1 duration-200">
               {/* Main Navigation */}
-              
-                <button
-                  onClick={() => onSelectCategory("individual")}
-                  className={cn(
-                    "w-full flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 group/nav relative overflow-hidden",
-                    isCollapsed ? "justify-center px-0 h-12" : "gap-3",
-                    selectedCategory === "individual"
-                      ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
-                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
-                  )}
-                >
-                  <div className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
-                    selectedCategory === "individual"
-                      ? "bg-white/20 border-white/30 text-white"
-                      : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
-                  )}>
-                    <LayoutDashboard className="h-4 w-4" />
-                  </div>
+
+              <button
+                onClick={() => onSelectCategory("individual")}
+                className={cn(
+                  "w-full flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 group/nav relative overflow-hidden",
+                  isCollapsed ? "justify-center px-0 h-12" : "gap-3",
+                  selectedCategory === "individual"
+                    ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
+                )}
+              >
+                <div className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
+                  selectedCategory === "individual"
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
+                )}>
+                  <LayoutDashboard className="h-4 w-4" />
+                </div>
                 {!isCollapsed && (
                   <>
                     <div className="flex flex-col items-start flex-1 min-w-0">
-                      <span className="text-xs font-black uppercase tracking-wider truncate w-full text-left">Dashboard</span>
+                      <span className="text-xs font-black uppercase tracking-wider truncate w-full text-left">My Tasks</span>
                       <span className={cn(
                         "text-[8px] font-medium opacity-60 truncate w-full text-left",
                         selectedCategory === "individual" ? "text-white" : "text-muted-foreground"
                       )}>My Workspace Overview</span>
                     </div>
                     {hasUnseenIndividualTasks && (
-                      <div className="flex items-center justify-center h-5 px-2 rounded-md bg-white/20 border border-white/30 backdrop-blur-sm shadow-sm animate-pulse shrink-0">
-                        <span className="text-[9px] font-black text-white uppercase tracking-tighter">New</span>
+                      <div className={cn(
+                        "flex items-center justify-center h-5 px-2 rounded-md backdrop-blur-sm shadow-sm animate-pulse shrink-0",
+                        selectedCategory === "individual" 
+                          ? "bg-white/20 border border-white/30 text-white" 
+                          : "bg-primary/20 border border-primary/30 text-primary"
+                      )}>
+                        <span className="text-[9px] font-black uppercase tracking-tighter">New</span>
                       </div>
                     )}
                     <ChevronRight className={cn(
@@ -348,24 +353,24 @@ export function EmployeeSidebar({
                 )}
               </button>
 
-                <button
-                  onClick={() => onSelectCategory("team")}
-                  className={cn(
-                    "w-full flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 group/nav relative overflow-hidden",
-                    isCollapsed ? "justify-center px-0 h-12" : "gap-3",
-                    selectedCategory === "team"
-                      ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
-                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
-                  )}
-                >
-                  <div className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
-                    selectedCategory === "team"
-                      ? "bg-white/20 border-white/30 text-white"
-                      : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
-                  )}>
-                    <Users className="h-4 w-4" />
-                  </div>
+              <button
+                onClick={() => onSelectCategory("team")}
+                className={cn(
+                  "w-full flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 group/nav relative overflow-hidden",
+                  isCollapsed ? "justify-center px-0 h-12" : "gap-3",
+                  selectedCategory === "team"
+                    ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
+                )}
+              >
+                <div className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
+                  selectedCategory === "team"
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
+                )}>
+                  <Users className="h-4 w-4" />
+                </div>
                 {!isCollapsed && (
                   <>
                     <div className="flex flex-col items-start flex-1 min-w-0">
@@ -391,24 +396,24 @@ export function EmployeeSidebar({
                 )}
               </button>
 
-                <button
-                  onClick={() => onSelectCategory("activity-log")}
-                  className={cn(
-                    "w-full flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 group/nav relative overflow-hidden",
-                    isCollapsed ? "justify-center px-0 h-12" : "gap-3",
-                    selectedCategory === "activity-log"
-                      ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
-                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
-                  )}
-                >
-                  <div className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
-                    selectedCategory === "activity-log"
-                      ? "bg-white/20 border-white/30 text-white"
-                      : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
-                  )}>
-                    <Activity className="h-4 w-4" />
-                  </div>
+              <button
+                onClick={() => onSelectCategory("activity-log")}
+                className={cn(
+                  "w-full flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 group/nav relative overflow-hidden",
+                  isCollapsed ? "justify-center px-0 h-12" : "gap-3",
+                  selectedCategory === "activity-log"
+                    ? "bg-primary shadow-[0_10px_25px_-5px_rgba(var(--primary),0.3)] text-primary-foreground border-primary"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary hover:translate-x-1"
+                )}
+              >
+                <div className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-xl border-2 shrink-0 transition-all duration-500",
+                  selectedCategory === "activity-log"
+                    ? "bg-white/20 border-white/30 text-white"
+                    : "bg-primary/10 text-primary border-primary/20 group-hover/nav:bg-primary group-hover/nav:text-white"
+                )}>
+                  <Activity className="h-4 w-4" />
+                </div>
                 {!isCollapsed && (
                   <>
                     <div className="flex flex-col items-start flex-1 min-w-0">
@@ -548,7 +553,7 @@ export function EmployeeSidebar({
                 <div className="flex flex-col items-center text-center p-8 rounded-[2.3rem] bg-background/60 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-inner relative overflow-hidden">
                   {/* Decorative mesh gradient */}
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(var(--primary),0.15),transparent_50%)] pointer-events-none" />
-                  
+
                   <div className="relative mb-6">
                     <motion.div
                       whileHover={{ scale: 1.02 }}
@@ -566,7 +571,7 @@ export function EmployeeSidebar({
                           )}
                         </Avatar>
                       </div>
-                      <motion.button 
+                      <motion.button
                         whileHover={{ scale: 1.1 }}
                         className="absolute bottom-1 right-1 h-8 w-8 rounded-full bg-primary text-white border-4 border-background shadow-lg flex items-center justify-center transition-transform"
                         onClick={() => setIsProfileDialogOpen(true)}
@@ -575,7 +580,7 @@ export function EmployeeSidebar({
                       </motion.button>
                     </motion.div>
                   </div>
-                  
+
                   <h3 className="text-xl font-black text-foreground tracking-tight mb-1 relative z-10">{profileData.name}</h3>
                   <div className="relative z-10 flex flex-col gap-2">
                     <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] border border-primary/20 backdrop-blur-md">

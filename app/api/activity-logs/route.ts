@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
         FROM activity_logs al
         LEFT JOIN tasks t ON t.id::text = al.entityid
         LEFT JOIN users u ON al.userid = u.id
-        WHERE u.orgid = ?::uuid AND u.role != 'creator'
+        WHERE u.orgid = ?::uuid AND LOWER(u.role) != 'creator'
         ORDER BY al.createdat DESC
         LIMIT 200
       `;
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN tasks t ON t.id::text = al.entityid
         LEFT JOIN users u ON al.userid = u.id
         WHERE 
-          u.orgid = ?::uuid AND u.role != 'creator' AND (
+          u.orgid = ?::uuid AND LOWER(u.role) != 'creator' AND (
             -- Task-related logs they are involved in
             (al.entitytype = 'TASK' AND (
               t.assigneeid = ?::uuid 

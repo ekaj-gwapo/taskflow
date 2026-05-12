@@ -115,9 +115,10 @@ export function MasterSettings() {
                           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">What will be deleted:</p>
                           <ul className="text-xs space-y-1 list-disc list-inside text-foreground/80">
                             <li>All Organizations & Branding</li>
-                            <li>All Users (Admins, Employees, etc.)</li>
+                            <li>All Users (Creators, Admins, Employees, etc.)</li>
                             <li>All Tasks & Project Data</li>
                             <li>All Activity Logs & History</li>
+                            <li>All Promo Codes & Support Requests</li>
                           </ul>
                         </div>
                         <p className="text-sm">

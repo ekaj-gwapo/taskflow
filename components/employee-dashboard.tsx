@@ -115,7 +115,7 @@ function EmployeeTaskCard({
                 {task.title}
               </span>
               {isNew && (
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">
+                <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded animate-pulse">
                   NEW
                 </span>
               )}
@@ -334,27 +334,36 @@ export function EmployeeDashboard({
         </div>
 
         <motion.div layout className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            {selectedCategory === "activity-log" ? (
-              <motion.div
-                key="activity-log"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="p-4 lg:p-6 lg:pr-5 w-full h-full"
-              >
-                <ActivityLogView />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="main-content"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="p-4 lg:p-6 lg:pr-5 flex flex-col gap-6"
-              >
+          {isLoadingTasks && tasks.length === 0 ? (
+            <div className="p-4 lg:p-6 space-y-6 animate-in fade-in duration-500">
+              <Skeleton className="h-40 w-full rounded-[2rem]" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}
+              </div>
+              <Skeleton className="h-96 w-full rounded-[2rem]" />
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              {selectedCategory === "activity-log" ? (
+                <motion.div
+                  key="activity-log"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="p-4 lg:p-6 lg:pr-5 w-full h-full"
+                >
+                  <ActivityLogView />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="main-content"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.2 }}
+                  className="p-4 lg:p-6 lg:pr-5 flex flex-col gap-6"
+                >
                 {/* Welcome Panel - Only shown on main Dashboard (Individual or Team views) */}
                 {(selectedCategory === "individual" || selectedCategory === "team") && (
                   <SmartBriefing />
@@ -444,7 +453,7 @@ export function EmployeeDashboard({
                                             <div className="flex flex-col gap-1.5">
                                               <StatusBadge status={task.status} />
                                               {!seenTaskIds.has(task.id) && (
-                                                <span className="w-max text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">
+                                                <span className="w-max text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded animate-pulse">
                                                   NEW
                                                 </span>
                                               )}
@@ -622,7 +631,8 @@ export function EmployeeDashboard({
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        )}
+      </motion.div>
       </div>
     </div>
   )

@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
       WHERE ta.taskId = ?
     `, [taskId]) as any[]
 
-    const actionStepsData = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [taskId]) as any[]
+    const actionStepsData = await db.getAll("SELECT * FROM action_steps WHERE taskId = ? ORDER BY createdAt ASC", [taskId]) as any[]
     const actionStepsWithNotes = await Promise.all(actionStepsData.map(async (as: any) => {
       const notes = await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[];
       return {

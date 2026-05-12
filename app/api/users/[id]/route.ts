@@ -16,7 +16,8 @@ export async function GET(
 
     const user = await db.getOne(`
       SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", 
-             u.role, u.theme, u.mode, u.createdat AS "createdAt", u.orgid AS "orgId",
+             u.jobdescription AS "jobDescription", u.role, u.theme, u.mode, 
+             u.createdat AS "createdAt", u.orgid AS "orgId",
              o.name as "organizationName", o.logo_url as "organizationLogo"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id
@@ -59,11 +60,11 @@ export async function PUT(
       )
     }
 
-    const { name, email, phone, location, jobTitle, theme, mode } = await request.json()
+    const { name, email, phone, location, jobTitle, jobDescription, theme, mode } = await request.json()
 
     // Get current data to check if we should log activity
     const currentUserData = await db.getOne(`
-      SELECT name, email, phone, location, jobtitle AS "jobTitle" FROM users WHERE id = ?
+      SELECT name, email, phone, location, jobtitle AS "jobTitle", jobdescription AS "jobDescription" FROM users WHERE id = ?
     `, [id]);
 
     await db.execute(`
@@ -73,11 +74,12 @@ export async function PUT(
           phone = COALESCE(?, phone),
           location = COALESCE(?, location),
           jobtitle = COALESCE(?, jobtitle),
+          jobdescription = COALESCE(?, jobdescription),
           theme = COALESCE(?, theme),
           mode = COALESCE(?, mode),
           updatedAt = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, [name, email, phone, location, jobTitle, theme, mode, id]);
+    `, [name, email, phone, location, jobTitle, jobDescription, theme, mode, id]);
 
     // Only log if core profile info changed (not just theme/mode)
     const profileInfoChanged = 
@@ -85,7 +87,8 @@ export async function PUT(
       (email && email !== currentUserData.email) ||
       (phone !== undefined && phone !== currentUserData.phone) ||
       (location !== undefined && location !== currentUserData.location) ||
-      (jobTitle !== undefined && jobTitle !== currentUserData.jobTitle);
+      (jobTitle !== undefined && jobTitle !== currentUserData.jobTitle) ||
+      (jobDescription !== undefined && jobDescription !== currentUserData.jobDescription);
 
     if (profileInfoChanged) {
       await logActivity({
@@ -100,7 +103,7 @@ export async function PUT(
 
     const user = await db.getOne(`
       SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", 
-             u.role, u.theme, u.mode, u.orgid AS "orgId",
+             u.jobdescription AS "jobDescription", u.role, u.theme, u.mode, u.orgid AS "orgId",
              o.name as "organizationName", o.logo_url as "organizationLogo"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id

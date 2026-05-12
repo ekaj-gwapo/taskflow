@@ -534,8 +534,13 @@ export function AdminSidebar({
                         )}>Your individual tasks</span>
                       </div>
                       {hasUnseenTasks && (
-                        <div className="flex items-center justify-center h-5 px-2 rounded-md bg-white/20 border border-white/30 backdrop-blur-sm shadow-sm animate-pulse shrink-0">
-                          <span className="text-[9px] font-black text-white uppercase tracking-tighter">New</span>
+                        <div className={cn(
+                          "flex items-center justify-center h-5 px-2 rounded-md backdrop-blur-sm shadow-sm animate-pulse shrink-0",
+                          selectedEmployeeId === 'my-tasks' 
+                            ? "bg-white/20 border border-white/30 text-white" 
+                            : "bg-primary/20 border border-primary/30 text-primary"
+                        )}>
+                          <span className="text-[9px] font-black uppercase tracking-tighter">New</span>
                         </div>
                       )}
                       <ChevronRight className={cn(

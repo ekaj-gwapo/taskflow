@@ -294,5 +294,6 @@ export function PromoFactory() {
         </div>
       </div>
     </div>
+  </div>
   )
 }

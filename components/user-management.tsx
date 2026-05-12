@@ -28,6 +28,8 @@ interface User {
   role: string
   phone?: string
   location?: string
+  jobTitle?: string
+  jobDescription?: string
   avatar?: string
   isActive?: boolean
 }
@@ -77,7 +79,9 @@ export function UserManagement() {
     password: "",
     role: "EMPLOYEE",
     phone: "",
-    location: ""
+    location: "",
+    jobTitle: "",
+    jobDescription: ""
   })
 
   const [resetPasswordId, setResetPasswordId] = useState<string | null>(null)
@@ -215,7 +219,7 @@ export function UserManagement() {
 
       if (res.ok) {
         toast.success("User created successfully")
-        setNewUser({ name: "", email: "", password: "", role: "EMPLOYEE", phone: "", location: "" })
+        setNewUser({ name: "", email: "", password: "", role: "EMPLOYEE", phone: "", location: "", jobTitle: "", jobDescription: "" })
         await fetchUsers()
         await refreshUsers()
       } else if (res.status === 403 && data.error?.includes("User limit")) {
@@ -253,6 +257,19 @@ export function UserManagement() {
       setIsUpgrading(false)
     }
   }
+
+  const planLimits = {
+    'FREE': 5,
+    'FREE_TRIAL': 5,
+    'STARTER': 10,
+    'PRO': 25,
+    'ENTERPRISE': 999999
+  }
+  
+  const currentPlan = currentUser?.plan || 'FREE'
+  const currentLimit = planLimits[currentPlan as keyof typeof planLimits] || 5
+  const activeUserCount = users.filter(u => u.isActive !== false).length
+  const isLimitReached = activeUserCount >= currentLimit
 
   const filteredUsers = users.filter(u =>
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -368,6 +385,26 @@ export function UserManagement() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">Job Title</label>
+                    <Input
+                      placeholder="e.g. Manager"
+                      className="h-12 rounded-xl bg-secondary/30 border-none focus:bg-background transition-all font-medium"
+                      value={newUser.jobTitle}
+                      onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">Job Desc.</label>
+                    <Input
+                      placeholder="Role description"
+                      className="h-12 rounded-xl bg-secondary/30 border-none focus:bg-background transition-all font-medium"
+                      value={newUser.jobDescription}
+                      onChange={(e) => setNewUser({ ...newUser, jobDescription: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-muted-foreground ml-1 uppercase tracking-wider">Phone</label>
                     <Input
                       placeholder="+1..."
@@ -388,16 +425,30 @@ export function UserManagement() {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-black text-base shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all mt-4" 
-                  disabled={isCreating}
+                  className={`w-full h-14 rounded-2xl font-black text-base shadow-xl transition-all mt-4 ${
+                    isLimitReached 
+                    ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none" 
+                    : "bg-primary text-primary-foreground shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
+                  }`}
+                  disabled={isCreating || isLimitReached}
                 >
-                  {isCreating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
+                  {isCreating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : isLimitReached ? (
+                    <>
+                      <Zap className="mr-2 h-5 w-5 text-amber-500" />
+                      Plan Limit Reached
+                    </>
+                  ) : (
                     <>
                       <UserPlus className="mr-2 h-5 w-5" />
                       Create User Account
                     </>
                   )}
                 </Button>
+                {isLimitReached && (
+                  <p className="text-[10px] text-center text-amber-600 font-bold uppercase tracking-widest animate-pulse mt-2">
+                    Upgrade to unlock more user slots
+                  </p>
+                )}
               </form>
             </CardContent>
           </Card>
@@ -484,15 +535,20 @@ export function UserManagement() {
                               </div>
                               <div>
                                 <div className="text-base font-black text-foreground flex items-center gap-2 tracking-tight">
-                                  {user.name}
-                                  {user.isActive === false && (
-                                    <Badge variant="outline" className="h-5 px-2 bg-destructive/10 text-destructive border-destructive/20 text-[9px] font-black uppercase tracking-tighter">Disabled</Badge>
-                                  )}
+                                {user.name}
+                                {user.isActive === false && (
+                                  <Badge variant="outline" className="h-5 px-2 bg-destructive/10 text-destructive border-destructive/20 text-[9px] font-black uppercase tracking-tighter">Disabled</Badge>
+                                )}
+                              </div>
+                              {user.jobTitle && (
+                                <div className="text-[10px] font-black text-primary/80 uppercase tracking-widest mt-0.5">
+                                  {user.jobTitle}
                                 </div>
-                                <div className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                                  <Mail className="h-3 w-3 text-primary/50" />
-                                  {user.email}
-                                </div>
+                              )}
+                              <div className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5 mt-1">
+                                <Mail className="h-3 w-3 text-primary/50" />
+                                {user.email}
+                              </div>
                               </div>
                             </div>
                           </td>

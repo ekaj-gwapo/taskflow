@@ -162,7 +162,7 @@ function TaskRow({
             </span>
           )}
           {isNew && (
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">
+            <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded animate-pulse">
               NEW
             </span>
           )}
@@ -325,7 +325,7 @@ function TeamProjectCard({
               <h3 className="text-base font-semibold text-foreground line-clamp-1">{task.title}</h3>
               <div className="flex items-center gap-1.5 mt-1">
                 {isNew && (
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded animate-pulse">NEW</span>
+                  <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded animate-pulse">NEW</span>
                 )}
                 {isOverdue && (
                   <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded font-medium">Overdue</span>
@@ -481,52 +481,6 @@ export function AdminDashboard({
     }
   }, [selectedTaskId, tasks, archivedTasks])
 
-  // Track the newest completed task to trigger notifications
-  const [lastCheckTime, setLastCheckTime] = useState(Date.now());
-
-  // Real-time notification effect
-  useMemo(() => {
-    const newlyCompleted = tasks.filter(t =>
-      t.status === "completed" &&
-      t.completedAt &&
-      new Date(t.completedAt).getTime() > lastCheckTime
-    );
-
-    if (newlyCompleted.length > 0) {
-      newlyCompleted.forEach(task => {
-        toast.success(`🎉 Task Completed: ${task.title}`, {
-          description: `By ${task.assigneeName}`
-        });
-
-        try {
-          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-          if (AudioContextClass) {
-            const audioCtx = new AudioContextClass();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.5);
-          }
-        } catch (e) {
-          console.error("Audio playback failed", e);
-        }
-      });
-
-      const newestTime = Math.max(...newlyCompleted.map(t => new Date(t.completedAt!).getTime()));
-      setLastCheckTime(newestTime);
-    }
-  }, [tasks]);
 
   useEffect(() => {
     if (selectedEmployeeId === 'archived-tasks') {
@@ -892,25 +846,25 @@ export function AdminDashboard({
                       transition={{ duration: 0.3 }}
                       className="sticky -top-4 z-30 bg-background/80 backdrop-blur-xl pb-3 pt-5 -mx-4 px-4 border-b border-border/50"
                     >
-                      <div className="flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center py-1.5">
-                        <div className="w-full flex flex-col sm:flex-row gap-3 items-center flex-1 min-w-0">
+                      <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center py-2">
+                        <div className="w-full flex flex-col sm:flex-row gap-4 items-center flex-1 min-w-0">
                           <div className="relative w-full sm:w-auto sm:flex-1 min-w-[150px] max-w-sm shrink">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                               value={selectedEmployeeId === 'team-projects' ? teamSearchQuery : searchQuery}
                               onChange={(e) => selectedEmployeeId === 'team-projects' ? setTeamSearchQuery(e.target.value) : setSearchQuery(e.target.value)}
-                              className="pl-9 bg-background border-border text-foreground w-full"
+                              className="pl-9 bg-background border-border text-foreground w-full h-10 rounded-xl"
                               placeholder="Search tasks or Assignee"
                             />
                           </div>
 
-                          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 flex-wrap">
+                          <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-nowrap overflow-x-auto no-scrollbar">
                             <Select
                               value={selectedEmployeeId === 'team-projects' ? teamFilterPriority : filterPriority}
                               onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterPriority : setFilterPriority}
                             >
-                              <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
-                                <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                              <SelectTrigger className="w-[140px] sm:w-[150px] bg-background border-border whitespace-nowrap h-10 rounded-xl">
+                                <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground shrink-0" />
                                 <SelectValue placeholder="Priority" />
                               </SelectTrigger>
                               <SelectContent className="bg-popover border-border">
@@ -925,8 +879,8 @@ export function AdminDashboard({
                               value={selectedEmployeeId === 'team-projects' ? teamFilterStatus : filterStatus}
                               onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterStatus : setFilterStatus}
                             >
-                              <SelectTrigger className="w-full sm:w-[160px] bg-background border-border whitespace-nowrap">
-                                <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                              <SelectTrigger className="w-[140px] sm:w-[150px] bg-background border-border whitespace-nowrap h-10 rounded-xl">
+                                <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground shrink-0" />
                                 <SelectValue placeholder="Status" />
                               </SelectTrigger>
                               <SelectContent className="bg-popover border-border">
@@ -940,7 +894,7 @@ export function AdminDashboard({
                           </div>
                         </div>
 
-                        <div className="flex gap-2 w-full sm:w-auto shrink-0 mt-2 lg:mt-0 flex-wrap justify-end">
+                        <div className="flex items-center gap-2.5 w-full lg:w-auto shrink-0 mt-3 lg:mt-0 flex-nowrap justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-border/30">
                           <button
                             onClick={() => {
                               if (!showCharts) {
@@ -954,8 +908,10 @@ export function AdminDashboard({
                               setShowCharts(!showCharts);
                             }}
                             className={cn(
-                              "flex items-center justify-center p-2 rounded-md transition-colors shrink-0 border border-border bg-background",
-                              showCharts ? "text-primary border-primary/30 bg-primary/5" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                              "flex items-center justify-center h-10 w-10 rounded-xl transition-all shrink-0 border shadow-sm",
+                              showCharts 
+                                ? "text-primary border-primary/30 bg-primary/10 shadow-primary/10" 
+                                : "text-muted-foreground border-border bg-background hover:text-foreground hover:bg-secondary hover:border-border"
                             )}
                             title={showCharts ? "Hide Analytics" : "Show Analytics"}
                           >

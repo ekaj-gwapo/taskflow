@@ -451,7 +451,7 @@ export async function PUT(
       WHERE t.id = ?
     `, [realTaskId])
 
-    const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ?", [realTaskId])
+    const actionSteps = await db.getAll("SELECT * FROM action_steps WHERE taskId = ? ORDER BY createdAt ASC", [realTaskId])
     const actionStepsWithNotes = await Promise.all((actionSteps as any[]).map(async (as: any) => {
       const notes = await db.getAll("SELECT * FROM step_notes WHERE stepId = ?", [as.id]) as any[];
       return {

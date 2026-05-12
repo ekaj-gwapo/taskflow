@@ -289,37 +289,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [currentUser]);
 
   const pathname = usePathname();
-  const [notifiedIds] = useState<Set<string>>(new Set()) // Persistent set for the session
 
-  // Watch for new notifications and show toasts
-  useEffect(() => {
-    if (!currentUser || notifications.length === 0) return
-
-    notifications.forEach(n => {
-      if (!n.isRead && !notifiedIds.has(n.id)) {
-        notifiedIds.add(n.id)
-        
-        const isApproval = n.type === "EXTENSION_APPROVED"
-        const isRejection = n.type === "EXTENSION_REJECTED"
-        
-        if (isApproval) {
-          toast.success(`✅ ${n.title}`, {
-            description: n.message,
-            duration: 6000,
-          })
-        } else if (isRejection) {
-          toast.error(`❌ ${n.title}`, {
-            description: n.message,
-            duration: 6000,
-          })
-        } else {
-          toast.info(n.title, {
-            description: n.message,
-          })
-        }
-      }
-    })
-  }, [notifications, currentUser, notifiedIds])
 
   // Handle Theme and Dark Mode
   useEffect(() => {
