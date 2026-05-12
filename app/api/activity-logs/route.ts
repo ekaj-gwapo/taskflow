@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     const orgId = user.orgId
     const isMasterAdmin = user.role.toLowerCase() === "master_admin"
     const isCreator = user.role.toLowerCase() === "creator"
-    const isAdminOrHead = role === "ADMIN" || role === "HEAD_ADMIN"
+    const isHeadAdmin = user.role.toLowerCase() === "head_admin"
+    const isAdmin = user.role.toLowerCase() === "admin"
 
     let logs: any[] = [];
 
@@ -41,14 +42,26 @@ export async function GET(request: NextRequest) {
         LIMIT 200
       `;
       logs = await db.getAll(query, [orgId]) as any[];
-    } else if (isAdminOrHead) {
-      // Admins and Head Admins see actions in their organization, EXCLUDING creator actions
+    } else if (isHeadAdmin) {
+      // Head Admins see actions in their organization, EXCLUDING creator actions
       const query = `
         SELECT al.*, t.title as taskTitle, u.name as currentUserName
         FROM activity_logs al
         LEFT JOIN tasks t ON t.id::text = al.entityid
         LEFT JOIN users u ON al.userid = u.id
         WHERE u.orgid = ?::uuid AND LOWER(u.role) != 'creator'
+        ORDER BY al.createdat DESC
+        LIMIT 200
+      `;
+      logs = await db.getAll(query, [orgId]) as any[];
+    } else if (isAdmin) {
+      // Regular Admins see actions in their organization, EXCLUDING creator AND head_admin actions
+      const query = `
+        SELECT al.*, t.title as taskTitle, u.name as currentUserName
+        FROM activity_logs al
+        LEFT JOIN tasks t ON t.id::text = al.entityid
+        LEFT JOIN users u ON al.userid = u.id
+        WHERE u.orgid = ?::uuid AND LOWER(u.role) NOT IN ('creator', 'head_admin')
         ORDER BY al.createdat DESC
         LIMIT 200
       `;

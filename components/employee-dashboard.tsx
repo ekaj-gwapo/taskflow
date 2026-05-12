@@ -416,7 +416,7 @@ export function EmployeeDashboard({
                               className="mt-0 flex flex-col min-h-[500px]"
                             >
                               {selectedCategory === "profile" ? (
-                                <EmployeeProfileReport />
+                                <EmployeeProfileReport onEditProfile={() => setIsProfileOpen?.(true)} />
                               ) : filteredTasks.length === 0 ? (
                                 <div className="py-12 text-center text-sm text-muted-foreground rounded-lg border border-border bg-card mt-4">
                                   No tasks in this category.
