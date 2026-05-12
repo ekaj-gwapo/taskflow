@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, X, Crop as CropIcon, Save, Sun, Moon, Palette, Check, User, Mail, Phone, MapPin, Camera, Loader2, Building2, Code2, Copy, Key } from "lucide-react"
+import { Upload, X, Crop as CropIcon, Save, Sun, Moon, Palette, Check, User, Mail, Phone, MapPin, Camera, Loader2, Building2, Code2, Copy, Key, Shield, FileText } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import Cropper, { Point, Area } from "react-easy-crop"
@@ -263,25 +263,16 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                             placeholder="Your Name"
                           />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <Label htmlFor="jobTitle" className="text-[11px] font-bold text-muted-foreground ml-1">Job Title / Position</Label>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="jobTitle" className="text-[11px] font-bold text-muted-foreground ml-1">Job Title / Position</Label>
+                          <div className="relative">
+                            <Shield className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
                             <Input
                               id="jobTitle"
                               value={jobTitle}
                               onChange={(e) => setJobTitle(e.target.value)}
-                              className="h-14 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
+                              className="h-14 pl-12 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
                               placeholder="e.g. Senior Manager"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="jobDescription" className="text-[11px] font-bold text-muted-foreground ml-1">Job Description</Label>
-                            <Input
-                              id="jobDescription"
-                              value={jobDescription}
-                              onChange={(e) => setJobDescription(e.target.value)}
-                              className="h-14 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
-                              placeholder="Describe your role"
                             />
                           </div>
                         </div>
@@ -306,7 +297,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-2">
                           <MapPin className="h-4 w-4 text-emerald-500" />
-                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assignment</span>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assignment & Role</span>
                         </div>
 
                         <div className="space-y-4">
@@ -320,6 +311,19 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                                 onChange={(e) => setLocation(e.target.value)}
                                 className="h-14 pl-12 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
                                 placeholder="Location"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="jobDescription" className="text-[11px] font-bold text-muted-foreground ml-1">Job Description</Label>
+                            <div className="relative">
+                              <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                              <Input
+                                id="jobDescription"
+                                value={jobDescription}
+                                onChange={(e) => setJobDescription(e.target.value)}
+                                className="h-14 pl-12 rounded-2xl bg-secondary/20 border-border focus:bg-background focus:border-primary transition-all font-medium"
+                                placeholder="Describe your role"
                               />
                             </div>
                           </div>

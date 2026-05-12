@@ -181,9 +181,9 @@ export function UserManagement() {
     fetchUsers()
   }, [])
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (silent = false) => {
     try {
-      setIsLoading(true)
+      if (!silent) setIsLoading(true)
       const token = localStorage.getItem("token")
       const res = await fetch("/api/users", {
         headers: { Authorization: `Bearer ${token}` }
@@ -198,7 +198,7 @@ export function UserManagement() {
       console.error("Fetch users error:", error)
       toast.error("Failed to load users")
     } finally {
-      setIsLoading(false)
+      if (!silent) setIsLoading(false)
     }
   }
 
@@ -220,7 +220,7 @@ export function UserManagement() {
       if (res.ok) {
         toast.success("User created successfully")
         setNewUser({ name: "", email: "", password: "", role: "EMPLOYEE", phone: "", location: "", jobTitle: "", jobDescription: "" })
-        await fetchUsers()
+        await fetchUsers(true)
         await refreshUsers()
       } else if (res.status === 403 && data.error?.includes("User limit")) {
         // Show the premium upgrade modal instead of a plain toast
@@ -305,9 +305,9 @@ export function UserManagement() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Create User Form */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-[5.8rem]">
           <Card className="relative overflow-hidden border-none shadow-2xl rounded-[2rem] bg-gradient-to-br from-card to-secondary/10">
             <div className="absolute top-0 right-0 p-8 opacity-[0.03] -rotate-12">
               <UserPlus className="h-32 w-32" />
@@ -455,9 +455,9 @@ export function UserManagement() {
         </div>
 
         {/* User List */}
-        <div className="lg:col-span-8">
-          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-background/50 backdrop-blur-xl overflow-hidden min-h-[600px]">
-            <CardHeader className="p-8 border-b border-border/50 bg-muted/20">
+        <div className="lg:col-span-8 h-full">
+          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-background/50 backdrop-blur-xl overflow-hidden flex flex-col h-full max-h-[calc(100vh-14rem)] min-h-[750px]">
+            <CardHeader className="p-8 border-b border-border/50 bg-muted/20 shrink-0">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-2xl font-black flex items-center gap-3">
@@ -472,12 +472,12 @@ export function UserManagement() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 flex-1 overflow-hidden flex flex-col">
               {isLoading ? (
-                <div className="overflow-x-auto">
+                <div className="flex-1 overflow-y-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="bg-muted/30">
+                      <tr className="bg-muted/30 sticky top-0 z-10">
                         <th className="text-left py-6 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">User Profile</th>
                         <th className="text-left py-6 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">System Role</th>
                         <th className="text-left py-6 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Connectivity</th>
@@ -485,12 +485,12 @@ export function UserManagement() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/50">
-                      {[1, 2, 3, 4, 5].map(i => <UserRowSkeleton key={i} />)}
+                      {[1, 2, 3, 4, 5, 6, 7].map(i => <UserRowSkeleton key={i} />)}
                     </tbody>
                   </table>
                 </div>
               ) : filteredUsers.length === 0 ? (
-                <div className="p-32 text-center text-muted-foreground">
+                <div className="flex-1 flex flex-col items-center justify-center p-32 text-center text-muted-foreground">
                   <div className="h-24 w-24 rounded-[2rem] bg-secondary/50 flex items-center justify-center mx-auto mb-6">
                     <Users className="h-12 w-12 opacity-20" />
                   </div>
@@ -498,10 +498,10 @@ export function UserManagement() {
                   <p className="text-sm font-medium mt-1">Try adjusting your search terms</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
                   <table className="w-full">
                     <thead>
-                      <tr className="bg-muted/30">
+                      <tr className="bg-muted/30 sticky top-0 z-10 backdrop-blur-sm">
                         <th className="text-left py-6 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">User Profile</th>
                         <th className="text-left py-6 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">System Role</th>
                         <th className="text-left py-6 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Connectivity</th>
