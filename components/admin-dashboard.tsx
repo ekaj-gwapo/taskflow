@@ -1135,7 +1135,6 @@ export function AdminDashboard({
                                 onDelete={() => {
                                   deleteTask(task.id);
                                   if (selectedTask?.id === task.id) setSelectedTask(null);
-                                  toast.success("Task deleted successfully");
                                 }}
                               />
                             ))
