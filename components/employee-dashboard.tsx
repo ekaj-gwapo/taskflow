@@ -115,7 +115,7 @@ function EmployeeTaskCard({
                 {task.title}
               </span>
               {isNew && (
-                <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded animate-pulse">
+                <span className="text-[10px] font-bold text-white bg-primary px-1.5 py-0.5 rounded animate-pulse shadow-sm shadow-primary/20">
                   NEW
                 </span>
               )}

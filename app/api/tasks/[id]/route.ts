@@ -548,7 +548,7 @@ export async function DELETE(
     const taskId = (await params).id?.toLowerCase()
     
     // Explicitly check if task is completed
-    const existingTask: any = await db.getOne("SELECT status, title FROM tasks WHERE id = ? OR LOWER(id) = LOWER(?)", [taskId, taskId])
+    const existingTask: any = await db.getOne("SELECT status, title FROM tasks WHERE id = ?", [taskId])
     if (existingTask && existingTask.status === "COMPLETED") {
       return NextResponse.json(
         { error: "Completed tasks cannot be deleted" },
@@ -561,6 +561,9 @@ export async function DELETE(
     await db.execute("DELETE FROM step_notes WHERE stepId IN (SELECT id FROM action_steps WHERE taskId = ?)", [taskId])
     await db.execute("DELETE FROM action_steps WHERE taskId = ?", [taskId])
     await db.execute("DELETE FROM progress_notes WHERE taskId = ?", [taskId])
+    await db.execute("DELETE FROM task_assignments WHERE taskId = ?", [taskId])
+    await db.execute("DELETE FROM task_comments WHERE taskId = ?", [taskId])
+    await db.execute("DELETE FROM extension_requests WHERE taskId = ?", [taskId])
     await db.execute("DELETE FROM tasks WHERE id = ?", [taskId])
 
     await logActivity({

@@ -162,7 +162,7 @@ function TaskRow({
             </span>
           )}
           {isNew && (
-            <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded animate-pulse">
+            <span className="text-[10px] font-bold text-white bg-primary px-1.5 py-0.5 rounded animate-pulse shadow-sm shadow-primary/20">
               NEW
             </span>
           )}
@@ -325,7 +325,7 @@ function TeamProjectCard({
               <h3 className="text-base font-semibold text-foreground line-clamp-1">{task.title}</h3>
               <div className="flex items-center gap-1.5 mt-1">
                 {isNew && (
-                  <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded animate-pulse">NEW</span>
+                  <span className="text-[10px] font-bold text-white bg-primary px-1.5 py-0.5 rounded animate-pulse shadow-sm shadow-primary/20">NEW</span>
                 )}
                 {isOverdue && (
                   <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded font-medium">Overdue</span>
