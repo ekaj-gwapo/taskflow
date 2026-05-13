@@ -14,7 +14,11 @@ export async function GET(request: NextRequest) {
     // Fetch latest user and organization plan data
     const user = await db.getOne(`
       SELECT 
-        u.*, 
+        u.id, u.name, u.email, u.username, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 
+        u.avatarUrl as avatar, u.theme, u.mode, u.orgid AS "orgId", 
+        u.createdAt as "createdAt", u.updatedAt as "updatedAt",
+        u."emailVerified", u."notifyOnAssign", u."notifyOnDeadline", 
+        u."notifyOnDiscussion", u."notifyOnExtension", u.isActive as "isActive",
         o.name as organizationName, 
         o.logo_url as organizationLogo, 
         o.plan, 

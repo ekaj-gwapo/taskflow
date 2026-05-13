@@ -1054,6 +1054,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             orgId: data.user.orgId || data.user.orgid,
             organizationName: data.user.organizationName || data.user.organizationname,
             organizationLogo: data.user.organizationLogo || data.user.organizationlogo,
+            plan: data.user.plan,
+            subscriptionStatus: data.user.subscriptionStatus || data.user.subscriptionstatus,
             trialEndsAt: data.user.trialEndsAt || data.user.trialendsat,
           }
           setCurrentUser(normalizedUser)

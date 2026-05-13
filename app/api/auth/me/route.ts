@@ -11,10 +11,14 @@ export async function GET(request: NextRequest) {
 
     const userId = auth.user!.id;
     const user = await db.getOne(`
-      SELECT u.id, u.name, u.email, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 
+      SELECT u.id, u.name, u.email, u.username, u.role, u.phone, u.location, u.jobtitle AS "jobTitle", 
              u.avatarUrl as avatar, u.theme, u.mode, u.orgid AS "orgId", 
              u.createdAt as "createdAt", u.updatedAt as "updatedAt",
-             o.name as "organizationName", o.status as "orgStatus", o.logo_url as "organizationLogo", o.trial_ends_at as "trialEndsAt", o.subscription_status as "subscriptionStatus"
+             u."emailVerified", u."notifyOnAssign", u."notifyOnDeadline", 
+             u."notifyOnDiscussion", u."notifyOnExtension", u.isActive as "isActive",
+             o.name as "organizationName", o.status as "orgStatus", o.logo_url as "organizationLogo", 
+             o.trial_ends_at as "trialEndsAt", o.subscription_status as "subscriptionStatus",
+             o.plan as "plan"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id
       WHERE u.id = ?
