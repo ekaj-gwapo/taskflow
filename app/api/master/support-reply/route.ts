@@ -39,8 +39,26 @@ export async function POST(request: NextRequest) {
       WHERE id = ?
     `, [message, auth.user.id, id])
 
-    // Send email to creator
+    // Notifications
     try {
+      const { v4: uuidv4 } = await import('uuid')
+      
+      // 1. In-app notification for the Creator
+      await db.execute(
+        `INSERT INTO notifications (id, userId, type, title, message, link, createdAt) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          supportRequest.creator_id,
+          'SUPPORT_REPLY',
+          'Support Response Received',
+          'A Master Admin has replied to your support request.',
+          '/support', // Assuming this is where creators view their support messages
+          new Date().toISOString()
+        ]
+      )
+
+      // 2. Email notification for the Creator
       const { sendSupportReplyEmail } = await import("@/lib/email")
       await sendSupportReplyEmail({
         to: supportRequest.creator_email,
@@ -48,9 +66,8 @@ export async function POST(request: NextRequest) {
         originalMessage: supportRequest.message,
         replyMessage: message,
       })
-    } catch (e) {
-      console.error("Failed to send support reply email:", e)
-      // Continue anyway so the status is updated in DB
+    } catch (notifyErr) {
+      console.error("Failed to send support reply notifications:", notifyErr)
     }
 
     // Log activity

@@ -1125,89 +1125,12 @@ export function TaskDetailPanel({
 
             {isDiscussionExpanded && (
               <div className="p-5 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="flex flex-col flex-1 gap-2 pb-4 mb-3 border-b border-border/40">
-                    <div className="flex gap-3 relative">
-                      <input
-                        type="file"
-                        ref={commentFileInputRef}
-                        className="hidden"
-                        onChange={handleCommentFileChange}
-                        accept="image/*,application/pdf"
-                      />
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => commentFileInputRef.current?.click()}
-                        className={cn(
-                          "h-10 w-10 shrink-0 rounded-xl border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-all",
-                          commentFile && "border-primary/50 bg-primary/10 text-primary"
-                        )}
-                        title="Attach file or image"
-                      >
-                        <Paperclip className="h-4 w-4" />
-                      </Button>
-                      <Textarea
-                        value={commentContent}
-                        onChange={(e) => setCommentContent(e.target.value)}
-                        placeholder="Discuss this task with your team..."
-                        rows={1}
-                        className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-10 py-2"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                            handleAddComment()
-                          }
-                        }}
-                      />
-                      <Button
-                        size="icon"
-                        onClick={handleAddComment}
-                        disabled={(!commentContent.trim() && !commentFile) || isAddingComment}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
-                        title="Post Comment (Ctrl+Enter)"
-                      >
-                        {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
-                        <span className="sr-only">Post comment</span>
-                      </Button>
-                    </div>
-
-                    {commentFile && (
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-bottom-1">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {commentFile.type.startsWith("image/") ? (
-                            <div className="h-6 w-6 rounded bg-primary/20 flex items-center justify-center overflow-hidden">
-                              <img
-                                src={URL.createObjectURL(commentFile)}
-                                alt="Preview"
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
-                              <FileIcon className="h-3 w-3 text-primary" />
-                            </div>
-                          )}
-                          <span className="text-[10px] font-medium text-foreground truncate max-w-[150px]">
-                            {commentFile.name}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => setCommentFile(null)}
-                          className="p-1 hover:bg-primary/10 rounded-full transition-colors"
-                        >
-                          <X className="h-3 w-3 text-muted-foreground" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-
-
                 {!task.comments || task.comments.length === 0 ? (
-                  <div className="py-2 text-center bg-secondary/10 rounded-lg border border-dashed border-border/50">
+                  <div className="py-2 text-center bg-secondary/10 rounded-lg border border-dashed border-border/50 mb-4">
                     <p className="text-xs text-muted-foreground/70 font-medium p-4">No comments yet. Start the discussion!</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-4 mb-4">
                     {task.comments.map((comment) => {
                       const initials = (comment.authorName || "User").split(" ").map((n: string) => n[0]).join("")
                       return (
@@ -1283,6 +1206,82 @@ export function TaskDetailPanel({
                     })}
                   </div>
                 )}
+
+                <div className="flex flex-col flex-1 gap-2 pt-4 mt-1 border-t border-border/40">
+                  <div className="flex gap-3 relative">
+                    <input
+                      type="file"
+                      ref={commentFileInputRef}
+                      className="hidden"
+                      onChange={handleCommentFileChange}
+                      accept="image/*,application/pdf"
+                    />
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => commentFileInputRef.current?.click()}
+                      className={cn(
+                        "h-10 w-10 shrink-0 rounded-xl border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-all",
+                        commentFile && "border-primary/50 bg-primary/10 text-primary"
+                      )}
+                      title="Attach file or image"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                    <Textarea
+                      value={commentContent}
+                      onChange={(e) => setCommentContent(e.target.value)}
+                      placeholder="Discuss this task with your team..."
+                      rows={1}
+                      className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-10 py-2"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                          handleAddComment()
+                        }
+                      }}
+                    />
+                    <Button
+                      size="icon"
+                      onClick={handleAddComment}
+                      disabled={(!commentContent.trim() && !commentFile) || isAddingComment}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
+                      title="Post Comment (Ctrl+Enter)"
+                    >
+                      {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
+                      <span className="sr-only">Post comment</span>
+                    </Button>
+                  </div>
+
+                  {commentFile && (
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-bottom-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {commentFile.type.startsWith("image/") ? (
+                          <div className="h-6 w-6 rounded bg-primary/20 flex items-center justify-center overflow-hidden">
+                            <img
+                              src={URL.createObjectURL(commentFile)}
+                              alt="Preview"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
+                            <FileIcon className="h-3 w-3 text-primary" />
+                          </div>
+                        )}
+                        <span className="text-[10px] font-medium text-foreground truncate max-w-[150px]">
+                          {commentFile.name}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setCommentFile(null)}
+                        className="p-1 hover:bg-primary/10 rounded-full transition-colors"
+                      >
+                        <X className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
               </div>
             )}
           </div>
@@ -1312,9 +1311,9 @@ export function TaskDetailPanel({
             </button>
 
             {isProgressNotesExpanded && (
-              <div className="px-6 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="px-6 pb-6 animate-in fade-in slide-in-from-top-2 duration-200">
                 {task.progressNotes.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 px-4 mt-2 bg-secondary/20 rounded-xl border border-dashed border-border/60">
+                  <div className="flex flex-col items-center justify-center py-10 px-4 mt-2 bg-secondary/20 rounded-xl border border-dashed border-border/60 mb-4">
                     <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-3" />
                     <p className="text-sm text-muted-foreground text-center font-medium">
                       No progress notes yet.
@@ -1324,7 +1323,7 @@ export function TaskDetailPanel({
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4 pb-6 mt-2">
+                  <div className="flex flex-col gap-4 pb-4 mt-2 mb-2">
                     {task.progressNotes.map((note) => {
                       const initials = (note.authorName || (note as any).authorname || "User")
                         .split(" ")
@@ -1402,82 +1401,97 @@ export function TaskDetailPanel({
                     })}
                   </div>
                 )}
+
+                {/* Note Input — moved inside to bottom */}
+                {task.status === "in-progress" && isAssignee && (showNoteInput || currentRole === "admin") && (
+                  <div className="flex flex-col gap-2 pt-4 mt-1 border-t border-border/40">
+                    <div className="flex gap-3 relative">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept="image/*,application/pdf"
+                      />
+
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className={cn(
+                          "h-10 w-10 shrink-0 rounded-xl border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-all",
+                          selectedFile && "border-primary/50 bg-primary/10 text-primary"
+                        )}
+                        title="Attach file or image"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                      <Textarea
+                        value={noteContent}
+                        onChange={(e) => setNoteContent(e.target.value)}
+                        placeholder="Type your progress note here..."
+                        rows={1}
+                        className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-10 py-2"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                            handleAddNote()
+                          }
+                        }}
+                      />
+                      <Button
+                        size="icon"
+                        onClick={handleAddNote}
+                        disabled={(!noteContent.trim() && !selectedFile) || isUploading}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
+                        title="Post Note (Ctrl+Enter)"
+                      >
+                        {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
+                        <span className="sr-only">Post note</span>
+                      </Button>
+                    </div>
+
+                    {selectedFile && (
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-bottom-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {selectedFile.type.startsWith("image/") ? (
+                            <div className="h-6 w-6 rounded bg-primary/20 flex items-center justify-center overflow-hidden">
+                              <img
+                                src={URL.createObjectURL(selectedFile)}
+                                alt="Preview"
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
+                              <FileIcon className="h-3 w-3 text-primary" />
+                            </div>
+                          )}
+                          <span className="text-[10px] font-medium text-foreground truncate max-w-[150px]">
+                            {selectedFile.name}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setSelectedFile(null)}
+                          className="p-1 hover:bg-primary/10 rounded-full transition-colors"
+                        >
+                          <X className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </div>
+                    )}
+                    
+                    <p className="text-[9px] font-medium text-muted-foreground flex items-center gap-1 opacity-60">
+                      <kbd className="px-1 py-0.5 bg-secondary rounded border border-border/50">Ctrl</kbd> + <kbd className="px-1 py-0.5 bg-secondary rounded border border-border/50">Enter</kbd> to post
+                    </p>
+                  </div>
+                )}
+
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Note Input — only shows when Progress Notes section is expanded */}
-      {isProgressNotesExpanded && task.status === "in-progress" && isAssignee && (showNoteInput || currentRole === "admin") && (
 
-        <div className="p-5 border-t border-border/50 bg-background/60 backdrop-blur-md">
-          {selectedFile && (
-            <div className="mb-3 flex items-center justify-between p-2 rounded-xl bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-bottom-2">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
-                  {selectedFile.type.startsWith("image/") ? <Paperclip className="h-3.5 w-3.5" /> : <FileIcon className="h-3.5 w-3.5" />}
-                </div>
-                <div className="flex flex-col overflow-hidden">
-                  <span className="text-[11px] font-bold text-foreground truncate max-w-[200px]">{selectedFile.name}</span>
-                  <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
-                onClick={() => setSelectedFile(null)}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          )}
-          <div className="flex gap-3 relative">
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleFileChange}
-              accept="image/*,application/pdf"
-            />
-
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-secondary/30 border-border/50 hover:border-primary/30 h-10 w-10 shrink-0 rounded-xl transition-all"
-            >
-              <Paperclip className="h-4 w-4 text-muted-foreground" />
-              <span className="sr-only">Attach file</span>
-            </Button>
-            <Textarea
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              placeholder="Type your progress note here..."
-              rows={2}
-              className="bg-secondary/30 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/70 resize-none flex-1 rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] transition-all focus:bg-background"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                  handleAddNote()
-                }
-              }}
-            />
-            <Button
-              size="icon"
-              onClick={handleAddNote}
-              disabled={(!noteContent.trim() && !selectedFile) || isUploading}
-              className="bg-primary/10 text-primary hover:bg-primary hover:text-white border border-primary/20 self-end h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:bg-secondary"
-            >
-              {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              <span className="sr-only">Send note</span>
-            </Button>
-          </div>
-          <p className="text-[10px] font-medium text-muted-foreground mt-2.5 flex items-center gap-1.5 opacity-70">
-            <kbd className="px-1.5 py-0.5 bg-secondary rounded border border-border/50 text-[9px]">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 bg-secondary rounded border border-border/50 text-[9px]">Enter</kbd> to send
-          </p>
-        </div>
-      )}
     </div>
   )
 }

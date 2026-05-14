@@ -17,6 +17,27 @@ export async function GET(request: NextRequest) {
     const isHeadAdmin = user.role.toLowerCase() === "head_admin"
     const isAdmin = user.role.toLowerCase() === "admin"
 
+    // Automatic 90-day retention cleanup
+    // We run this when a Creator or Master Admin fetches the logs to keep the DB clean
+    if (isCreator || isMasterAdmin) {
+      try {
+        if (isMasterAdmin) {
+          // Master Admin clears ALL logs older than 90 days across the system
+          await db.execute(`DELETE FROM activity_logs WHERE createdat < NOW() - INTERVAL '90 days'`);
+        } else {
+          // Creator clears logs older than 90 days only for their organization
+          await db.execute(`
+            DELETE FROM activity_logs 
+            WHERE createdat < NOW() - INTERVAL '90 days'
+            AND userid IN (SELECT id FROM users WHERE orgid = ?)
+          `, [orgId]);
+        }
+      } catch (cleanupError) {
+        // We log but don't fail the request if cleanup fails
+        console.error("Retention cleanup failed:", cleanupError);
+      }
+    }
+
     let logs: any[] = [];
 
     if (isMasterAdmin) {

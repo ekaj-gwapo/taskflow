@@ -8,9 +8,10 @@ import { AppHeader } from "@/components/app-header"
 import { StatusBadge, PriorityBadge } from "@/components/status-badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
-import { ClipboardList, Clock, CheckCircle2, AlertTriangle, Bell, ChevronRight } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
 import { ActivityLogView } from "@/components/activity-log-view"
+import { TaskRow, TaskRowSkeleton, TeamProjectCard, TeamProjectCardSkeleton } from "@/components/task-items"
 import { SmartBriefing } from "@/components/smart-briefing"
 import { cn, formatDate, formatDateTime, calculateTaskProgress } from "@/lib/utils"
 import { EmployeeProfileReport } from "@/components/employee-profile-report"
@@ -20,186 +21,6 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Task, User } from "@/lib/store"
 
-function NoteReminder({ task }: { task: Task }) {
-  const [minutes, setMinutes] = useState(0)
-
-  useEffect(() => {
-    if (task.status?.toLowerCase() !== "in-progress") return
-
-    const lastNote = task.progressNotes[task.progressNotes.length - 1]
-    if (lastNote) {
-      const diff = Date.now() - new Date(lastNote.createdAt).getTime()
-      const mins = Math.floor(diff / 60000)
-      setMinutes(mins)
-    } else {
-      setMinutes(30)
-    }
-
-    const interval = setInterval(() => {
-      if (lastNote) {
-        const diff = Date.now() - new Date(lastNote.createdAt).getTime()
-        setMinutes(Math.floor(diff / 60000))
-      }
-    }, 60000)
-
-    return () => clearInterval(interval)
-  }, [task.status, task.progressNotes])
-
-  if (task.status?.toLowerCase() !== "in-progress") return null
-
-  const isOverdue = minutes >= 30
-  const progress = Math.min((minutes / 30) * 100, 100)
-
-  return (
-    <div className={`flex items-center gap-2 mt-2 px-2.5 py-1.5 rounded-md text-xs ${isOverdue
-        ? "bg-destructive/10 text-destructive"
-        : "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]"
-      }`}>
-      {isOverdue ? (
-        <Bell className="h-3 w-3 animate-pulse" />
-      ) : (
-        <Clock className="h-3 w-3" />
-      )}
-      <span className="flex-1">
-        {isOverdue
-          ? "Progress note overdue! Please update now."
-          : `Next note due in ${30 - minutes}m`}
-      </span>
-      <Progress
-        value={progress}
-        className="w-16 h-1.5 bg-secondary"
-      />
-    </div>
-  )
-}
-
-function EmployeeTaskCard({
-  task,
-  onSelect,
-  isSelected,
-  currentUser,
-  isNew,
-}: {
-  task: Task
-  onSelect: () => void
-  isSelected: boolean
-  currentUser: User | null
-  isNew?: boolean
-}) {
-  const isOverdue =
-    task.status?.toLowerCase() !== "completed" && new Date(task.dueDate) < new Date()
-
-  const myAssigneeData = task.assignees?.find(a => a.id === currentUser?.id)
-  const myPoints = myAssigneeData ? myAssigneeData.points : 0
-
-  return (
-    <motion.button
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -2 }}
-      onClick={onSelect}
-      className={cn(
-        "w-full text-left rounded-[1.5rem] border border-border/50 transition-all glass-card",
-        isSelected
-          ? "border-primary bg-primary/5"
-          : "hover:bg-muted/80 hover:border-border hover:shadow-md"
-      )}
-    >
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground truncate">
-                {task.title}
-              </span>
-              {isNew && (
-                <span className="text-[10px] font-bold text-white bg-primary px-1.5 py-0.5 rounded animate-pulse shadow-sm shadow-primary/20">
-                  NEW
-                </span>
-              )}
-              {isOverdue && (
-                <span className="shrink-0 text-[10px] font-medium text-destructive bg-destructive/10 rounded px-1.5 py-0.5">
-                  Overdue
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-              {task.description}
-            </p>
-            {task.createdBy && (
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                <span className="text-[10px] text-muted-foreground font-medium bg-secondary/50 px-1.5 py-0.5 rounded border border-border/50">
-                  Created by <span className="text-foreground">{task.createdBy.name}</span>
-                </span>
-                {task.delegatedBy && task.delegatedBy.id?.toLowerCase() !== task.createdBy.id?.toLowerCase() && (
-                  <span className="text-[10px] text-primary/80 font-medium bg-primary/5 px-1.5 py-0.5 rounded border border-primary/20">
-                    ↳ Delegated by <span className="text-foreground">{task.delegatedBy.name}</span>
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5 ml-2" />
-
-        </div>
-        <div className="flex items-center gap-2 mt-3">
-          <StatusBadge status={task.status} />
-          <PriorityBadge priority={task.priority} />
-          {myPoints > 0 && (
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-[hsl(var(--chart-2))]/15 text-[hsl(var(--chart-2))] shadow-sm border border-[hsl(var(--chart-2))]/20">
-              ✨ {myPoints} Pts
-            </span>
-          )}
-          <span className="text-xs text-muted-foreground ml-auto">
-            Due {formatDateTime(task.dueDate)}
-          </span>
-        </div>
-        
-        {/* Progress Bar */}
-        <div className="mt-4 space-y-1.5">
-          <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
-            <span>Action Progress</span>
-            <span>{calculateTaskProgress(task)}%</span>
-          </div>
-          <Progress 
-            value={calculateTaskProgress(task)} 
-            className="h-1 bg-secondary"
-          />
-        </div>
-
-        <NoteReminder task={task} />
-      </div>
-    </motion.button>
-  )
-}
-
-function EmployeeTaskCardSkeleton() {
-  return (
-    <div className="w-full rounded-[1.5rem] border border-border/50 p-4 space-y-4 animate-pulse glass-card">
-      <div className="flex justify-between items-start">
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-1/3" />
-          <Skeleton className="h-3 w-1/2" />
-        </div>
-        <Skeleton className="h-4 w-4" />
-      </div>
-      <div className="flex gap-2">
-        <Skeleton className="h-6 w-16 rounded-full" />
-        <Skeleton className="h-6 w-16 rounded-full" />
-        <Skeleton className="h-3 w-24 ml-auto mt-2" />
-      </div>
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <Skeleton className="h-2 w-20" />
-          <Skeleton className="h-2 w-8" />
-        </div>
-        <Skeleton className="h-1 w-full rounded-full" />
-      </div>
-    </div>
-  )
-}
 
 export function EmployeeDashboard({ 
   isProfileOpen, 
@@ -428,83 +249,17 @@ export function EmployeeDashboard({
                                       {isLoadingTasks ? (
                                         [1, 2, 3, 4, 5, 6].map(i => <TeamProjectCardSkeleton key={i} />)
                                       ) : paginatedTasks.map((task) => (
-                                        <motion.div
-                                          layout
-                                          initial={{ opacity: 0, scale: 0.9 }}
-                                          animate={{ opacity: 1, scale: 1 }}
-                                          exit={{ opacity: 0, scale: 0.9 }}
-                                          whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
+                                        <TeamProjectCard
                                           key={task.id}
-                                          className={cn(
-                                            "flex flex-col p-5 rounded-[2rem] border-2 cursor-pointer",
-                                            (task.status !== "completed" && new Date(task.dueDate) < new Date()) ? "border-destructive/50 shadow-[0_0_15px_-5px_rgba(239,68,68,0.2)]" :
-                                            task.status === "completed" ? "border-emerald-500/50 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]" :
-                                            task.status === "in-progress" ? "border-orange-500/50 shadow-[0_0_15px_-5px_rgba(249,115,22,0.2)]" :
-                                            "border-muted-foreground/20",
-                                            selectedTask?.id === task.id ? "ring-4 ring-primary/20 border-primary" : "",
-                                            task.status === "completed" ? "opacity-90" : ""
-                                          )}
-                                          onClick={() => {
+                                          task={task}
+                                          onSelect={() => {
                                             selectTask(selectedTask?.id === task.id ? null : task.id);
                                             markAsSeen(task.id);
                                           }}
-                                        >
-                                          <div className="flex justify-between items-start mb-2">
-                                            <div className="flex flex-col gap-1.5">
-                                              <StatusBadge status={task.status} />
-                                              {!seenTaskIds.has(task.id) && (
-                                                <span className="w-max text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded animate-pulse">
-                                                  NEW
-                                                </span>
-                                              )}
-                                            </div>
-                                            <PriorityBadge priority={task.priority} />
-                                          </div>
-                                          <h3 className="font-bold text-sm mb-1 line-clamp-1">{task.title}</h3>
-                                          <p className="text-xs text-muted-foreground line-clamp-2 mb-2 flex-1">
-                                            {task.description || "No description provided."}
-                                          </p>
-                                          
-                                          {task.createdBy && (
-                                            <div className="flex items-center gap-1.5 mb-4 flex-wrap">
-                                              <span className="text-[10px] text-muted-foreground font-medium bg-secondary/50 px-1.5 py-0.5 rounded border border-border/50">
-                                                Created by <span className="text-foreground">{task.createdBy.name}</span>
-                                              </span>
-                                              {task.delegatedBy && task.delegatedBy.id !== task.createdBy.id && (
-                                                <span className="text-[10px] text-primary/80 font-medium bg-primary/5 px-1.5 py-0.5 rounded border border-primary/20">
-                                                  ↳ Delegated by <span className="text-foreground">{task.delegatedBy.name}</span>
-                                                </span>
-                                              )}
-                                            </div>
-                                          )}
-                                          
-                                          {/* Team Progress Bar */}
-                                          <div className="mb-4 space-y-1.5">
-                                            <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
-                                              <span>Progress</span>
-                                              <span>{calculateTaskProgress(task)}%</span>
-                                            </div>
-                                            <Progress 
-                                              value={calculateTaskProgress(task)} 
-                                              className="h-1 bg-secondary"
-                                            />
-                                          </div>
-
-                                          <div className="flex items-center justify-between mt-auto">
-                                            <div className="flex -space-x-2 overflow-hidden">
-                                              {task.assignees?.map((a) => (
-                                                <Avatar key={a.id} className="h-6 w-6 border-2 border-background">
-                                                  <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
-                                                    {a.name[0]}
-                                                  </AvatarFallback>
-                                                </Avatar>
-                                              ))}
-                                            </div>
-                                            <span className="text-[10px] text-muted-foreground font-medium">
-                                              Due {formatDate(task.dueDate)}
-                                            </span>
-                                          </div>
-                                        </motion.div>
+                                          isSelected={selectedTask?.id === task.id}
+                                          isNew={!seenTaskIds.has(task.id)}
+                                          showCreatedBy={true}
+                                        />
                                       ))}
                                     </AnimatePresence>
                                   </div>
@@ -541,22 +296,36 @@ export function EmployeeDashboard({
                                 </div>
                               ) : (
                                 <div className="flex flex-col gap-4 mt-4">
-                                  <div className="grid gap-3">
-                                    {isLoadingTasks ? (
-                                      [1, 2, 3, 4, 5].map(i => <EmployeeTaskCardSkeleton key={i} />)
-                                    ) : paginatedTasks.map((task) => (
-                                      <EmployeeTaskCard
-                                        key={task.id}
-                                        task={task}
-                                        onSelect={() => {
-                                          selectTask(selectedTaskId === task.id ? null : task.id);
-                                          markAsSeen(task.id);
-                                        }}
-                                        isSelected={selectedTask?.id === task.id}
-                                        currentUser={currentUser}
-                                        isNew={!seenTaskIds.has(task.id)}
-                                      />
-                                    ))}
+                                  <div className="rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl min-h-[500px] overflow-hidden">
+                                    <div className="flex items-center px-4 py-2.5 border-b bg-muted/50 shrink-0">
+                                      <span className="flex-1 text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Task</span>
+                                      <div className="hidden md:flex items-center gap-6">
+                                        <div className="w-24 text-center text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Priority</div>
+                                        <div className="w-32 text-center text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Status</div>
+                                        <div className="w-40 text-left pl-5 text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Assignees</div>
+                                        <div className="w-24 text-right text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Due Date</div>
+                                      </div>
+                                      <div className="w-12" />
+                                    </div>
+
+                                    <div className="flex-1">
+                                      {isLoadingTasks ? (
+                                        [1, 2, 3, 4, 5].map(i => <TaskRowSkeleton key={i} />)
+                                      ) : paginatedTasks.map((task) => (
+                                        <TaskRow
+                                          key={task.id}
+                                          task={task}
+                                          onSelect={() => {
+                                            selectTask(selectedTaskId === task.id ? null : task.id);
+                                            markAsSeen(task.id);
+                                          }}
+                                          isSelected={selectedTask?.id === task.id}
+                                          isNew={!seenTaskIds.has(task.id)}
+                                          showNoteReminder={true}
+                                          myPoints={task.assignees?.find(a => a.id === currentUser?.id)?.points}
+                                        />
+                                      ))}
+                                    </div>
                                   </div>
                                   {totalPages > 1 && (
                                     <div className="flex items-center justify-between py-4 mt-auto border-t border-border/50 pt-4">
@@ -633,35 +402,6 @@ export function EmployeeDashboard({
           </AnimatePresence>
         )}
       </motion.div>
-      </div>
-    </div>
-  )
-}
-
-function TeamProjectCardSkeleton() {
-  return (
-    <div className="flex flex-col p-5 rounded-[2rem] border-2 border-border/20 space-y-4 animate-pulse bg-card/40">
-      <div className="flex justify-between items-start">
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-20 rounded-full" />
-          <Skeleton className="h-5 w-32" />
-        </div>
-        <Skeleton className="h-6 w-16 rounded-full" />
-      </div>
-      <Skeleton className="h-3 w-full" />
-      <Skeleton className="h-3 w-3/4" />
-      <div className="space-y-2 pt-2">
-        <div className="flex justify-between">
-          <Skeleton className="h-2 w-16" />
-          <Skeleton className="h-2 w-8" />
-        </div>
-        <Skeleton className="h-1 w-full rounded-full" />
-      </div>
-      <div className="flex justify-between items-center pt-2 border-t border-border/50">
-        <div className="flex -space-x-2">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-6 w-6 rounded-full" />)}
-        </div>
-        <Skeleton className="h-2 w-16" />
       </div>
     </div>
   )

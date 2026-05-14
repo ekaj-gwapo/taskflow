@@ -50,6 +50,33 @@ export async function POST(request: NextRequest) {
         organizationName: userInfo.organizationName,
         message,
       })
+
+      // In-app notifications for Master Admins
+      try {
+        const { v4: uuidv4 } = await import('uuid')
+        const masterAdmins = await db.getAll(`
+          SELECT id FROM users 
+          WHERE role IN ('MASTER_ADMIN', 'master_admin', 'SUPERADMIN', 'superadmin')
+        `)
+        
+        for (const admin of masterAdmins) {
+          await db.execute(
+            `INSERT INTO notifications (id, userId, type, title, message, link, createdAt) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              admin.id,
+              'SUPPORT_REQUEST',
+              'New Support Request',
+              `${userInfo.name} from ${userInfo.organizationName} sent a support request.`,
+              '/master/support', // Assuming this is the link to view support requests
+              new Date().toISOString()
+            ]
+          )
+        }
+      } catch (notifyErr) {
+        console.error("Failed to send in-app notifications to Master Admins:", notifyErr)
+      }
     }
 
     // Log the activity using the shared helper
