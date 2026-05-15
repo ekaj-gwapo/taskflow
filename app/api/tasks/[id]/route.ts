@@ -546,10 +546,17 @@ export async function DELETE(
     }
 
     const taskId = (await params).id?.toLowerCase()
+    if (!taskId) {
+      return NextResponse.json({ error: "Task ID is required" }, { status: 400 })
+    }
     
-    // Explicitly check if task is completed
+    // Explicitly check if task exists and its status
     const existingTask: any = await db.getOne("SELECT status, title FROM tasks WHERE id = ?", [taskId])
-    if (existingTask && existingTask.status === "COMPLETED") {
+    if (!existingTask) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 })
+    }
+
+    if (existingTask.status === "COMPLETED") {
       return NextResponse.json(
         { error: "Completed tasks cannot be deleted" },
         { status: 403 }
@@ -558,31 +565,39 @@ export async function DELETE(
 
     // Explicitly delete related data in order to avoid foreign key issues
     // and ensure no orphaned records remain.
-    await db.execute("DELETE FROM step_notes WHERE stepId IN (SELECT id FROM action_steps WHERE taskId = ?)", [taskId])
-    await db.execute("DELETE FROM action_steps WHERE taskId = ?", [taskId])
-    await db.execute("DELETE FROM progress_notes WHERE taskId = ?", [taskId])
-    await db.execute("DELETE FROM task_assignments WHERE taskId = ?", [taskId])
-    await db.execute("DELETE FROM task_comments WHERE taskId = ?", [taskId])
-    await db.execute("DELETE FROM extension_requests WHERE taskId = ?", [taskId])
-    await db.execute("DELETE FROM tasks WHERE id = ?", [taskId])
+    try {
+      await db.execute("DELETE FROM step_notes WHERE stepId IN (SELECT id FROM action_steps WHERE taskId = ?)", [taskId])
+      await db.execute("DELETE FROM action_steps WHERE taskId = ?", [taskId])
+      await db.execute("DELETE FROM progress_notes WHERE taskId = ?", [taskId])
+      await db.execute("DELETE FROM task_assignments WHERE taskId = ?", [taskId])
+      await db.execute("DELETE FROM task_comments WHERE taskId = ?", [taskId])
+      await db.execute("DELETE FROM extension_requests WHERE taskId = ?", [taskId])
+      await db.execute("DELETE FROM tasks WHERE id = ?", [taskId])
 
-    await logActivity({
-      action: "TASK_DELETED",
-      entityId: taskId,
-      entityType: "TASK",
-      userId: auth.user!.id,
-      userName: auth.user!.name,
-      details: { title: existingTask.title || "Unknown Task" }
-    });
+      await logActivity({
+        action: "TASK_DELETED",
+        entityId: taskId,
+        entityType: "TASK",
+        userId: auth.user!.id,
+        userName: auth.user!.name,
+        details: { title: existingTask.title || "Unknown Task" }
+      });
 
-    return NextResponse.json(
-      { message: "Task deleted successfully" },
-      { status: 200 }
-    )
-  } catch (error) {
+      return NextResponse.json(
+        { message: "Task deleted successfully" },
+        { status: 200 }
+      )
+    } catch (dbError: any) {
+      console.error("Database delete error:", dbError)
+      return NextResponse.json(
+        { error: "Database error during deletion", details: dbError.message },
+        { status: 500 }
+      )
+    }
+  } catch (error: any) {
     console.error("Delete task error:", error)
     return NextResponse.json(
-      { error: "Failed to delete task" },
+      { error: "Failed to delete task", details: error.message },
       { status: 500 }
     )
   }

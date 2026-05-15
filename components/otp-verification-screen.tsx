@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { LayoutDashboard, CheckCircle2, ArrowRight, RefreshCw, AlertCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useTaskContext } from "@/lib/task-context"
@@ -151,12 +152,12 @@ export function OTPVerificationScreen() {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <Link href="/" className="flex items-center justify-center gap-3 mb-4 hover:opacity-80 transition-opacity">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">TaskFlow</h1>
-          </div>
+          </Link>
           <h2 className="text-2xl font-black text-foreground">Check your email</h2>
           <p className="text-muted-foreground text-sm mt-2">
             We've sent a 6-digit verification code to <span className="font-bold text-foreground">{email}</span>

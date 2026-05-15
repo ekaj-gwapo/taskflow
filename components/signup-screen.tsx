@@ -121,12 +121,12 @@ export function SignupScreen() {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <Link href="/" className="flex items-center justify-center gap-3 mb-4 hover:opacity-80 transition-opacity">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">TaskFlow</h1>
-          </div>
+          </Link>
           <p className="text-muted-foreground text-sm">
             Create your account to get started
           </p>

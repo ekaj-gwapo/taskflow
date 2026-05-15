@@ -303,9 +303,11 @@ export function TaskDetailPanel({
     }
   }
 
-  const handleDelete = () => {
-    deleteTask(task.id)
-    onClose()
+  const handleDelete = async () => {
+    const success = await deleteTask(task.id)
+    if (success) {
+      onClose()
+    }
   }
 
   const handleAddActionStep = (stepTitle: string) => {
@@ -351,12 +353,12 @@ export function TaskDetailPanel({
   }
 
   return (
-    <div className="relative flex flex-col h-full rounded-l-3xl bg-card/95 backdrop-blur-xl border-l border-border/40 shadow-[0_0_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden">
-      {/* Decorative top gradient */}
-      <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent pointer-events-none z-0" />
+    <div className="relative flex flex-col h-full rounded-l-3xl bg-card border-l border-border shadow-[0_0_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden">
+      {/* Removed decorative top gradient to fix blur/overlap issues */}
+
 
       {/* Header */}
-      <div className="relative z-10 border-b border-border/50 bg-background/40 backdrop-blur-md">
+      <div className="relative z-10 border-b border-border/50 bg-card">
         <div className="flex items-start justify-between p-6">
           <div className="flex-1 min-w-0 pr-4">
             <h3 className="text-xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
@@ -379,7 +381,7 @@ export function TaskDetailPanel({
 
         {task.createdBy && (
           <div className="px-6 pb-6">
-            <div className="text-xs text-muted-foreground flex flex-col gap-1.5 p-3 rounded-xl bg-secondary/30 border border-border/50 shadow-sm backdrop-blur-sm">
+            <div className="text-xs text-muted-foreground flex flex-col gap-1.5 p-3 rounded-xl bg-secondary/40 border border-border/50 shadow-sm">
               <span className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-muted-foreground/70">Created by</span>
                 <span className="font-semibold text-foreground">{task.createdBy.name}</span>
@@ -398,7 +400,7 @@ export function TaskDetailPanel({
       <div className="flex-1 overflow-y-auto relative z-10">
         <div className="flex flex-col pb-4">
           {/* Meta */}
-          <div className="p-6 border-b border-border/50 flex flex-col gap-4 bg-background/20 relative">
+          <div className="p-6 border-b border-border/50 flex flex-col gap-4 bg-card relative">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2.5 p-3.5 rounded-xl bg-secondary/30 border border-border/50 shadow-sm hover:shadow-md hover:bg-secondary/40 transition-all duration-300">
                 <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest flex items-center gap-1.5">
@@ -1038,7 +1040,20 @@ export function TaskDetailPanel({
               const hasEmployeeAssignees = task.assignees?.some(a => a.role === "employee") || 
                 (task.assignee?.role === "employee" && task.assigneeId !== currentUser?.id)
               const isTeamTask = (task.assignees && task.assignees.length > 1) || hasEmployeeAssignees
-              const canArchive = !task.archived ? !isTeamTask : true // Always allow restore
+              
+              // Archiving Permissions:
+              // 1. Superadmin: Can archive anything at any time.
+              // 2. Head Admin: Can ONLY archive if the task is completed (as requested).
+              // 3. Regular Admin: Can archive if it's not a team task OR if it's completed.
+              const canArchive = !task.archived 
+                ? (
+                    currentRole === "superadmin" 
+                      ? true 
+                      : currentRole === "head_admin" 
+                        ? task.status === "completed" 
+                        : (!isTeamTask || task.status === "completed")
+                  )
+                : true // Always allow restore
 
               return (
                 <div className="space-y-1.5">
@@ -1072,9 +1087,11 @@ export function TaskDetailPanel({
                     )}
                     {!task.archived ? "Archive Task" : "Restore Task"}
                   </Button>
-                  {!task.archived && isTeamTask && (
-                    <p className="text-[10px] text-center text-muted-foreground/70 italic">
-                      Cannot archive — this task has team members assigned.
+                  {!task.archived && !canArchive && (
+                    <p className="text-[10px] text-center text-muted-foreground/70 italic px-4">
+                      {currentRole === "head_admin" 
+                        ? "Only completed tasks can be archived by Head Admins."
+                        : "Cannot archive — this task is active and has team members assigned."}
                     </p>
                   )}
                 </div>

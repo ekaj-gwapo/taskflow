@@ -30,7 +30,6 @@ import { Button } from "@/components/ui/button"
 import { RecentlyCompletedTasks } from "@/components/recently-completed-tasks"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
 import { ActivityLogView } from "@/components/activity-log-view"
-import { TaskRow, TaskRowSkeleton, TeamProjectCard, TeamProjectCardSkeleton } from "@/components/task-items"
 import { SmartBriefing } from "@/components/smart-briefing"
 import { EmployeeWeeklyPerformance } from "@/components/employee-weekly-performance"
 import { EmployeeProfileReport } from "@/components/employee-profile-report"
@@ -52,6 +51,332 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 
+function TaskRowSkeleton() {
+  return (
+    <div className="w-full flex items-center px-4 py-3 border-b border-border animate-pulse">
+      <div className="flex-1 flex flex-col min-w-0 bg-background/30 overflow-hidden relative">
+        <main className="flex-1 overflow-y-auto p-4 md:p-5 scroll-smooth custom-scrollbar relative z-10">
+          <div className="max-w-[1600px] mx-auto space-y-4">
+            <Skeleton className="h-4 w-1/3 mb-2" />
+            <Skeleton className="h-3 w-1/2" />
+            <div className="mt-3 max-w-[200px] space-y-1.5">
+              <Skeleton className="h-2 w-12" />
+              <Skeleton className="h-1.5 w-full rounded-full" />
+            </div>
+          </div>
+        </main>
+      </div>
+      <div className="hidden md:flex items-center shrink-0 gap-4">
+        <div className="w-24 flex justify-center"><Skeleton className="h-6 w-16 rounded-full" /></div>
+        <div className="w-32 flex justify-center"><Skeleton className="h-6 w-20 rounded-full" /></div>
+        <div className="w-40 flex items-center gap-1.5 pl-1">
+          <div className="flex -space-x-2">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-6 w-6 rounded-full" />)}
+          </div>
+          <Skeleton className="h-3 w-16 ml-2" />
+        </div>
+        <div className="w-24"><Skeleton className="h-3 w-16 ml-auto" /></div>
+      </div>
+      <div className="ml-4 w-12 flex justify-end">
+        <Skeleton className="h-4 w-4" />
+      </div>
+    </div>
+  )
+}
+
+function TeamProjectCardSkeleton() {
+  return (
+    <div className="flex flex-col min-h-[160px] rounded-[2rem] border-2 border-border p-6 space-y-4 animate-pulse bg-card/40">
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+        <Skeleton className="h-6 w-16 rounded-full" />
+      </div>
+      <div className="space-y-2 flex-1">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-3/4" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-1 w-full rounded-full" />
+      </div>
+      <div className="flex justify-between items-center pt-2 border-t border-border/50">
+        <Skeleton className="h-6 w-20 rounded-full" />
+        <div className="flex -space-x-2">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-7 w-7 rounded-full" />)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TaskRow({
+  task,
+  onSelect,
+  isSelected,
+  onDelete,
+  isDelegatedView,
+  currentUserRole,
+  currentUserId,
+  taskCreatorId,
+  isNew,
+}: {
+  task: Task
+  onSelect: () => void
+  isSelected: boolean
+  onDelete: () => void
+  isDelegatedView?: boolean
+  currentUserRole?: string
+  currentUserId?: string
+  taskCreatorId?: string
+  isNew?: boolean
+}) {
+  const isOverdue =
+    task.status !== "completed" && new Date(task.dueDate) < new Date()
+
+  const displayAssignees = task.assignees && task.assignees.length > 0 ? task.assignees : []
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      whileHover={{ x: 4 }}
+      onClick={onSelect}
+      className={cn(
+        "w-full flex items-center px-4 py-3 text-left cursor-pointer border-b border-border border-l-4 border-l-transparent hover:border-l-primary hover:bg-muted/80 transition-colors",
+        isSelected ? "bg-accent/70 border-l-primary" : ""
+      )}
+    >
+      {/* TASK */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium truncate">
+            {task.title}
+          </span>
+          {task.delegatedById && (
+            <span className="flex items-center gap-1 text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+              <Share2 className="h-2.5 w-2.5" />
+              Delegated
+            </span>
+          )}
+          {isNew && (
+            <span className="text-[10px] font-bold text-white bg-primary px-1.5 py-0.5 rounded animate-pulse shadow-sm shadow-primary/20">
+              NEW
+            </span>
+          )}
+          {isOverdue && (
+            <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">
+              Overdue
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground truncate">
+          {task.description}
+        </p>
+
+        {/* Task Progress Mini-bar */}
+        <div className="mt-2.5 max-w-[200px] space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] font-bold text-primary/80 uppercase tracking-tighter">
+            <span>Progress</span>
+            <span>{calculateTaskProgress(task)}%</span>
+          </div>
+          <Progress value={calculateTaskProgress(task)} className="h-1.5 bg-secondary border border-border/50" />
+        </div>
+      </div>
+
+      {/* ✅ FIXED COLUMNS */}
+      <div className="hidden md:flex items-center shrink-0 gap-6">
+        {/* PRIORITY */}
+        <div className="w-24 flex justify-center">
+          <PriorityBadge priority={task.priority} />
+        </div>
+
+        {/* STATUS */}
+        <div className="w-32 flex justify-center">
+          <StatusBadge status={task.status} />
+        </div>
+
+        {/* ASSIGNEES */}
+        <div className="w-40 flex items-center gap-1.5 pl-1">
+          {displayAssignees.length > 0 ? (
+            <div className="flex items-center">
+              <div className="flex -space-x-2 overflow-hidden items-center">
+                {displayAssignees.slice(0, 3).map((a) => (
+                  <Avatar key={a.id} className="inline-block h-6 w-6 shrink-0 rounded-full ring-2 ring-background border border-border/50">
+                    {a.avatar ? (
+                      <AvatarImage src={a.avatar} />
+                    ) : (
+                      <AvatarFallback className="text-[9px] bg-secondary text-foreground font-medium">
+                        {a.name.split(" ").map(n => n[0]).join("")}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                ))}
+                {displayAssignees.length > 3 && (
+                  <div className="flex items-center justify-center h-6 w-6 shrink-0 rounded-full ring-2 ring-background bg-secondary text-[10px] font-medium text-foreground z-10 border border-border/50">
+                    +{displayAssignees.length - 3}
+                  </div>
+                )}
+              </div>
+              {displayAssignees.length === 1 && (
+                <span className="text-xs truncate ml-2 text-foreground font-medium">{displayAssignees[0].name}</span>
+              )}
+              {displayAssignees.length > 1 && (
+                <span className="text-[11px] truncate ml-2 text-muted-foreground font-medium">{displayAssignees.length} members</span>
+              )}
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground ml-1">Unassigned</span>
+          )}
+        </div>
+
+        {/* DUE DATE OR DELEGATED AT */}
+        <div className="w-24 text-right text-xs whitespace-nowrap text-muted-foreground">
+          {isDelegatedView && task.delegatedAt ? (
+            <div className="flex flex-col items-end">
+              <span className="font-medium text-foreground">{formatDate(task.delegatedAt)}</span>
+              <span className="text-[10px] opacity-70">
+                {new Date(task.delegatedAt).toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })}
+              </span>
+            </div>
+          ) : (
+            formatDate(task.dueDate)
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-2 ml-4 w-12">
+        {(currentUserRole === "SUPERADMIN" || currentUserRole === "HEAD_ADMIN" || taskCreatorId === currentUserId) && task.status === "todo" && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                title="Delete Task"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete the task "{task.title}" and all its associated action required items and notes. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete Task
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </div>
+    </motion.div>
+  )
+}
+
+function TeamProjectCard({
+  task,
+  onSelect,
+  isSelected,
+  isNew
+}: {
+  task: Task;
+  onSelect: () => void;
+  isSelected: boolean;
+  isNew?: boolean
+}) {
+  const isOverdue = task.status !== "completed" && new Date(task.dueDate) < new Date()
+  const displayAssignees = task.assignees && task.assignees.length > 0 ? task.assignees : []
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
+      className={cn(
+        "cursor-pointer flex flex-col min-h-[160px] rounded-[2rem] border-2",
+        isOverdue ? "border-destructive/50 shadow-[0_0_15px_-5px_rgba(239,68,68,0.2)]" :
+          task.status === "completed" ? "border-emerald-500/50 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]" :
+            task.status === "in-progress" ? "border-orange-500/50 shadow-[0_0_15px_-5px_rgba(249,115,22,0.2)]" :
+              "border-muted-foreground/20",
+        isSelected ? "ring-4 ring-primary/20 border-primary" : ""
+      )}
+      onClick={onSelect}
+    >
+      <Card className="h-full border-0 bg-transparent shadow-none">
+        <CardHeader className="pb-3 pt-4 px-4 shrink-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 pr-2">
+              <h3 className="text-base font-semibold text-foreground line-clamp-1">{task.title}</h3>
+              <div className="flex items-center gap-1.5 mt-1">
+                {isNew && (
+                  <span className="text-[10px] font-bold text-white bg-primary px-1.5 py-0.5 rounded animate-pulse shadow-sm shadow-primary/20">NEW</span>
+                )}
+                {isOverdue && (
+                  <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded font-medium">Overdue</span>
+                )}
+              </div>
+            </div>
+            <PriorityBadge priority={task.priority} />
+          </div>
+        </CardHeader>
+
+        <CardContent className="px-4 pb-4 flex flex-col flex-1">
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-4 flex-1">
+            {task.description || "No description provided."}
+          </p>
+
+          {/* Card Progress Bar */}
+          <div className="mb-4 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+              <span>Action Required Progress</span>
+              <span>{calculateTaskProgress(task)}%</span>
+            </div>
+            <Progress value={calculateTaskProgress(task)} className="h-1 bg-secondary" />
+          </div>
+
+          <div className="flex items-center justify-between mt-auto shrink-0 pt-2 border-t border-border/50">
+            <StatusBadge status={task.status} />
+
+            <div className="flex -space-x-2 overflow-hidden items-center ml-2">
+              {displayAssignees.slice(0, 4).map((a) => (
+                <Avatar key={a.id} className="inline-block h-7 w-7 shrink-0 rounded-full ring-2 ring-background border border-border/50">
+                  {a.avatar ? (
+                    <AvatarImage src={a.avatar} />
+                  ) : (
+                    <AvatarFallback className="text-[10px] bg-secondary text-foreground font-medium">
+                      {a.name.split(" ").map(n => n[0]).join("")}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              ))}
+              {displayAssignees.length > 4 && (
+                <div className="flex items-center justify-center h-7 w-7 shrink-0 rounded-full ring-2 ring-background bg-secondary text-[10px] font-medium text-foreground z-10 border border-border/50">
+                  +{displayAssignees.length - 4}
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
 
 export function AdminDashboard({
   isProfileOpen,
@@ -677,9 +1002,9 @@ export function AdminDashboard({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
-                    className="flex flex-col gap-4 min-h-[600px]"
+                    className="flex flex-col gap-4 min-h-[600px] p-2 pt-6"
                   >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 p-1">
                       <AnimatePresence>
                         {isLoadingTasks ? (
                           [1, 2, 3, 4, 5, 6, 7, 8].map(i => <TeamProjectCardSkeleton key={i} />)

@@ -18,7 +18,9 @@ export async function GET(
       SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", 
              u.jobdescription AS "jobDescription", u.role, u.theme, u.mode, 
              u.createdat AS "createdAt", u.orgid AS "orgId",
-             o.name as "organizationName", o.logo_url as "organizationLogo"
+             o.name as "organizationName", o.logo_url as "organizationLogo",
+             o.plan as "plan", o.subscription_status as "subscriptionStatus",
+             o.trial_ends_at as "trialEndsAt"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id
       WHERE u.id = ?
@@ -104,7 +106,9 @@ export async function PUT(
     const user = await db.getOne(`
       SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", 
              u.jobdescription AS "jobDescription", u.role, u.theme, u.mode, u.orgid AS "orgId",
-             o.name as "organizationName", o.logo_url as "organizationLogo"
+             o.name as "organizationName", o.logo_url as "organizationLogo",
+             o.plan as "plan", o.subscription_status as "subscriptionStatus",
+             o.trial_ends_at as "trialEndsAt"
       FROM users u
       LEFT JOIN organizations o ON u.orgid = o.id
       WHERE u.id = ?
