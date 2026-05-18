@@ -27,6 +27,7 @@ import { OfficeAccomplishmentReport } from "@/components/office-accomplishment-r
 import { TopCompletersChart } from "@/components/top-completers-chart"
 import { WorkloadDistribution } from "@/components/workload-distribution"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { RecentlyCompletedTasks } from "@/components/recently-completed-tasks"
 import { UrgentTasksSection } from "@/components/urgent-tasks-section"
 import { ActivityLogView } from "@/components/activity-log-view"
@@ -858,7 +859,7 @@ export function AdminDashboard({
                             />
                           </div>
 
-                          <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-nowrap overflow-x-auto no-scrollbar">
+                          <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-nowrap overflow-x-auto no-scrollbar p-1 -m-1">
                             <Select
                               value={selectedEmployeeId === 'team-projects' ? teamFilterPriority : filterPriority}
                               onValueChange={selectedEmployeeId === 'team-projects' ? setTeamFilterPriority : setFilterPriority}
@@ -1018,7 +1019,7 @@ export function AdminDashboard({
                                 markAsSeen(task.id);
                               }}
                               isSelected={selectedTask?.id === task.id}
-                              isNew={!seenTaskIds.has(task.id)}
+                              isNew={!seenTaskIds.has(task.id) && task.createdById !== currentUser?.id}
                             />
                           ))
                         ) : (
@@ -1131,7 +1132,7 @@ export function AdminDashboard({
                                 currentUserRole={currentUser?.role?.toUpperCase()}
                                 currentUserId={currentUser?.id}
                                 taskCreatorId={task.createdBy?.id}
-                                isNew={selectedEmployeeId === 'my-tasks' && myTaskTab === 'assigned' && !seenTaskIds.has(task.id)}
+                                isNew={selectedEmployeeId === 'my-tasks' && myTaskTab === 'assigned' && !seenTaskIds.has(task.id) && task.createdById !== currentUser?.id}
                                 onDelete={() => {
                                   deleteTask(task.id);
                                   if (selectedTask?.id === task.id) setSelectedTask(null);
@@ -1190,42 +1191,27 @@ export function AdminDashboard({
             </div>
 
             {/* DETAIL PANEL - Moved here to align with the list and not push charts */}
-            <AnimatePresence>
-              {liveSelectedTask && (
-                <>
-                  {/* Backdrop for mobile */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => { setSelectedTask(null); selectTask(null); }}
-                    className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-10 lg:hidden"
+            {/* DETAIL PANEL - Modal Pop-up */}
+            <Dialog open={!!liveSelectedTask} onOpenChange={(open) => { if (!open) { setSelectedTask(null); selectTask(null); } }}>
+              <DialogContent className="max-w-[1000px] w-[95vw] h-[90vh] p-0 border-0 overflow-hidden rounded-xl sm:rounded-2xl bg-card">
+                <DialogTitle className="sr-only">Task Details</DialogTitle>
+                {liveSelectedTask && (
+                  <TaskDetailPanel
+                    task={liveSelectedTask}
+                    onClose={() => {
+                      setSelectedTask(null);
+                      selectTask(null);
+                    }}
+                    showDeleteButton={
+                      currentUser?.role?.toUpperCase() === "SUPERADMIN" ||
+                      currentUser?.role?.toUpperCase() === "HEAD_ADMIN" ||
+                      liveSelectedTask.createdBy?.id === currentUser?.id
+                    }
+                    showStatusControl={true}
                   />
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-full sm:w-[400px] lg:w-[380px] shrink-0 fixed lg:sticky top-[5.8rem] right-0 lg:right-auto self-start h-[calc(100vh-12rem)] lg:h-[calc(100vh-12rem)] z-20 filter drop-shadow-2xl lg:drop-shadow-none p-4 sm:p-0"
-                  >
-                    <TaskDetailPanel
-                      task={liveSelectedTask}
-                      onClose={() => {
-                        setSelectedTask(null);
-                        selectTask(null);
-                      }}
-                      showDeleteButton={
-                        currentUser?.role?.toUpperCase() === "SUPERADMIN" ||
-                        currentUser?.role?.toUpperCase() === "HEAD_ADMIN" ||
-                        liveSelectedTask.createdBy?.id === currentUser?.id
-                      }
-                      showStatusControl={true}
-                    />
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
+                )}
+              </DialogContent>
+            </Dialog>
           </motion.div>
         </motion.div>
       </div>

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { motion, AnimatePresence } from "framer-motion"
 import { ClipboardList, Clock, CheckCircle2, AlertTriangle, Bell, ChevronRight, Search, Filter, Trash2, Activity, FileText, Users } from "lucide-react"
@@ -370,10 +371,6 @@ export function EmployeeDashboard({
   }, [filteredTasks, currentPage])
 
   const totalPages = Math.ceil(filteredTasks.length / tasksPerPage)
-  
-  const todo = currentCategoryTasks.filter((t) => t.status?.toLowerCase() === "todo").length
-  const inProgress = currentCategoryTasks.filter((t) => t.status?.toLowerCase() === "in-progress").length
-  const completed = currentCategoryTasks.filter((t) => t.status?.toLowerCase() === "completed").length
 
   const liveSelectedTask = tasks.find((t) => t.id === selectedTaskId) || selectedTask
 
@@ -504,7 +501,7 @@ export function EmployeeDashboard({
                                 />
                               </div>
 
-                              <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-nowrap overflow-x-auto no-scrollbar">
+                              <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-nowrap overflow-x-auto no-scrollbar p-1 -m-1">
                                 <Select value={filterPriority} onValueChange={setFilterPriority}>
                                   <SelectTrigger className="w-[140px] sm:w-[150px] bg-background border-border whitespace-nowrap h-10 rounded-xl">
                                     <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground shrink-0" />
@@ -535,22 +532,6 @@ export function EmployeeDashboard({
                             </div>
                           </div>
 
-                          <div className="flex items-center px-5 py-3 border-b border-border/50">
-                            <TabsList className="bg-transparent border-0 h-auto p-0 gap-1">
-                              <TabsTrigger value="all" onClick={() => setFilterStatus("all")} className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md px-3 py-1.5">
-                                All ({currentCategoryTasks.length})
-                              </TabsTrigger>
-                              <TabsTrigger value="todo" onClick={() => setFilterStatus("todo")} className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md px-3 py-1.5">
-                                To Do ({todo})
-                              </TabsTrigger>
-                              <TabsTrigger value="in-progress" onClick={() => setFilterStatus("in-progress")} className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md px-3 py-1.5">
-                                In Progress ({inProgress})
-                              </TabsTrigger>
-                              <TabsTrigger value="completed" onClick={() => setFilterStatus("completed")} className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md px-3 py-1.5">
-                                Completed ({completed})
-                              </TabsTrigger>
-                            </TabsList>
-                          </div>
                         </div>
                       )}
 
@@ -588,7 +569,7 @@ export function EmployeeDashboard({
                                               markAsSeen(task.id);
                                             }}
                                             isSelected={selectedTask?.id === task.id}
-                                            isNew={!seenTaskIds.has(task.id)}
+                                            isNew={!seenTaskIds.has(task.id) && task.createdById !== currentUser?.id}
                                           />
                                         ))
                                       )}
@@ -669,7 +650,7 @@ export function EmployeeDashboard({
                                                 markAsSeen(task.id);
                                               }}
                                               isSelected={selectedTask?.id === task.id}
-                                              isNew={!seenTaskIds.has(task.id)}
+                                              isNew={!seenTaskIds.has(task.id) && task.createdById !== currentUser?.id}
                                               isPanelOpen={!!selectedTask}
                                             />
                                           ))}
@@ -717,36 +698,20 @@ export function EmployeeDashboard({
                     </Tabs>
                   </div>
 
-                  {/* Detail Panel — responsive container */}
-                  <AnimatePresence>
-                    {liveSelectedTask && (
-                      <>
-                        {/* Backdrop for mobile */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          onClick={() => { setSelectedTask(null); selectTask(null); }}
-                          className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-10 lg:hidden"
+                  {/* Detail Panel — Modal Pop-up */}
+                  <Dialog open={!!liveSelectedTask} onOpenChange={(open) => { if (!open) { setSelectedTask(null); selectTask(null); } }}>
+                    <DialogContent className="max-w-[1000px] w-[95vw] h-[90vh] p-0 border-0 overflow-hidden rounded-xl sm:rounded-2xl bg-card">
+                      <DialogTitle className="sr-only">Task Details</DialogTitle>
+                      {liveSelectedTask && (
+                        <TaskDetailPanel
+                          task={liveSelectedTask}
+                          onClose={() => { setSelectedTask(null); selectTask(null); }}
+                          showStatusControl
+                          showNoteInput
                         />
-                        <motion.div
-                          layout
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 20 }}
-                          transition={{ duration: 0.2 }}
-                          className="w-full sm:w-[400px] lg:w-[380px] shrink-0 fixed lg:sticky top-[5.8rem] right-0 lg:right-auto self-start h-[calc(100vh-12rem)] lg:h-[calc(100vh-12rem)] z-20 filter drop-shadow-2xl lg:drop-shadow-none p-4 sm:p-0"
-                        >
-                          <TaskDetailPanel
-                            task={liveSelectedTask}
-                            onClose={() => { setSelectedTask(null); selectTask(null); }}
-                            showStatusControl
-                            showNoteInput
-                          />
-                        </motion.div>
-                      </>
-                    )}
-                  </AnimatePresence>
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </motion.div>
             )}

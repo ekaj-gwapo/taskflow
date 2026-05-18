@@ -353,7 +353,7 @@ export function TaskDetailPanel({
   }
 
   return (
-    <div className="relative flex flex-col h-full rounded-l-3xl bg-card border-l border-border shadow-[0_0_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden">
+    <div className="relative flex flex-col h-full w-full bg-card overflow-hidden">
       {/* Removed decorative top gradient to fix blur/overlap issues */}
 
 

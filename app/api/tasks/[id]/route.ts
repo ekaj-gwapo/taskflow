@@ -215,7 +215,7 @@ export async function PUT(
     } else if (dbStatus && existingTask.status === "COMPLETED") {
       completedAt = null
     } else {
-      completedAt = existingTask.completedAt
+      completedAt = existingTask.completedAt || existingTask.completedat || null
     }
 
     let newDelegatedById = existingTask.delegatedById;
@@ -241,7 +241,7 @@ export async function PUT(
       SET status = COALESCE(?, status), 
           priority = COALESCE(?, priority),
           dueDate = COALESCE(?, dueDate),
-          completedAt = COALESCE(?, completedAt),
+          completedAt = ?,
           delegatedById = ?,
           delegatedAt = ?,
           assigneeId = ?,

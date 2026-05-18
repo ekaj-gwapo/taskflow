@@ -180,17 +180,19 @@ export function ActionStepsSection({
             <div key={step.id} className="border border-border rounded-lg overflow-hidden bg-secondary/30">
               {/* Step header */}
               <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-secondary/50 transition-colors">
-                <Checkbox
-                  checked={step.completed}
-                  onCheckedChange={(checked) => {
-                    onUpdateStepStatus(step.id, checked === true);
-                    if (checked === true && !step.isActed) {
-                      onUpdateStepActed?.(step.id, true);
-                    }
-                  }}
-                  className="h-4 w-4"
-                  disabled={userRole !== "employee" || taskStatus !== "in-progress"}
-                />
+                <div title={userRole === "employee" && taskStatus !== "in-progress" ? "Set status to In Progress first" : undefined}>
+                  <Checkbox
+                    checked={step.completed}
+                    onCheckedChange={(checked) => {
+                      onUpdateStepStatus(step.id, checked === true);
+                      if (checked === true && !step.isActed) {
+                        onUpdateStepActed?.(step.id, true);
+                      }
+                    }}
+                    className="h-4 w-4"
+                    disabled={userRole !== "employee" || taskStatus !== "in-progress"}
+                  />
+                </div>
 
 
                 <div className="flex-1 min-w-0 pr-2">
@@ -216,27 +218,29 @@ export function ActionStepsSection({
 
                 <div className="flex items-center gap-2 shrink-0">
                   {userRole === "employee" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={step.completed || taskStatus !== "in-progress"}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onUpdateStepActed?.(step.id, !step.isActed);
-                      }}
-                      className={`h-7 px-3 text-[10px] uppercase font-bold tracking-wider rounded-lg transition-all shrink-0 ${step.isActed
-                          ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 hover:text-primary'
-                          : 'bg-background border-border/50 text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-border'
-                        }`}
-                    >
-                      {step.isActed ? (
-                        <span className="flex items-center gap-1.5">
-                          <Check className="h-3 w-3" />
-                          ACTED
-                        </span>
-                      ) : 'Mark Acted'}
+                    <div title={taskStatus !== "in-progress" ? "Set status to In Progress first" : undefined}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={step.completed || taskStatus !== "in-progress"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onUpdateStepActed?.(step.id, !step.isActed);
+                        }}
+                        className={`h-7 px-3 text-[10px] uppercase font-bold tracking-wider rounded-lg transition-all shrink-0 ${step.isActed
+                            ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 hover:text-primary'
+                            : 'bg-background border-border/50 text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-border'
+                          }`}
+                      >
+                        {step.isActed ? (
+                          <span className="flex items-center gap-1.5">
+                            <Check className="h-3 w-3" />
+                            ACTED
+                          </span>
+                        ) : 'Mark Acted'}
 
-                    </Button>
+                      </Button>
+                    </div>
                   )}
                   <button
                     onClick={() => handleToggleExpand(step.id)}
