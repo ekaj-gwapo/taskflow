@@ -45,6 +45,7 @@ interface TaskContextType {
   addActionStep: (taskId: string, stepTitle: string) => void
   updateActionStepStatus: (taskId: string, stepId: string, completed: boolean) => void
   updateActionStepActed: (taskId: string, stepId: string, isActed: boolean) => void
+  editActionStep: (taskId: string, stepId: string, title: string) => void
   deleteActionStep: (taskId: string, stepId: string) => void
   addStepNote: (taskId: string, stepId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => Promise<void>
 
@@ -616,6 +617,46 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const editActionStep = useCallback(
+    async (taskId: string, stepId: string, title: string) => {
+      try {
+        const token = localStorage.getItem("token")
+        const response = await fetch(`/api/tasks/${taskId}/action-steps/${stepId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ title }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("Edit action step error:", errorData.error || response.statusText)
+          toast.error(errorData.error || "Failed to edit action step.")
+          throw new Error(errorData.error || "Failed to edit action step")
+        }
+
+        const data = await response.json()
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id.toLowerCase() === taskId.toLowerCase()
+              ? {
+                  ...t,
+                  actionSteps: (t.actionSteps || []).map((step) =>
+                    step.id.toLowerCase() === stepId.toLowerCase() ? data.actionStep : step
+                  ),
+                }
+              : t
+          )
+        )
+      } catch (error) {
+        console.error("Edit action step error:", error)
+      }
+    },
+    []
+  )
+
   const updateActionStepStatus = useCallback(
     async (taskId: string, stepId: string, completed: boolean) => {
       try {
@@ -1179,6 +1220,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addActionStep,
         updateActionStepStatus,
         updateActionStepActed,
+        editActionStep,
         deleteActionStep,
         addStepNote,
         reports,

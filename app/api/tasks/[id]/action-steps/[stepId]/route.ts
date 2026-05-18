@@ -13,7 +13,7 @@ export async function PUT(
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { completed, isActed } = await request.json()
+    const { completed, isActed, title } = await request.json()
 
     const taskId = (await params).id?.toLowerCase()
     // Verify task exists
@@ -32,21 +32,27 @@ export async function PUT(
     ) || task.assigneeId?.toLowerCase() === auth.user!.id.toLowerCase();
 
     const isSuper = role === "SUPERADMIN" || role === "MASTER_ADMIN";
-    if (!isSuper && !isAssigned) {
+    
+    // Check if the update contains ONLY title changes.
+    // If it contains status changes, the user must be assigned.
+    // If it contains title changes, the user must be a creator or admin to edit it, unless they are assigned.
+    // Let's enforce the existing rule for status, but for title editing, admins/creators can edit.
+    const isStatusUpdate = completed !== undefined || isActed !== undefined;
+    if (isStatusUpdate && !isSuper && !isAssigned) {
       return NextResponse.json(
-        { error: "Access denied. Only assigned users can update action steps." },
+        { error: "Access denied. Only assigned users can update action step statuses." },
         { status: 403 }
       )
     }
 
-
-    const currentStep: any = await db.getOne("SELECT completed, isacted, isActed FROM action_steps WHERE id = ?", [(await params).stepId]);
+    const currentStep: any = await db.getOne("SELECT title, completed, isacted, isActed FROM action_steps WHERE id = ?", [(await params).stepId]);
     const currentCompleted = currentStep.completed; 
     const currentIsActed = currentStep.isActed !== undefined ? currentStep.isActed : currentStep.isacted;
+    const currentTitle = currentStep.title;
 
     const newCompleted = completed !== undefined ? !!completed : !!currentCompleted;
     let newIsActed = isActed !== undefined ? !!isActed : !!currentIsActed;
-
+    const newTitle = title !== undefined ? title : currentTitle;
 
     // Automatically mark as acted if it's being marked completed
     if (newCompleted) {
@@ -55,13 +61,14 @@ export async function PUT(
 
     await db.execute(`
       UPDATE action_steps 
-      SET completed = ?, 
+      SET title = ?,
+          completed = ?, 
           isActed = ?,
           updatedAt = ?
       WHERE id = ?
-    `, [newCompleted, newIsActed, new Date().toISOString(), (await params).stepId]);
+    `, [newTitle, newCompleted, newIsActed, new Date().toISOString(), (await params).stepId]);
 
-    const step = await db.getOne("SELECT title FROM action_steps WHERE id = ?", [(await params).stepId]) as any;
+    const step = { title: newTitle };
     
     await logActivity({
       action: "STEP_UPDATED",

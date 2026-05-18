@@ -61,7 +61,7 @@ export function TaskDetailPanel({
   showNoteInput = false,
   showDeleteButton = false,
 }: TaskDetailPanelProps) {
-  const { currentRole, currentUser, updateTaskStatus, updateTask, addProgressNote, addTaskComment, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees, requestExtension, reviewExtension, toggleArchiveTask, targetSection, setTargetSection } = useTaskContext()
+  const { currentRole, currentUser, updateTaskStatus, updateTask, addProgressNote, addTaskComment, deleteTask, addActionStep, updateActionStepStatus, updateActionStepActed, editActionStep, deleteActionStep, addStepNote, canAccessTask, updateTaskAssignees, allEmployees, requestExtension, reviewExtension, toggleArchiveTask, targetSection, setTargetSection } = useTaskContext()
   const discussionRef = useRef<HTMLDivElement>(null)
   const extensionRef = useRef<HTMLDivElement>(null)
   const [noteContent, setNoteContent] = useState("")
@@ -320,6 +320,10 @@ export function TaskDetailPanel({
 
   const handleDeleteActionStep = (stepId: string) => {
     deleteActionStep(task.id, stepId)
+  }
+
+  const handleEditActionStep = (stepId: string, title: string) => {
+    editActionStep(task.id, stepId, title)
   }
 
   const handleUpdateActionStepActed = (stepId: string, isActed: boolean) => {
@@ -1108,6 +1112,7 @@ export function TaskDetailPanel({
                 onUpdateStepStatus={handleUpdateActionStepStatus}
                 onUpdateStepActed={handleUpdateActionStepActed}
                 onDeleteStep={handleDeleteActionStep}
+                onEditStep={handleEditActionStep}
                 onAddStepNote={handleAddStepNote}
                 userRole={isEmployeeLike ? "employee" : currentRole || undefined}
                 taskStatus={task.status}
@@ -1150,75 +1155,80 @@ export function TaskDetailPanel({
                   <div className="flex flex-col gap-4 mb-4">
                     {task.comments.map((comment) => {
                       const initials = (comment.authorName || "User").split(" ").map((n: string) => n[0]).join("")
+                      const isMine = comment.authorId === currentUser?.id
                       return (
-                        <div key={comment.id} className="flex gap-3 group">
-                          <Avatar className="h-8 w-8 shrink-0 border border-border/50 shadow-sm">
-                            {comment.authorAvatar && <AvatarImage src={comment.authorAvatar} alt={comment.authorName} />}
-                            <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">
-                              {initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-xs font-bold text-foreground">
-                                {comment.authorName}
-                              </span>
-                              <span className="text-[10px] font-medium text-muted-foreground">
-                                {(() => {
-                                  const dateVal = comment.createdAt || (comment as any).createdat;
-                                  try {
-                                    return dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : "recently";
-                                  } catch (e) {
-                                    return "recently";
-                                  }
-                                })()}
-                              </span>
+                          <div key={comment.id} className={cn("flex gap-3 group", isMine ? "flex-row-reverse" : "flex-row")}>
+                            <Avatar className="h-8 w-8 shrink-0 border border-border/50 shadow-sm mt-1">
+                              {comment.authorAvatar && <AvatarImage src={comment.authorAvatar} alt={comment.authorName} />}
+                              <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className={cn("flex flex-col flex-1 min-w-0 max-w-[85%]", isMine ? "items-end" : "items-start")}>
+                              <div className={cn("flex items-center gap-2 mb-0.5", isMine ? "flex-row-reverse" : "flex-row")}>
+                                <span className="text-xs font-bold text-foreground">
+                                  {isMine ? "You" : comment.authorName}
+                                </span>
+                                <span className="text-[10px] font-medium text-muted-foreground">
+                                  {(() => {
+                                    const dateVal = comment.createdAt || (comment as any).createdat;
+                                    try {
+                                      return dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : "recently";
+                                    } catch (e) {
+                                      return "recently";
+                                    }
+                                  })()}
+                                </span>
+                              </div>
+                              <div className={cn(
+                                "text-sm leading-relaxed p-3 border shadow-sm",
+                                isMine 
+                                  ? "bg-primary text-primary-foreground border-primary rounded-2xl rounded-tr-sm" 
+                                  : "bg-secondary/40 text-foreground border-border/30 rounded-2xl rounded-tl-sm"
+                              )}>
+                                {comment.content}
+                                {comment.attachmentUrl && (
+                                  <div className={cn("mt-2 pt-2 border-t", isMine ? "border-primary-foreground/20" : "border-border/20")}>
+                                    {comment.attachmentType?.startsWith("image/") ? (
+                                      <a
+                                        href={comment.attachmentUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={cn("relative inline-block group/img overflow-hidden rounded-lg border transition-all", isMine ? "border-primary-foreground/30 hover:border-primary-foreground/60" : "border-border/50 hover:border-primary/50")}
+                                      >
+                                        <img
+                                          src={comment.attachmentUrl}
+                                          alt={comment.attachmentName}
+                                          className="max-w-full h-auto max-h-[200px] object-contain rounded-md"
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                                          <ExternalLink className="h-4 w-4 text-white" />
+                                        </div>
+                                      </a>
+                                    ) : (
+                                      <a
+                                        href={comment.attachmentUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={cn("flex items-center gap-2.5 p-2 rounded-xl transition-all group/file max-w-full border", isMine ? "bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20" : "bg-background/50 border-border/50 hover:border-primary/30 hover:bg-background/80")}
+                                      >
+                                        <div className={cn("p-1.5 rounded-lg transition-colors", isMine ? "bg-primary-foreground/20 text-primary-foreground group-hover/file:bg-primary-foreground group-hover/file:text-primary" : "bg-primary/10 text-primary group-hover/file:bg-primary group-hover/file:text-white")}>
+                                          <FileText className="h-3.5 w-3.5" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className={cn("text-[10px] font-bold truncate", isMine ? "text-primary-foreground" : "text-foreground")}>{comment.attachmentName}</p>
+                                          <p className={cn("text-[8px] uppercase font-black tracking-widest leading-none mt-0.5", isMine ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                            {comment.attachmentType?.split("/")[1] || "FILE"}
+                                          </p>
+                                        </div>
+                                        <ExternalLink className={cn("h-3 w-3 transition-colors shrink-0", isMine ? "text-primary-foreground/70 group-hover/file:text-primary-foreground" : "text-muted-foreground group-hover/file:text-primary")} />
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-sm text-foreground/90 leading-relaxed bg-secondary/30 p-3 rounded-2xl rounded-tl-sm border border-border/30">
-                              {comment.content}
-                              {comment.attachmentUrl && (
-                                <div className="mt-2 pt-2 border-t border-border/20">
-                                  {comment.attachmentType?.startsWith("image/") ? (
-                                    <a
-                                      href={comment.attachmentUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="relative inline-block group/img overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 transition-all"
-                                    >
-                                      <img
-                                        src={comment.attachmentUrl}
-                                        alt={comment.attachmentName}
-                                        className="max-w-full h-auto max-h-[200px] object-contain rounded-md"
-                                      />
-                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
-                                        <ExternalLink className="h-4 w-4 text-white" />
-                                      </div>
-                                    </a>
-                                  ) : (
-                                    <a
-                                      href={comment.attachmentUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-2.5 p-2 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-background/80 transition-all group/file max-w-full"
-                                    >
-                                      <div className="p-1.5 rounded-lg bg-primary/10 text-primary group-hover/file:bg-primary group-hover/file:text-white transition-colors">
-                                        <FileText className="h-3.5 w-3.5" />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-bold text-foreground truncate">{comment.attachmentName}</p>
-                                        <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest leading-none mt-0.5">
-                                          {comment.attachmentType?.split("/")[1] || "FILE"}
-                                        </p>
-                                      </div>
-                                      <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/file:text-primary transition-colors shrink-0" />
-                                    </a>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-
                           </div>
-                        </div>
                       )
                     })}
                   </div>

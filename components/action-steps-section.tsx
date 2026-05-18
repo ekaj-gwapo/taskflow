@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ChevronDown, Plus, Trash2, Send, Paperclip, FileIcon, FileText, Loader2, ExternalLink, X, Check, MessageSquare } from "lucide-react"
+import { ChevronDown, Plus, Trash2, Send, Paperclip, FileIcon, FileText, Loader2, ExternalLink, X, Check, MessageSquare, Pencil } from "lucide-react"
 
 import type { ActionStep, UserRole } from "@/lib/store"
 import { formatDistanceToNow } from "date-fns"
@@ -27,6 +27,7 @@ interface ActionStepsSectionProps {
   onAddStep: (stepTitle: string) => void
   onUpdateStepStatus: (stepId: string, completed: boolean) => void
   onDeleteStep: (stepId: string) => void
+  onEditStep?: (stepId: string, title: string) => void
   onAddStepNote: (stepId: string, content: string, attachmentUrl?: string, attachmentName?: string, attachmentType?: string) => void
   onUpdateStepActed?: (stepId: string, isActed: boolean) => void
   userRole?: UserRole
@@ -39,6 +40,7 @@ export function ActionStepsSection({
   onAddStep,
   onUpdateStepStatus,
   onDeleteStep,
+  onEditStep,
   onAddStepNote,
   onUpdateStepActed,
   userRole = "employee",
@@ -46,6 +48,8 @@ export function ActionStepsSection({
   isCreator = false,
 }: ActionStepsSectionProps) {
   const [newStepTitle, setNewStepTitle] = useState("")
+  const [editingStepId, setEditingStepId] = useState<string | null>(null)
+  const [editingStepTitle, setEditingStepTitle] = useState("")
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set())
   const [stepNoteInputs, setStepNoteInputs] = useState<Record<string, string>>({})
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File | null>>({})
@@ -205,14 +209,64 @@ export function ActionStepsSection({
                         </span>
                       )}
                     </div>
-                    <p
-                      className={`text-sm leading-snug ${step.completed
-                          ? "text-muted-foreground line-through"
-                          : "text-foreground font-medium"
-                        }`}
-                    >
-                      {step.title}
-                    </p>
+                    {editingStepId === step.id ? (
+                      <div className="flex gap-2 items-center w-full mt-1">
+                        <input
+                          type="text"
+                          value={editingStepTitle}
+                          onChange={(e) => setEditingStepTitle(e.target.value)}
+                          className="flex-1 px-2 py-1 h-7 bg-background border border-border rounded text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              if (editingStepTitle.trim() && onEditStep) {
+                                onEditStep(step.id, editingStepTitle.trim())
+                                setEditingStepId(null)
+                              }
+                            } else if (e.key === "Escape") {
+                              setEditingStepId(null)
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (editingStepTitle.trim() && onEditStep) {
+                              onEditStep(step.id, editingStepTitle.trim())
+                              setEditingStepId(null)
+                            }
+                          }}
+                          className="h-7 w-7 p-0 shrink-0 text-[hsl(var(--success))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingStepId(null)
+                          }}
+                          className="h-7 w-7 p-0 shrink-0 text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <p
+                        className={`text-sm leading-snug ${step.completed
+                            ? "text-muted-foreground line-through"
+                            : "text-foreground font-medium"
+                          }`}
+                      >
+                        {step.title}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -253,7 +307,20 @@ export function ActionStepsSection({
                   </button>
                 </div>
                 {(userRole === "admin" || userRole === "superadmin" || isCreator) && taskStatus !== "completed" && (
-                  <AlertDialog>
+                  <div className="flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditingStepId(step.id)
+                        setEditingStepTitle(step.title)
+                      }}
+                      className="text-muted-foreground hover:text-foreground hover:bg-secondary h-7 w-7 p-0"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="ghost"
@@ -278,13 +345,14 @@ export function ActionStepsSection({
                             e.stopPropagation();
                             onDeleteStep(step.id);
                           }}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          className="bg-destructive hover:bg-destructive/90"
                         >
-                          Delete
+                          Delete Step
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                  </div>
                 )}
               </div>
 
