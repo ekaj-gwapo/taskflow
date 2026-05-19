@@ -54,7 +54,7 @@ export function EmployeeWeeklyPerformance({ onHide }: { onHide?: () => void }) {
 
   return (
     <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden h-[400px] flex flex-col">
-      {(currentUser?.plan === "FREE" || !currentUser?.plan || currentUser?.plan === "STARTER") && (
+      {(currentUser?.plan !== "PRO" && currentUser?.plan !== "ENTERPRISE") && (
         <LockedOverlay 
           title="Team Productivity" 
           description="Track weekly performance trends, completion rates, and individual employee efficiency."

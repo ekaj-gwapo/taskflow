@@ -26,6 +26,7 @@ export function LoginScreen() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [lockoutTimer, setLockoutTimer] = useState(0)
 
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
   
@@ -56,6 +57,15 @@ export function LoginScreen() {
       }
     }
   }, [router, searchParams])
+  
+  useEffect(() => {
+    if (lockoutTimer > 0) {
+      const timer = setInterval(() => {
+        setLockoutTimer((prev) => prev - 1)
+      }, 1000)
+      return () => clearInterval(timer)
+    }
+  }, [lockoutTimer])
   
   const [formData, setFormData] = useState({
     email: "",
@@ -116,6 +126,12 @@ export function LoginScreen() {
 
       const data = await response.json()
 
+      if (response.status === 429 || data.error?.includes("Too many login")) {
+        setLockoutTimer(60)
+        setError("Too many login attempts. Please try again in 60 seconds.")
+        return
+      }
+
       if (!response.ok) {
         setError(data.error || "Login failed")
         return
@@ -170,6 +186,7 @@ export function LoginScreen() {
                       value={formData.email}
                       onChange={handleInputChange}
                       className="h-12 pl-12 rounded-2xl bg-secondary/30 border-transparent focus:bg-background transition-all"
+                      disabled={loading || lockoutTimer > 0}
                       required
                     />
                   </div>
@@ -186,19 +203,21 @@ export function LoginScreen() {
                   onChange={handleInputChange}
                   placeholder="••••••••"
                   className="bg-secondary border-border text-foreground"
-                  disabled={loading}
+                  disabled={loading || lockoutTimer > 0}
                 />
               </div>
 
-              {error && (
+              {(error || lockoutTimer > 0) && (
                 <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
-                  <p className="text-xs font-medium text-destructive">{error}</p>
+                  <p className="text-xs font-medium text-destructive">
+                    {lockoutTimer > 0 ? `Too many login attempts. Please try again in ${lockoutTimer} seconds.` : error}
+                  </p>
                 </div>
               )}
 
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || lockoutTimer > 0}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 rounded-xl font-bold transition-all"
               >
                 {loading ? (

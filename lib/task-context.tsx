@@ -1067,7 +1067,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         setNotifications(data.notifications || [])
       }
     } catch (error) {
-      console.error("Failed to fetch notifications:", error)
+      console.warn("Failed to fetch notifications:", error)
     }
   }, [currentUser])
 
@@ -1181,7 +1181,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         // Fetch Notifications
         await fetchNotifications();
       } catch (error) {
-        console.error('Failed to fetch data:', error);
+        console.warn('Failed to fetch data:', error);
         setIsLoadingTasks(false);
       }
     };

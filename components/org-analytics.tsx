@@ -25,9 +25,10 @@ import {
   PieChart,
   Pie
 } from "recharts"
+import { LockedOverlay } from "@/components/ui/locked-overlay"
 
 export function OrgAnalytics() {
-  const { tasks, allEmployees } = useTaskContext()
+  const { tasks, allEmployees, currentUser } = useTaskContext()
 
   const stats = useMemo(() => {
     const total = tasks.length
@@ -100,7 +101,13 @@ export function OrgAnalytics() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Priority Distribution */}
-        <Card className="lg:col-span-2 border-border bg-card/40 backdrop-blur-xl shadow-xl">
+        <Card className="lg:col-span-2 relative border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden">
+          {(currentUser?.plan !== "PRO" && currentUser?.plan !== "ENTERPRISE") && (
+            <LockedOverlay 
+              title="Priority Distribution" 
+              description="Analyze task urgency across your organization to effectively allocate resources."
+            />
+          )}
           <CardHeader className="pb-2 border-b border-border/50 bg-muted/20">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-primary/10 text-primary">
@@ -144,7 +151,13 @@ export function OrgAnalytics() {
         </Card>
 
         {/* Quick Org Stats */}
-        <Card className="border-border bg-card/40 backdrop-blur-xl shadow-xl">
+        <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden">
+          {(currentUser?.plan !== "PRO" && currentUser?.plan !== "ENTERPRISE") && (
+            <LockedOverlay 
+              title="Status Overview" 
+              description="Track real-time workflow progress and employee task loads at a glance."
+            />
+          )}
           <CardHeader className="pb-2 border-b border-border/50 bg-muted/20">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600">

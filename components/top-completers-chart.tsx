@@ -105,7 +105,7 @@ export function TopCompletersChart({ onHide }: { onHide?: () => void }) {
 
   return (
     <Card className="relative border-border bg-card/40 backdrop-blur-xl shadow-xl h-[400px] flex flex-col overflow-hidden">
-      {(currentUser?.plan === "FREE" || !currentUser?.plan || currentUser?.plan === "STARTER") && (
+      {(currentUser?.plan !== "PRO" && currentUser?.plan !== "ENTERPRISE") && (
         <LockedOverlay 
           title="Team Leaderboard" 
           description="Identify your top performers with point-based rankings and productivity scores."

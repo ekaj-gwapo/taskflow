@@ -482,7 +482,11 @@ export function TaskDetailPanel({
                         </div>
                         <Command className="bg-transparent">
                           <CommandInput placeholder="Search employees..." className="h-9 border-none focus:ring-0" />
-                          <CommandList className="max-h-[250px]">
+                          <CommandList 
+                            className="max-h-[250px] overflow-y-auto overscroll-contain"
+                            onWheel={(e) => e.stopPropagation()}
+                            onTouchMove={(e) => e.stopPropagation()}
+                          >
                             <CommandEmpty>No employee found.</CommandEmpty>
                             <CommandGroup className="p-1.5">
                               {allEmployees.filter(emp => {
