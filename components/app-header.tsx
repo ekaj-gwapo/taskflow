@@ -88,7 +88,7 @@ export function AppHeader({ onMenuClick }: { onMenuClick?: () => void }) {
               </div>
               <div className="p-6 pt-4 bg-muted/20 border-t border-border/50">
                 <AlertDialogFooter className="gap-3 sm:gap-4 flex-col sm:flex-row">
-                  <AlertDialogCancel className="h-12 rounded-xl border-border/50 bg-background hover:bg-secondary transition-colors flex-1 font-bold">
+                  <AlertDialogCancel className="h-12 rounded-xl border-border/50 bg-background hover:bg-secondary text-foreground hover:text-foreground transition-colors flex-1 font-bold">
                     Cancel
                   </AlertDialogCancel>
                   <AlertDialogAction
