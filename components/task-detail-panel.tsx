@@ -362,379 +362,360 @@ export function TaskDetailPanel({
 
 
       {/* Header */}
-      <div className="relative z-10 border-b border-border/50 bg-card">
-        <div className="flex items-start justify-between p-6">
-          <div className="flex-1 min-w-0 pr-4">
-            <h3 className="text-xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+      <div className="relative z-10 p-5 bg-card border-b border-border">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-bold tracking-tight text-foreground leading-tight">
               {task.title}
-            </h3>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
               {task.description}
             </p>
+            {task.createdBy && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground/70">Created by</span>
+                  <span className="font-semibold text-foreground">{task.createdBy.name}</span>
+                  <span className="text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded-full bg-secondary/50 text-muted-foreground border border-border/50">
+                    {task.createdBy.role}
+                  </span>
+                </span>
+                {task.delegatedBy && task.delegatedBy.id !== task.createdBy.id && (
+                  <span className="flex items-center gap-1.5 ml-1">
+                    <span className="text-muted-foreground/40">•</span>
+                    <span className="text-muted-foreground/70">Delegated by</span>
+                    <span className="font-semibold text-foreground">{task.delegatedBy.name}</span>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
             onClick={onClose}
-            className="shrink-0 h-8 w-8 rounded-full bg-background/50 backdrop-blur-sm border-border/50 shadow-sm hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all"
+            className="shrink-0 h-8 w-8 rounded-full bg-secondary/30 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </Button>
         </div>
-
-        {task.createdBy && (
-          <div className="px-6 pb-6">
-            <div className="text-xs text-muted-foreground flex flex-col gap-1.5 p-3 rounded-xl bg-secondary/40 border border-border/50 shadow-sm">
-              <span className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-muted-foreground/70">Created by</span>
-                <span className="font-semibold text-foreground">{task.createdBy.name}</span>
-                <span className="uppercase text-[9px] font-bold tracking-wider bg-primary/10 text-primary px-1.5 py-0.5 rounded-md border border-primary/20 shrink-0">{task.createdBy.role}</span>
-              </span>
-              {task.delegatedBy && task.delegatedBy.id?.toLowerCase() !== task.createdBy.id?.toLowerCase() && (
-                <span className="flex items-center gap-1.5 text-muted-foreground/80 flex-wrap">
-                  <span className="text-primary/60 font-bold">↳</span> Delegated by <span className="font-semibold text-foreground">{task.delegatedBy.name}</span>
-                </span>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="flex-1 overflow-y-auto relative z-10">
         <div className="flex flex-col pb-4">
-          {/* Meta */}
-          <div className="p-6 border-b border-border/50 flex flex-col gap-4 bg-card relative">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2.5 p-3.5 rounded-xl bg-secondary/30 border border-border/50 shadow-sm hover:shadow-md hover:bg-secondary/40 transition-all duration-300">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse" />
-                  Status
-                </span>
-                {isStatusEditable ? (
-                  <Select
-                    value={task.status}
-                    onValueChange={(v) => handleStatusChange(v as TaskStatus)}
-                  >
-                    <SelectTrigger className="h-9 w-full bg-background border-border/50 shadow-sm text-xs px-3 gap-2 font-medium hover:border-primary/30 transition-colors focus:ring-primary/20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border/50 shadow-lg backdrop-blur-xl">
-                      {!(isEmployeeLike && task.status !== "todo") && (
-                        <SelectItem value="todo">To Do</SelectItem>
-                      )}
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div className="flex mt-0.5">
-                    <StatusBadge status={task.status} />
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col gap-2.5 p-3.5 rounded-xl bg-secondary/30 border border-border/50 shadow-sm hover:shadow-md hover:bg-secondary/40 transition-all duration-300">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-orange-500/60" />
-                  Priority
-                </span>
-                <div className="flex mt-0.5">
-                  <PriorityBadge priority={task.priority} />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3.5 mt-1">
-              <div className="flex items-center justify-between pb-2 border-b border-border/30">
-                <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
-                  <div className="p-1 rounded-md bg-secondary/60 border border-border/50">
-                    <Users className="h-3.5 w-3.5 text-foreground/80" />
-                  </div>
-                  Assignees
-                </div>
-                {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && task.status !== "completed" && (
-                  <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-[10px] bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary font-bold shadow-none w-max px-3 gap-1.5 rounded-full transition-colors"
-                        disabled={isUpdatingAssignees}
+          {/* Meta Information */}
+          <div className="p-5 border-b border-border bg-card/40">
+            <div className="flex flex-col gap-5">
+              {/* Status & Priority row */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Status</span>
+                    {isStatusEditable ? (
+                      <Select
+                        value={task.status}
+                        onValueChange={(v) => handleStatusChange(v as TaskStatus)}
                       >
-                        {isUpdatingAssignees ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          (task.assignees && task.assignees.length > 1) ? <Users className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />
-                        )}
-                        <span className="truncate uppercase tracking-wider">
-                          {isUpdatingAssignees ? "Updating..." : (
-                            (task.assignees && task.assignees.length > 1)
-                              ? "Manage Team"
-                              : "Reassign / Add Team"
+                        <SelectTrigger className="h-10 w-full bg-background border-border shadow-sm text-xs px-3 gap-2 font-medium hover:border-primary/30 transition-all focus:ring-primary/20 rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border-border/50 shadow-xl backdrop-blur-xl rounded-xl">
+                          {!(isEmployeeLike && task.status !== "todo") && (
+                            <SelectItem value="todo">To Do</SelectItem>
                           )}
-                        </span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[280px] p-0 border-border/50 shadow-xl overflow-hidden" align="end">
-                      <div className="bg-popover flex flex-col max-h-[400px]">
-                        <div className="p-2 border-b border-border/50 bg-muted/30">
-                          <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2 py-1">Manage Team</h4>
-                        </div>
-                        <Command className="bg-transparent">
-                          <CommandInput placeholder="Search employees..." className="h-9 border-none focus:ring-0" />
-                          <CommandList 
-                            className="max-h-[250px] overflow-y-auto overscroll-contain"
-                            onWheel={(e) => e.stopPropagation()}
-                            onTouchMove={(e) => e.stopPropagation()}
-                          >
-                            <CommandEmpty>No employee found.</CommandEmpty>
-                            <CommandGroup className="p-1.5">
-                              {allEmployees.filter(emp => {
-                                // Show everyone except current user normally
-                                // BUT if current user is Admin/Head Admin/Creator/Superadmin, show them too 
-                                // OR if they are already an assignee, show them so they can be removed
-                                const isManagement = ["admin", "head_admin", "creator", "superadmin"].includes(currentUser?.role?.toLowerCase() || "");
-                                const isAlreadyAssignee = localAssigneeIds.includes(currentUser?.id || "");
-                                if (emp.id === currentUser?.id) {
-                                  return isManagement || isAlreadyAssignee;
-                                }
-                                return true;
-                              }).map((emp) => {
-                                const isSelected = localAssigneeIds.includes(emp.id)
-                                return (
-                                  <CommandItem
-                                    key={emp.id}
-                                    onSelect={() => handleToggleAssignee(emp.id)}
-                                    className={`flex items-center gap-3 px-2 py-2 rounded-lg cursor-pointer transition-colors hover:bg-primary/5 data-[selected=true]:bg-primary/5`}
-                                  >
-                                    <Checkbox
-                                      checked={isSelected}
-                                      onCheckedChange={() => handleToggleAssignee(emp.id)}
-                                      className="h-4 w-4 rounded-md border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                    />
-                                    <div className="flex flex-col">
-                                      <span className="text-sm font-semibold text-foreground leading-none">{emp.name}</span>
-                                      <span className="text-[10px] text-muted-foreground mt-1 capitalize leading-none">{emp.role}</span>
-                                    </div>
-                                    {isSelected && <Check className="h-3.5 w-3.5 text-primary ml-auto" />}
-                                  </CommandItem>
-                                )
-                              })}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                        <div className="p-3 border-t border-border/50 bg-muted/20 flex flex-col gap-2">
-                           <div className="flex items-center justify-between px-1">
-                              <span className="text-[10px] font-bold text-muted-foreground">
-                                {localAssigneeIds.length} members selected
+                          <SelectItem value="in-progress">In Progress</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex h-10 items-center">
+                        <StatusBadge status={task.status} />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Priority</span>
+                    <div className="flex h-10 items-center">
+                      <PriorityBadge priority={task.priority} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Separator */}
+                <div className="border-t border-border" />
+
+                <div className="flex flex-col gap-2">
+                   {task.createdAt && (
+                     <div className="flex items-center justify-between bg-background border border-border px-3 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:border-border/80 transition-all duration-300">
+                       <span className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                         <Clock className="h-4 w-4 text-muted-foreground/60" /> Created
+                       </span>
+                       <span className="text-sm font-medium text-foreground ml-auto text-right">
+                         {new Date(task.createdAt).toLocaleString(undefined, {
+                           month: "short",
+                           day: "numeric",
+                           hour: "numeric",
+                           minute: "2-digit",
+                         })}
+                       </span>
+                     </div>
+                   )}
+                   <div className="flex items-center justify-between bg-background border border-border px-3 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:border-border/80 transition-all duration-300">
+                     <span className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                       <Calendar className="h-4 w-4 text-muted-foreground/60" /> Due Date
+                     </span>
+                     {((currentRole === "superadmin" || (task.createdById === currentUser?.id && (currentRole === "admin" || currentRole === "head_admin"))) && task.status !== "completed") ? (
+                        <div className="flex items-center gap-2">
+                          <div className="relative group/input">
+                            <div className={cn(
+                              "text-sm font-medium transition-all duration-300 flex items-center",
+                              isOverdue && !localDueDate ? "text-destructive" : "text-foreground"
+                            )}>
+                              <span className="ml-auto text-right">
+                              {localDueDate 
+                                ? new Date(localDueDate).toLocaleString(undefined, {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                  })
+                                : task.dueDate 
+                                ? new Date(task.dueDate).toLocaleString(undefined, {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                  })
+                                : "Set Due Date"}
+                              {isOverdue && task.dueDate && !localDueDate && " (Overdue)"}
                               </span>
-                              {localAssigneeIds.length !== (task.assignees?.length || 0) && (
-                                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                              )}
-                           </div>
-                           <Button 
-                              size="sm" 
-                              className="w-full h-8 text-[11px] font-bold uppercase tracking-wider"
-                              disabled={isUpdatingAssignees || localAssigneeIds.length === 0}
-                              onClick={handleSaveAssignees}
-                           >
-                              {isUpdatingAssignees ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : "Save Changes"}
-                           </Button>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
-              </div>
-              <div className="grid gap-2.5">
-                {task.assignees && task.assignees.length > 0 ? (
-                  task.assignees.map(a => (
-                    <div key={a.id} className="flex items-center justify-between bg-gradient-to-r from-secondary/40 to-secondary/10 px-3.5 py-2.5 rounded-xl border border-border/50 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] group hover:from-secondary/60 hover:to-secondary/20 hover:border-primary/20 transition-all duration-300">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-7 w-7 border-2 border-background shadow-sm group-hover:scale-105 transition-transform duration-300">
-                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary uppercase font-bold">{a.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm text-foreground font-semibold tracking-tight flex items-center gap-2">
-                          {a.name}
-                          {task.createdBy?.id === a.id && (
-                            <span className="text-[9px] uppercase tracking-wider font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">
-                              Creator
-                            </span>
+                            </div>
+                            <input
+                              type="datetime-local"
+                              value={localDueDate ? localDueDate.substring(0, 16) : task.dueDate ? (task.dueDate.includes("T") ? task.dueDate.substring(0, 16) : new Date(task.dueDate).toISOString().substring(0, 16)) : ""}
+                              onChange={(e) => {
+                                const newDate = e.target.value;
+                                if (newDate) {
+                                  setLocalDueDate(new Date(newDate).toISOString());
+                                } else {
+                                  setLocalDueDate(null);
+                                }
+                              }}
+                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                            />
+                          </div>
+                          {localDueDate && localDueDate !== task.dueDate && (
+                            <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200 ml-2">
+                              <Button 
+                                size="icon" 
+                                variant="outline"
+                                className="h-7 w-7 rounded-full bg-background border-border shadow-sm text-[hsl(var(--success))]"
+                                disabled={isSavingDueDate}
+                                onClick={async () => {
+                                  setIsSavingDueDate(true);
+                                  try {
+                                    await updateTask(task.id, { dueDate: localDueDate });
+                                    setLocalDueDate(null);
+                                    toast.success("Due date updated");
+                                  } catch (e) {
+                                    toast.error("Failed to update due date");
+                                  } finally {
+                                    setIsSavingDueDate(false);
+                                  }
+                                }}
+                              >
+                                {isSavingDueDate ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-4 w-4" />}
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                className="h-7 w-7 rounded-full text-muted-foreground hover:bg-secondary"
+                                disabled={isSavingDueDate}
+                                onClick={() => setLocalDueDate(null)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
                           )}
+                        </div>
+                     ) : (
+                       <span className={cn(
+                         "text-sm font-medium ml-auto text-right",
+                         isOverdue ? "text-destructive" : "text-foreground"
+                       )}>
+                         {task.dueDate 
+                           ? new Date(task.dueDate).toLocaleString(undefined, {
+                               month: "short",
+                               day: "numeric",
+                               hour: "numeric",
+                               minute: "2-digit",
+                             })
+                           : "Due N/A"}
+                         {isOverdue && task.dueDate && " (Overdue)"}
+                       </span>
+                     )}
+                   </div>
+                   {task.delegatedAt && (
+                     <div className="flex items-center justify-between bg-background border border-border px-3 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:border-border/80 transition-all duration-300">
+                       <span className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                         <Share2 className="h-4 w-4 text-blue-500/70" /> Delegated At
+                       </span>
+                       <span className="text-sm font-medium text-foreground ml-auto text-right">
+                         {new Date(task.delegatedAt).toLocaleString(undefined, {
+                           month: "short",
+                           day: "numeric",
+                           hour: "numeric",
+                           minute: "2-digit",
+                         })}
+                       </span>
+                     </div>
+                   )}
+                   {task.completedAt && (
+                     <div className="flex items-center justify-between bg-background border border-border px-3 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:border-border/80 transition-all duration-300 border-l-2 border-l-[hsl(var(--success))]">
+                       <span className="text-xs font-semibold text-[hsl(var(--success))] flex items-center gap-2">
+                         <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))]" /> Completed At
+                       </span>
+                       <span className="text-sm font-bold text-[hsl(var(--success))]">
+                         {new Date(task.completedAt).toLocaleString(undefined, {
+                           month: "short",
+                           day: "numeric",
+                           hour: "numeric",
+                           minute: "2-digit",
+                         })}
+                       </span>
+                     </div>
+                   )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-border" />
+
+              {/* Assignees */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5" />
+                    Assignees
+                  </span>
+                  {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin") && task.status !== "completed" && (
+                    <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-[10px] hover:bg-secondary text-foreground font-bold px-3 gap-1.5 rounded-full transition-colors"
+                          disabled={isUpdatingAssignees}
+                        >
+                          {isUpdatingAssignees ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <UserPlus className="h-3 w-3" />
+                          )}
+                          <span className="uppercase tracking-wider">
+                            {isUpdatingAssignees ? "Updating..." : "Manage Team"}
+                          </span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[280px] p-0 border-border/50 shadow-xl overflow-hidden rounded-xl" align="end">
+                        <div className="bg-popover flex flex-col max-h-[400px]">
+                          <div className="p-3 border-b border-border/50 bg-muted/30">
+                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Manage Team</h4>
+                          </div>
+                          <Command className="bg-transparent">
+                            <CommandInput placeholder="Search employees..." className="h-10 border-none focus:ring-0 text-sm" />
+                            <CommandList 
+                              className="max-h-[250px] overflow-y-auto overscroll-contain p-1.5"
+                              onWheel={(e) => e.stopPropagation()}
+                              onTouchMove={(e) => e.stopPropagation()}
+                            >
+                              <CommandEmpty>No employee found.</CommandEmpty>
+                              <CommandGroup>
+                                {allEmployees.filter(emp => {
+                                  const isManagement = ["admin", "head_admin", "creator", "superadmin"].includes(currentUser?.role?.toLowerCase() || "");
+                                  const isAlreadyAssignee = localAssigneeIds.includes(currentUser?.id || "");
+                                  if (emp.id === currentUser?.id) {
+                                    return isManagement || isAlreadyAssignee;
+                                  }
+                                  return true;
+                                }).map((emp) => {
+                                  const isSelected = localAssigneeIds.includes(emp.id)
+                                  return (
+                                    <CommandItem
+                                      key={emp.id}
+                                      onSelect={() => handleToggleAssignee(emp.id)}
+                                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-secondary data-[selected=true]:bg-secondary/80`}
+                                    >
+                                      <Checkbox
+                                        checked={isSelected}
+                                        onCheckedChange={() => handleToggleAssignee(emp.id)}
+                                        className="h-4 w-4 rounded-md border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                      />
+                                      <div className="flex flex-col">
+                                        <span className="text-sm font-semibold text-foreground leading-none">{emp.name}</span>
+                                        <span className="text-[10px] text-muted-foreground mt-1.5 capitalize leading-none">{emp.role}</span>
+                                      </div>
+                                      {isSelected && <Check className="h-4 w-4 text-primary ml-auto" />}
+                                    </CommandItem>
+                                  )
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                          <div className="p-3 border-t border-border/50 bg-muted/20 flex flex-col gap-3">
+                             <div className="flex items-center justify-between px-1">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                  {localAssigneeIds.length} selected
+                                </span>
+                             </div>
+                             <Button 
+                                className="w-full h-9 text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm"
+                                disabled={isUpdatingAssignees || localAssigneeIds.length === 0}
+                                onClick={handleSaveAssignees}
+                             >
+                                {isUpdatingAssignees ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Save Changes"}
+                             </Button>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {task.assignees && task.assignees.length > 0 ? (
+                    task.assignees.map(a => (
+                      <div key={a.id} className="flex items-center justify-between bg-background border border-border px-3 py-2 rounded-xl shadow-sm hover:shadow-md hover:border-border/80 transition-all duration-300">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8 rounded-full border border-border shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
+                            <AvatarFallback className="text-xs bg-secondary text-secondary-foreground font-semibold uppercase">{a.name[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="text-sm text-foreground font-semibold flex items-center gap-2">
+                              {a.name}
+                              {task.createdBy?.id === a.id && (
+                                <span className="text-[8px] uppercase tracking-wider font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
+                                  Creator
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold bg-secondary/80 text-muted-foreground border border-border shadow-sm">
+                          {a.points} Pts
                         </span>
                       </div>
-                      <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold bg-primary/10 text-primary shadow-sm border border-primary/20 group-hover:bg-primary/20 transition-colors">
-                        ✨ {a.points} Pts
-                      </span>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-6 bg-secondary/20 border border-dashed border-border rounded-xl">
+                      <User className="h-6 w-6 text-muted-foreground/50 mb-2" />
+                      <span className="text-sm text-muted-foreground font-medium">{task.assigneeName || "Unassigned"}</span>
                     </div>
-                  ))
-                ) : (
-                  <div className="flex items-center gap-3 bg-secondary/30 px-3.5 py-2.5 rounded-xl border border-border/50 shadow-sm">
-                    <div className="p-1.5 rounded-full bg-background border border-border/50">
-                      <User className="h-3 w-3 text-muted-foreground" />
-                    </div>
-                    <span className="text-xs text-foreground font-medium">{task.assigneeName || "Unassigned"}</span>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-
-            <div ref={extensionRef} className="grid grid-cols-1 gap-2 pt-1">
-              {task.createdAt && (
-                <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-secondary/30 transition-colors group">
-                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-2.5">
-                    <div className="p-1.5 rounded-md bg-background shadow-sm border border-border/50 group-hover:border-primary/20 transition-colors">
-                      <Clock className="h-3.5 w-3.5 text-foreground/70 group-hover:text-primary transition-colors" />
-                    </div>
-                    Created At
-                  </span>
-                  <span className="text-xs font-bold px-3 py-1.5 rounded-lg text-foreground bg-background border border-border/50 shadow-sm transition-colors group-hover:border-primary/30">
-                    {new Date(task.createdAt).toLocaleString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-              )}
-              <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-secondary/30 transition-colors group">
-                <span className="text-xs font-semibold text-muted-foreground flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-md bg-background shadow-sm border border-border/50 group-hover:border-primary/20 transition-colors">
-                    <Calendar className="h-3.5 w-3.5 text-foreground/70 group-hover:text-primary transition-colors" />
-                  </div>
-                  Due Date
-                </span>
-                {((currentRole === "superadmin" || (task.createdById === currentUser?.id && (currentRole === "admin" || currentRole === "head_admin"))) && task.status !== "completed") ? (
-                  <div className="flex items-center gap-2">
-                    <div className="relative group/input">
-                      <div className={cn(
-                        "text-xs font-bold px-3 py-1.5 rounded-lg border shadow-sm transition-all duration-300 flex items-center gap-2",
-                        isOverdue && !localDueDate ? "text-destructive bg-destructive/10 border-destructive/20" : "text-foreground bg-background border-border/50 group-hover:border-primary/30"
-                      )}>
-                        {localDueDate 
-                          ? new Date(localDueDate).toLocaleString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                              hour: "numeric",
-                              minute: "2-digit",
-                            })
-                          : task.dueDate 
-                          ? new Date(task.dueDate).toLocaleString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                              hour: "numeric",
-                              minute: "2-digit",
-                            })
-                          : "Set Due Date"}
-                        {isOverdue && task.dueDate && !localDueDate && " (Overdue)"}
-                        <Calendar className="h-3 w-3 opacity-40 group-hover/input:opacity-100 transition-opacity" />
-                      </div>
-                      <input
-                        type="datetime-local"
-                        value={localDueDate ? localDueDate.substring(0, 16) : task.dueDate ? (task.dueDate.includes("T") ? task.dueDate.substring(0, 16) : new Date(task.dueDate).toISOString().substring(0, 16)) : ""}
-                        onChange={(e) => {
-                          const newDate = e.target.value;
-                          if (newDate) {
-                            setLocalDueDate(new Date(newDate).toISOString());
-                          } else {
-                            setLocalDueDate(null);
-                          }
-                        }}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                      />
-                    </div>
-                    {localDueDate && localDueDate !== task.dueDate && (
-                      <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
-                        <Button 
-                          size="sm" 
-                          variant="default"
-                          className="h-7 px-2.5 text-[10px] uppercase font-bold tracking-wider"
-                          disabled={isSavingDueDate}
-                          onClick={async () => {
-                            setIsSavingDueDate(true);
-                            try {
-                              await updateTask(task.id, { dueDate: localDueDate });
-                              setLocalDueDate(null);
-                              toast.success("Due date updated");
-                            } catch (e) {
-                              toast.error("Failed to update due date");
-                            } finally {
-                              setIsSavingDueDate(false);
-                            }
-                          }}
-                        >
-                          {isSavingDueDate ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
-                          Save
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground hover:bg-secondary"
-                          disabled={isSavingDueDate}
-                          onClick={() => setLocalDueDate(null)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                ) : (
-                  <span
-                    className={cn(
-                      "text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm border transition-colors",
-                      isOverdue ? "text-destructive bg-destructive/10 border-destructive/20" : "text-foreground bg-background border-border/50 group-hover:border-primary/30"
-                    )}
-                  >
-                    {task.dueDate 
-                      ? new Date(task.dueDate).toLocaleString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })
-                      : "Due N/A"}
-                    {isOverdue && task.dueDate && " (Overdue)"}
-                  </span>
-                )}
-              </div>
-              {task.delegatedAt && (
-                <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-500/5 transition-colors group">
-                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-2.5">
-                    <div className="p-1.5 rounded-md bg-background shadow-sm border border-border/50 group-hover:border-blue-500/30 transition-colors">
-                      <Share2 className="h-3.5 w-3.5 text-blue-500/70 group-hover:text-blue-500 transition-colors" />
-                    </div>
-                    Delegated At
-                  </span>
-                  <span className="text-xs font-bold px-3 py-1.5 rounded-lg text-blue-600 bg-blue-50/50 border border-blue-200/50 shadow-sm">
-                    {new Date(task.delegatedAt).toLocaleString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-              )}
-              {task.completedAt && (
-                <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[hsl(var(--success))]/5 transition-colors group">
-                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-2.5">
-                    <div className="p-1.5 rounded-md bg-background shadow-sm border border-border/50 group-hover:border-[hsl(var(--success))]/30 transition-colors">
-                      <Calendar className="h-3.5 w-3.5 text-[hsl(var(--success))]/70 group-hover:text-[hsl(var(--success))] transition-colors" />
-                    </div>
-                    Completed At
-                  </span>
-                  <span className="text-xs text-[hsl(var(--success))] font-bold bg-[hsl(var(--success))]/10 border border-[hsl(var(--success))]/20 px-3 py-1.5 rounded-lg shadow-sm">
-                    {new Date(task.completedAt).toLocaleString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Deadline Extension Section */}
@@ -1156,7 +1137,7 @@ export function TaskDetailPanel({
                     <p className="text-xs text-muted-foreground/70 font-medium p-4">No comments yet. Start the discussion!</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4 mb-4">
+                  <div className="flex flex-col gap-4 mb-4 max-h-[300px] overflow-y-auto pr-2">
                     {task.comments.map((comment) => {
                       const initials = (comment.authorName || "User").split(" ").map((n: string) => n[0]).join("")
                       const isMine = comment.authorId === currentUser?.id
@@ -1354,7 +1335,7 @@ export function TaskDetailPanel({
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4 pb-4 mt-2 mb-2">
+                  <div className="flex flex-col gap-4 pb-4 mt-2 mb-2 max-h-[300px] overflow-y-auto pr-2">
                     {task.progressNotes.map((note) => {
                       const initials = (note.authorName || (note as any).authorname || "User")
                         .split(" ")

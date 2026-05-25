@@ -31,7 +31,7 @@ export function UrgentTasksSection({ tasks, onSelectTask, isLoadingTasks }: Urge
   if (urgentTasks.length === 0) return null
 
   return (
-    <div className="space-y-3 mb-8">
+    <div className="space-y-3 mb-0">
       <div className="flex items-center gap-2">
         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-destructive/10">
           <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
@@ -81,7 +81,7 @@ export function UrgentTasksSection({ tasks, onSelectTask, isLoadingTasks }: Urge
           </button>
         ))}
       </div>
-      <div className="h-px bg-border/50 w-full mt-6" />
+      <div className="h-px bg-border/50 w-full mt-2" />
     </div>
   )
 }

@@ -484,12 +484,19 @@ export function EmployeeDashboard({
 
                 {/* Task Filter Tabs + Detail Panel side by side */}
                 <div className="flex gap-6 items-start">
-                  <div className="flex-1 min-w-0 rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl overflow-hidden min-h-[400px]">
-                    <Tabs value={filterStatus} onValueChange={setFilterStatus} className="flex flex-col h-full">
+                  <div className="flex-1 min-w-0 space-y-4">
+                    {/* SEARCH & FILTER */}
+                    <AnimatePresence mode="wait">
                       {selectedCategory !== "profile" && (
-                        <div className="sticky top-0 z-30 flex flex-col bg-background/80 backdrop-blur-xl shrink-0">
-                          {/* Search & Filter Bar */}
-                          <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center p-5 border-b border-border/50">
+                        <motion.div
+                          key="search-filter-section"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="sticky -top-4 z-30 bg-background/80 backdrop-blur-xl pb-3 pt-5 -mx-4 px-4 border-b border-border/50"
+                        >
+                          <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center py-2">
                             <div className="w-full flex flex-col sm:flex-row gap-4 items-center flex-1 min-w-0">
                               <div className="relative w-full sm:w-auto sm:flex-1 min-w-[150px] max-w-sm shrink">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -531,12 +538,15 @@ export function EmployeeDashboard({
                               </div>
                             </div>
                           </div>
-
-                        </div>
+                        </motion.div>
                       )}
+                    </AnimatePresence>
 
-                      <div className="flex-1 overflow-y-auto">
-                        <TabsContent value={filterStatus} className="mt-0 p-0">
+                    {/* TABLE CARD */}
+                    <div className="rounded-[2rem] flex flex-col bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl overflow-hidden min-h-[500px]">
+                      <Tabs value={filterStatus} onValueChange={setFilterStatus} className="flex flex-col h-full">
+                        <div className="flex-1 overflow-y-auto">
+                          <TabsContent value={filterStatus} className="mt-0 p-0">
                           <AnimatePresence mode="popLayout">
                             <motion.div
                               key={selectedCategory}
@@ -610,7 +620,7 @@ export function EmployeeDashboard({
                               ) : (
                                 <div className="flex flex-col w-full flex-1">
                                   {/* Table Header */}
-                                  <div className="flex items-center px-4 py-3 border-b bg-muted/80 shrink-0 first:rounded-t-[2rem]">
+                                  <div className="flex items-center px-4 py-3 border-b bg-muted/80 shrink-0">
                                     <span className="flex-1 text-[11px] uppercase text-muted-foreground font-bold tracking-widest">Task</span>
                                     <div className={cn(
                                       "hidden md:flex items-center gap-4 lg:gap-6",
@@ -696,11 +706,12 @@ export function EmployeeDashboard({
                         </TabsContent>
                       </div>
                     </Tabs>
+                    </div>
                   </div>
 
                   {/* Detail Panel — Modal Pop-up */}
                   <Dialog open={!!liveSelectedTask} onOpenChange={(open) => { if (!open) { setSelectedTask(null); selectTask(null); } }}>
-                    <DialogContent className="max-w-[1000px] w-[95vw] h-[90vh] p-0 border-0 overflow-hidden rounded-xl sm:rounded-2xl bg-card">
+                    <DialogContent className="max-w-[700px] w-[95vw] h-[90vh] p-0 border-0 overflow-hidden rounded-xl sm:rounded-2xl bg-card">
                       <DialogTitle className="sr-only">Task Details</DialogTitle>
                       {liveSelectedTask && (
                         <TaskDetailPanel

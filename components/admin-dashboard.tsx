@@ -1193,7 +1193,7 @@ export function AdminDashboard({
             {/* DETAIL PANEL - Moved here to align with the list and not push charts */}
             {/* DETAIL PANEL - Modal Pop-up */}
             <Dialog open={!!liveSelectedTask} onOpenChange={(open) => { if (!open) { setSelectedTask(null); selectTask(null); } }}>
-              <DialogContent className="max-w-[1000px] w-[95vw] h-[90vh] p-0 border-0 overflow-hidden rounded-xl sm:rounded-2xl bg-card">
+              <DialogContent className="max-w-[700px] w-[95vw] h-[90vh] p-0 border-0 overflow-hidden rounded-xl sm:rounded-2xl bg-card">
                 <DialogTitle className="sr-only">Task Details</DialogTitle>
                 {liveSelectedTask && (
                   <TaskDetailPanel
