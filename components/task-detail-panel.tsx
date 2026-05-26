@@ -71,8 +71,7 @@ export function TaskDetailPanel({
   const [commentFile, setCommentFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isUpdatingAssignees, setIsUpdatingAssignees] = useState(false)
-  const [isDiscussionExpanded, setIsDiscussionExpanded] = useState(false)
-  const [isProgressNotesExpanded, setIsProgressNotesExpanded] = useState(false)
+  const [activeTab, setActiveTab] = useState<"discussion" | "notes">("discussion")
   const [lastSeenComments, setLastSeenComments] = useState(0)
   const [lastSeenNotes, setLastSeenNotes] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -130,31 +129,31 @@ export function TaskDetailPanel({
 
   const othersNotesCount = task.progressNotes?.filter(n => n.authorId !== currentUser?.id).length || 0
 
-  // Update last seen when sections are expanded
+  // Update last seen when active tab is selected
   useEffect(() => {
-    if (isDiscussionExpanded && currentUser?.id && task.id) {
+    if (activeTab === "discussion" && currentUser?.id && task.id) {
       setLastSeenComments(othersCommentsCount)
       localStorage.setItem(`taskflow_comments_others_${task.id}_${currentUser.id}`, othersCommentsCount.toString())
     }
-  }, [isDiscussionExpanded, othersCommentsCount, task.id, currentUser?.id])
+  }, [activeTab, othersCommentsCount, task.id, currentUser?.id])
 
   useEffect(() => {
-    if (isProgressNotesExpanded && currentUser?.id && task.id) {
+    if (activeTab === "notes" && currentUser?.id && task.id) {
       setLastSeenNotes(othersNotesCount)
       localStorage.setItem(`taskflow_notes_others_${task.id}_${currentUser.id}`, othersNotesCount.toString())
     }
-  }, [isProgressNotesExpanded, othersNotesCount, task.id, currentUser?.id])
+  }, [activeTab, othersNotesCount, task.id, currentUser?.id])
 
-  const hasNewComments = !isDiscussionExpanded && othersCommentsCount > lastSeenComments
-  const hasNewNotes = !isProgressNotesExpanded && othersNotesCount > lastSeenNotes
+  const hasNewComments = activeTab !== "discussion" && othersCommentsCount > lastSeenComments
+  const hasNewNotes = activeTab !== "notes" && othersNotesCount > lastSeenNotes
 
   // Handle deep linking to sections
   useEffect(() => {
     if (!targetSection) return
 
     if (targetSection === "discussion") {
-      setIsDiscussionExpanded(true)
-      // Small timeout to allow expansion animation to start or complete
+      setActiveTab("discussion")
+      // Small timeout to allow tab switch or layout shift
       setTimeout(() => {
         discussionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 300)
@@ -1106,369 +1105,199 @@ export function TaskDetailPanel({
             </div>
           ) : null}
 
-          {/* Discussion Thread */}
+          {/* Discussion & Progress Notes Combined Tabs */}
           <div ref={discussionRef} className="flex flex-col bg-background/30 rounded-xl mt-6 mb-6 border border-border/40 shadow-sm mx-6 overflow-hidden">
-            <button
-              onClick={() => setIsDiscussionExpanded(!isDiscussionExpanded)}
-              className="flex items-center justify-between w-full px-5 pt-4 pb-3 border-b border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors group/header"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-md bg-primary/10 border border-primary/20">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                </div>
-                <span className="text-[11px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1.5">
-                  Discussion <span className="text-muted-foreground ml-0.5">({task.comments?.length || 0})</span>
-                  {hasNewComments && (
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
-                  )}
+            {/* Tabs Trigger Header */}
+            <div className="flex border-b border-border/30 bg-muted/20">
+              <button
+                type="button"
+                onClick={() => setActiveTab("discussion")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-3.5 text-[11px] font-bold uppercase tracking-widest transition-all border-b-2",
+                  activeTab === "discussion"
+                    ? "border-primary text-primary bg-background/50"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span>Discussion</span>
+                <span className={cn(
+                  "px-1.5 py-0.5 text-[9px] rounded-full font-bold ml-1.5",
+                  activeTab === "discussion" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                )}>
+                  {task.comments?.length || 0}
                 </span>
-              </div>
-              {isDiscussionExpanded ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground group-hover/header:text-foreground transition-colors" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/header:text-foreground transition-colors" />
-              )}
-            </button>
+                {hasNewComments && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)] ml-1" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("notes")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-3.5 text-[11px] font-bold uppercase tracking-widest transition-all border-b-2",
+                  activeTab === "notes"
+                    ? "border-primary text-primary bg-background/50"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span>Progress Notes</span>
+                <span className={cn(
+                  "px-1.5 py-0.5 text-[9px] rounded-full font-bold ml-1.5",
+                  activeTab === "notes" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                )}>
+                  {task.progressNotes?.length || 0}
+                </span>
+                {hasNewNotes && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)] ml-1" />
+                )}
+              </button>
+            </div>
 
-            {isDiscussionExpanded && (
-              <div className="p-5 animate-in fade-in slide-in-from-top-2 duration-200">
-                {!task.comments || task.comments.length === 0 ? (
-                  <div className="py-2 text-center bg-secondary/10 rounded-lg border border-dashed border-border/50 mb-4">
-                    <p className="text-xs text-muted-foreground/70 font-medium p-4">No comments yet. Start the discussion!</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4 mb-4 max-h-[300px] overflow-y-auto pr-2">
-                    {task.comments.map((comment) => {
-                      const initials = (comment.authorName || "User").split(" ").map((n: string) => n[0]).join("")
-                      const isMine = comment.authorId === currentUser?.id
-                      return (
-                          <div key={comment.id} className={cn("flex gap-3 group", isMine ? "flex-row-reverse" : "flex-row")}>
-                            <Avatar className="h-8 w-8 shrink-0 border border-border/50 shadow-sm mt-1">
-                              {comment.authorAvatar && <AvatarImage src={comment.authorAvatar} alt={comment.authorName} />}
-                              <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">
-                                {initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className={cn("flex flex-col flex-1 min-w-0 max-w-[85%]", isMine ? "items-end" : "items-start")}>
-                              <div className={cn("flex items-center gap-2 mb-0.5", isMine ? "flex-row-reverse" : "flex-row")}>
-                                <span className="text-xs font-bold text-foreground">
-                                  {isMine ? "You" : comment.authorName}
-                                </span>
-                                <span className="text-[10px] font-medium text-muted-foreground">
-                                  {(() => {
-                                    const dateVal = comment.createdAt || (comment as any).createdat;
-                                    try {
-                                      return dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : "recently";
-                                    } catch (e) {
-                                      return "recently";
-                                    }
-                                  })()}
-                                </span>
-                              </div>
-                              <div className={cn(
-                                "text-sm leading-relaxed p-3 border shadow-sm",
-                                isMine 
-                                  ? "bg-primary text-primary-foreground border-primary rounded-2xl rounded-tr-sm" 
-                                  : "bg-secondary/40 text-foreground border-border/30 rounded-2xl rounded-tl-sm"
-                              )}>
-                                {comment.content}
-                                {comment.attachmentUrl && (
-                                  <div className={cn("mt-2 pt-2 border-t", isMine ? "border-primary-foreground/20" : "border-border/20")}>
-                                    {comment.attachmentType?.startsWith("image/") ? (
-                                      <a
-                                        href={comment.attachmentUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className={cn("relative inline-block group/img overflow-hidden rounded-lg border transition-all", isMine ? "border-primary-foreground/30 hover:border-primary-foreground/60" : "border-border/50 hover:border-primary/50")}
-                                      >
-                                        <img
-                                          src={comment.attachmentUrl}
-                                          alt={comment.attachmentName}
-                                          className="max-w-full h-auto max-h-[200px] object-contain rounded-md"
-                                        />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
-                                          <ExternalLink className="h-4 w-4 text-white" />
-                                        </div>
-                                      </a>
-                                    ) : (
-                                      <a
-                                        href={comment.attachmentUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className={cn("flex items-center gap-2.5 p-2 rounded-xl transition-all group/file max-w-full border", isMine ? "bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20" : "bg-background/50 border-border/50 hover:border-primary/30 hover:bg-background/80")}
-                                      >
-                                        <div className={cn("p-1.5 rounded-lg transition-colors", isMine ? "bg-primary-foreground/20 text-primary-foreground group-hover/file:bg-primary-foreground group-hover/file:text-primary" : "bg-primary/10 text-primary group-hover/file:bg-primary group-hover/file:text-white")}>
-                                          <FileText className="h-3.5 w-3.5" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                          <p className={cn("text-[10px] font-bold truncate", isMine ? "text-primary-foreground" : "text-foreground")}>{comment.attachmentName}</p>
-                                          <p className={cn("text-[8px] uppercase font-black tracking-widest leading-none mt-0.5", isMine ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                            {comment.attachmentType?.split("/")[1] || "FILE"}
-                                          </p>
-                                        </div>
-                                        <ExternalLink className={cn("h-3 w-3 transition-colors shrink-0", isMine ? "text-primary-foreground/70 group-hover/file:text-primary-foreground" : "text-muted-foreground group-hover/file:text-primary")} />
-                                      </a>
-                                    )}
-                                  </div>
-                                )}
+            {/* Tab Contents */}
+            <div className="p-5 animate-in fade-in duration-200">
+              {activeTab === "discussion" ? (
+                <div>
+                  {!task.comments || task.comments.length === 0 ? (
+                    <div className="py-2 text-center bg-secondary/10 rounded-lg border border-dashed border-border/50 mb-4">
+                      <p className="text-xs text-muted-foreground/70 font-medium p-4">No comments yet. Start the discussion!</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4 mb-4 max-h-[300px] overflow-y-auto pr-2">
+                      {task.comments.map((comment) => {
+                        const initials = (comment.authorName || "User").split(" ").map((n: string) => n[0]).join("")
+                        const isMine = comment.authorId === currentUser?.id
+                        return (
+                            <div key={comment.id} className={cn("flex gap-3 group", isMine ? "flex-row-reverse" : "flex-row")}>
+                              <Avatar className="h-8 w-8 shrink-0 border border-border/50 shadow-sm mt-1">
+                                {comment.authorAvatar && <AvatarImage src={comment.authorAvatar} alt={comment.authorName} />}
+                                <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className={cn("flex flex-col flex-1 min-w-0 max-w-[85%]", isMine ? "items-end" : "items-start")}>
+                                <div className={cn("flex items-center gap-2 mb-0.5", isMine ? "flex-row-reverse" : "flex-row")}>
+                                  <span className="text-xs font-bold text-foreground">
+                                    {isMine ? "You" : comment.authorName}
+                                  </span>
+                                  <span className="text-[10px] font-medium text-muted-foreground">
+                                    {(() => {
+                                      const dateVal = comment.createdAt || (comment as any).createdat;
+                                      try {
+                                        return dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : "recently";
+                                      } catch (e) {
+                                        return "recently";
+                                      }
+                                    })()}
+                                  </span>
+                                </div>
+                                <div className={cn(
+                                  "text-sm leading-relaxed p-3 border shadow-sm",
+                                  isMine 
+                                    ? "bg-primary text-primary-foreground border-primary rounded-2xl rounded-tr-sm" 
+                                    : "bg-secondary/40 text-foreground border-border/30 rounded-2xl rounded-tl-sm"
+                                )}>
+                                  {comment.content}
+                                  {comment.attachmentUrl && (
+                                    <div className={cn("mt-2 pt-2 border-t", isMine ? "border-primary-foreground/20" : "border-border/20")}>
+                                      {comment.attachmentType?.startsWith("image/") ? (
+                                        <a
+                                          href={comment.attachmentUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className={cn("relative inline-block group/img overflow-hidden rounded-lg border transition-all", isMine ? "border-primary-foreground/30 hover:border-primary-foreground/60" : "border-border/50 hover:border-primary/50")}
+                                        >
+                                          <img
+                                            src={comment.attachmentUrl}
+                                            alt={comment.attachmentName}
+                                            className="max-w-full h-auto max-h-[200px] object-contain rounded-md"
+                                          />
+                                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                                            <ExternalLink className="h-4 w-4 text-white" />
+                                          </div>
+                                        </a>
+                                      ) : (
+                                        <a
+                                          href={comment.attachmentUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className={cn("flex items-center gap-2.5 p-2 rounded-xl transition-all group/file max-w-full border", isMine ? "bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20" : "bg-background/50 border-border/50 hover:border-primary/30 hover:bg-background/80")}
+                                        >
+                                          <div className={cn("p-1.5 rounded-lg transition-colors", isMine ? "bg-primary-foreground/20 text-primary-foreground group-hover/file:bg-primary-foreground group-hover/file:text-primary" : "bg-primary/10 text-primary group-hover/file:bg-primary group-hover/file:text-white")}>
+                                            <FileText className="h-3.5 w-3.5" />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className={cn("text-[10px] font-bold truncate", isMine ? "text-primary-foreground" : "text-foreground")}>{comment.attachmentName}</p>
+                                            <p className={cn("text-[8px] uppercase font-black tracking-widest leading-none mt-0.5", isMine ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                              {comment.attachmentType?.split("/")[1] || "FILE"}
+                                            </p>
+                                          </div>
+                                          <ExternalLink className={cn("h-3 w-3 transition-colors shrink-0", isMine ? "text-primary-foreground/70 group-hover/file:text-primary-foreground" : "text-muted-foreground group-hover/file:text-primary")} />
+                                        </a>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                      )
-                    })}
-                  </div>
-                )}
-
-                <div className="flex flex-col flex-1 gap-2 pt-4 mt-1 border-t border-border/40">
-                  <div className="flex gap-3 relative">
-                    <input
-                      type="file"
-                      ref={commentFileInputRef}
-                      className="hidden"
-                      onChange={handleCommentFileChange}
-                      accept="image/*,application/pdf"
-                    />
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={() => commentFileInputRef.current?.click()}
-                      className={cn(
-                        "h-10 w-10 shrink-0 rounded-xl border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-all",
-                        commentFile && "border-primary/50 bg-primary/10 text-primary"
-                      )}
-                      title="Attach file or image"
-                    >
-                      <Paperclip className="h-4 w-4" />
-                    </Button>
-                    <Textarea
-                      value={commentContent}
-                      onChange={(e) => setCommentContent(e.target.value)}
-                      placeholder="Discuss this task with your team..."
-                      rows={1}
-                      className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-10 py-2"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                          handleAddComment()
-                        }
-                      }}
-                    />
-                    <Button
-                      size="icon"
-                      onClick={handleAddComment}
-                      disabled={(!commentContent.trim() && !commentFile) || isAddingComment}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
-                      title="Post Comment (Ctrl+Enter)"
-                    >
-                      {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
-                      <span className="sr-only">Post comment</span>
-                    </Button>
-                  </div>
-
-                  {commentFile && (
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-bottom-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {commentFile.type.startsWith("image/") ? (
-                          <div className="h-6 w-6 rounded bg-primary/20 flex items-center justify-center overflow-hidden">
-                            <img
-                              src={URL.createObjectURL(commentFile)}
-                              alt="Preview"
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
-                            <FileIcon className="h-3 w-3 text-primary" />
-                          </div>
-                        )}
-                        <span className="text-[10px] font-medium text-foreground truncate max-w-[150px]">
-                          {commentFile.name}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => setCommentFile(null)}
-                        className="p-1 hover:bg-primary/10 rounded-full transition-colors"
-                      >
-                        <X className="h-3 w-3 text-muted-foreground" />
-                      </button>
+                        )
+                      })}
                     </div>
                   )}
-                </div>
 
-              </div>
-            )}
-          </div>
-
-          {/* Progress Notes */}
-          <div className="flex flex-col bg-background/30 rounded-xl mt-2 mb-6 border border-border/40 shadow-sm mx-6 overflow-hidden">
-            <button
-              onClick={() => setIsProgressNotesExpanded(!isProgressNotesExpanded)}
-              className="flex items-center justify-between w-full px-5 pt-4 pb-3 border-b border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors group/pheader"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-md bg-primary/10 border border-primary/20">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                </div>
-                <span className="text-[11px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1.5">
-                  Progress Notes <span className="text-muted-foreground ml-0.5">({task.progressNotes?.length || 0})</span>
-                  {hasNewNotes && (
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
-                  )}
-                </span>
-              </div>
-              {isProgressNotesExpanded ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground group-hover/pheader:text-foreground transition-colors" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/pheader:text-foreground transition-colors" />
-              )}
-            </button>
-
-            {isProgressNotesExpanded && (
-              <div className="px-6 pb-6 animate-in fade-in slide-in-from-top-2 duration-200">
-                {task.progressNotes.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 px-4 mt-2 bg-secondary/20 rounded-xl border border-dashed border-border/60 mb-4">
-                    <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-3" />
-                    <p className="text-sm text-muted-foreground text-center font-medium">
-                      No progress notes yet.
-                    </p>
-                    <p className="text-xs text-muted-foreground/70 text-center mt-1">
-                      Notes added will appear here.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4 pb-4 mt-2 mb-2 max-h-[300px] overflow-y-auto pr-2">
-                    {task.progressNotes.map((note) => {
-                      const initials = (note.authorName || (note as any).authorname || "User")
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")
-                      return (
-                        <div key={note.id} className="flex gap-3.5 group">
-                          <Avatar className="h-8 w-8 shrink-0 mt-0.5 border border-border/50 shadow-sm group-hover:border-primary/30 transition-colors">
-                            {note.authorAvatar && <AvatarImage src={note.authorAvatar} alt={note.authorName} />}
-                            <AvatarFallback className="bg-primary/5 text-primary text-[11px] font-bold">
-                              {initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0 bg-secondary/20 p-3.5 rounded-2xl rounded-tl-sm border border-border/40 shadow-sm group-hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center justify-between gap-2 mb-1.5">
-                              <span className="text-sm font-bold text-foreground">
-                                {note.authorName || (note as any).authorname || "Anonymous"}
-                              </span>
-                              <span className="text-[10px] font-medium text-muted-foreground bg-background px-2 py-0.5 rounded-full border border-border/50">
-                                {(() => {
-                                  const dateVal = note.createdAt || (note as any).createdat;
-                                  try {
-                                    return dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : "recently";
-                                  } catch (e) {
-                                    return "recently";
-                                  }
-                                })()}
-                              </span>
-                            </div>
-                            <p className="text-sm text-foreground/80 leading-relaxed">
-                              {note.content}
-                            </p>
-                            {note.attachmentUrl && (
-                              <div className="mt-3 pt-3 border-t border-border/40">
-                                {note.attachmentType?.startsWith("image/") ? (
-                                  <a
-                                    href={note.attachmentUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="relative inline-block group/img overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 transition-all"
-                                  >
-                                    <img
-                                      src={note.attachmentUrl}
-                                      alt={note.attachmentName}
-                                      className="max-w-[200px] max-h-[150px] object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
-                                      <ExternalLink className="h-5 w-5 text-white" />
-                                    </div>
-                                  </a>
-                                ) : (
-                                  <a
-                                    href={note.attachmentUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-background/80 transition-all group/file"
-                                  >
-                                    <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover/file:bg-primary group-hover/file:text-white transition-colors">
-                                      <FileText className="h-4 w-4" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-bold text-foreground truncate">{note.attachmentName}</p>
-                                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">
-                                        {note.attachmentType?.split("/")[1] || "FILE"}
-                                      </p>
-                                    </div>
-                                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover/file:text-primary transition-colors mr-1" />
-                                  </a>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-
-                {/* Note Input — moved inside to bottom */}
-                {task.status === "in-progress" && isAssignee && (showNoteInput || currentRole === "admin") && (
-                  <div className="flex flex-col gap-2 pt-4 mt-1 border-t border-border/40">
+                  <div className="flex flex-col flex-1 gap-2 pt-4 mt-1 border-t border-border/40">
                     <div className="flex gap-3 relative">
                       <input
                         type="file"
-                        ref={fileInputRef}
+                        ref={commentFileInputRef}
                         className="hidden"
-                        onChange={handleFileChange}
+                        onChange={handleCommentFileChange}
                         accept="image/*,application/pdf"
                       />
-
                       <Button
                         size="icon"
                         variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => commentFileInputRef.current?.click()}
                         className={cn(
                           "h-10 w-10 shrink-0 rounded-xl border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-all",
-                          selectedFile && "border-primary/50 bg-primary/10 text-primary"
+                          commentFile && "border-primary/50 bg-primary/10 text-primary"
                         )}
                         title="Attach file or image"
                       >
                         <Paperclip className="h-4 w-4" />
                       </Button>
                       <Textarea
-                        value={noteContent}
-                        onChange={(e) => setNoteContent(e.target.value)}
-                        placeholder="Type your progress note here..."
+                        value={commentContent}
+                        onChange={(e) => setCommentContent(e.target.value)}
+                        placeholder="Discuss this task with your team..."
                         rows={1}
                         className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-10 py-2"
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                            handleAddNote()
+                            handleAddComment()
                           }
                         }}
                       />
                       <Button
                         size="icon"
-                        onClick={handleAddNote}
-                        disabled={(!noteContent.trim() && !selectedFile) || isUploading}
+                        onClick={handleAddComment}
+                        disabled={(!commentContent.trim() && !commentFile) || isAddingComment}
                         className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
-                        title="Post Note (Ctrl+Enter)"
+                        title="Post Comment (Ctrl+Enter)"
                       >
-                        {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
-                        <span className="sr-only">Post note</span>
+                        {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
+                        <span className="sr-only">Post comment</span>
                       </Button>
                     </div>
 
-                    {selectedFile && (
+                    {commentFile && (
                       <div className="flex items-center justify-between p-2 rounded-xl bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-bottom-1">
                         <div className="flex items-center gap-2 min-w-0">
-                          {selectedFile.type.startsWith("image/") ? (
+                          {commentFile.type.startsWith("image/") ? (
                             <div className="h-6 w-6 rounded bg-primary/20 flex items-center justify-center overflow-hidden">
                               <img
-                                src={URL.createObjectURL(selectedFile)}
+                                src={URL.createObjectURL(commentFile)}
                                 alt="Preview"
                                 className="h-full w-full object-cover"
                               />
@@ -1479,26 +1308,196 @@ export function TaskDetailPanel({
                             </div>
                           )}
                           <span className="text-[10px] font-medium text-foreground truncate max-w-[150px]">
-                            {selectedFile.name}
+                            {commentFile.name}
                           </span>
                         </div>
                         <button
-                          onClick={() => setSelectedFile(null)}
+                          onClick={() => setCommentFile(null)}
                           className="p-1 hover:bg-primary/10 rounded-full transition-colors"
                         >
                           <X className="h-3 w-3 text-muted-foreground" />
                         </button>
                       </div>
                     )}
-                    
-                    <p className="text-[9px] font-medium text-muted-foreground flex items-center gap-1 opacity-60">
-                      <kbd className="px-1 py-0.5 bg-secondary rounded border border-border/50">Ctrl</kbd> + <kbd className="px-1 py-0.5 bg-secondary rounded border border-border/50">Enter</kbd> to post
-                    </p>
                   </div>
-                )}
+                </div>
+              ) : (
+                <div>
+                  {task.progressNotes.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 px-4 bg-secondary/20 rounded-xl border border-dashed border-border/60 mb-4">
+                      <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-3" />
+                      <p className="text-sm text-muted-foreground text-center font-medium">
+                        No progress notes yet.
+                      </p>
+                      <p className="text-xs text-muted-foreground/70 text-center mt-1">
+                        Notes added will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4 pb-4 mb-2 max-h-[300px] overflow-y-auto pr-2">
+                      {task.progressNotes.map((note) => {
+                        const initials = (note.authorName || (note as any).authorname || "User")
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .join("")
+                        return (
+                          <div key={note.id} className="flex gap-3.5 group">
+                            <Avatar className="h-8 w-8 shrink-0 mt-0.5 border border-border/50 shadow-sm group-hover:border-primary/30 transition-colors">
+                              {note.authorAvatar && <AvatarImage src={note.authorAvatar} alt={note.authorName} />}
+                              <AvatarFallback className="bg-primary/5 text-primary text-[11px] font-bold">
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0 bg-secondary/20 p-3.5 rounded-2xl rounded-tl-sm border border-border/40 shadow-sm group-hover:shadow-md transition-all duration-300">
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <span className="text-sm font-bold text-foreground">
+                                  {note.authorName || (note as any).authorname || "Anonymous"}
+                                </span>
+                                <span className="text-[10px] font-medium text-muted-foreground bg-background px-2 py-0.5 rounded-full border border-border/50">
+                                  {(() => {
+                                    const dateVal = note.createdAt || (note as any).createdat;
+                                    try {
+                                      return dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : "recently";
+                                    } catch (e) {
+                                      return "recently";
+                                    }
+                                  })()}
+                                </span>
+                              </div>
+                              <p className="text-sm text-foreground/80 leading-relaxed">
+                                {note.content}
+                              </p>
+                              {note.attachmentUrl && (
+                                <div className="mt-3 pt-3 border-t border-border/40">
+                                  {note.attachmentType?.startsWith("image/") ? (
+                                    <a
+                                      href={note.attachmentUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="relative inline-block group/img overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 transition-all"
+                                    >
+                                      <img
+                                        src={note.attachmentUrl}
+                                        alt={note.attachmentName}
+                                        className="max-w-[200px] max-h-[150px] object-cover"
+                                      />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                                        <ExternalLink className="h-5 w-5 text-white" />
+                                      </div>
+                                    </a>
+                                  ) : (
+                                    <a
+                                      href={note.attachmentUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-3 p-2.5 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-background/80 transition-all group/file"
+                                    >
+                                      <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover/file:bg-primary group-hover/file:text-white transition-colors">
+                                        <FileText className="h-4 w-4" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-bold text-foreground truncate">{note.attachmentName}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">
+                                          {note.attachmentType?.split("/")[1] || "FILE"}
+                                        </p>
+                                      </div>
+                                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover/file:text-primary transition-colors mr-1" />
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
 
-              </div>
-            )}
+                  {/* Note Input — moved inside to bottom */}
+                  {task.status === "in-progress" && isAssignee && (showNoteInput || currentRole === "admin") && (
+                    <div className="flex flex-col gap-2 pt-4 mt-1 border-t border-border/40">
+                      <div className="flex gap-3 relative">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          onChange={handleFileChange}
+                          accept="image/*,application/pdf"
+                        />
+
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          className={cn(
+                            "h-10 w-10 shrink-0 rounded-xl border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-all",
+                            selectedFile && "border-primary/50 bg-primary/10 text-primary"
+                          )}
+                          title="Attach file or image"
+                        >
+                          <Paperclip className="h-4 w-4" />
+                        </Button>
+                        <Textarea
+                          value={noteContent}
+                          onChange={(e) => setNoteContent(e.target.value)}
+                          placeholder="Type your progress note here..."
+                          rows={1}
+                          className="bg-secondary/20 border-border/50 focus:border-primary/50 text-foreground text-sm placeholder:text-muted-foreground/60 resize-none flex-1 rounded-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] transition-all focus:bg-background h-10 py-2"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                              handleAddNote()
+                            }
+                          }}
+                        />
+                        <Button
+                          size="icon"
+                          onClick={handleAddNote}
+                          disabled={(!noteContent.trim() && !selectedFile) || isUploading}
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-10 w-10 shrink-0 rounded-xl transition-all duration-300 disabled:opacity-50"
+                          title="Post Note (Ctrl+Enter)"
+                        >
+                          {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
+                          <span className="sr-only">Post note</span>
+                        </Button>
+                      </div>
+
+                      {selectedFile && (
+                        <div className="flex items-center justify-between p-2 rounded-xl bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-bottom-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {selectedFile.type.startsWith("image/") ? (
+                              <div className="h-6 w-6 rounded bg-primary/20 flex items-center justify-center overflow-hidden">
+                                <img
+                                  src={URL.createObjectURL(selectedFile)}
+                                  alt="Preview"
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
+                                <FileIcon className="h-3 w-3 text-primary" />
+                              </div>
+                            )}
+                            <span className="text-[10px] font-medium text-foreground truncate max-w-[150px]">
+                              {selectedFile.name}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => setSelectedFile(null)}
+                            className="p-1 hover:bg-primary/10 rounded-full transition-colors"
+                          >
+                            <X className="h-3 w-3 text-muted-foreground" />
+                          </button>
+                        </div>
+                      )}
+                      
+                      <p className="text-[9px] font-medium text-muted-foreground flex items-center gap-1 opacity-60">
+                        <kbd className="px-1 py-0.5 bg-secondary rounded border border-border/50">Ctrl</kbd> + <kbd className="px-1 py-0.5 bg-secondary rounded border border-border/50">Enter</kbd> to post
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
