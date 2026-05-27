@@ -494,7 +494,7 @@ export function EmployeeDashboard({
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="sticky -top-4 z-30 bg-background/80 backdrop-blur-xl pb-3 pt-5 -mx-4 px-4 border-b border-border/50"
+                          className="sticky -top-4 z-30 bg-background/80 backdrop-blur-xl pb-3 pt-2 -mx-4 px-4 border-b border-border/50"
                         >
                           <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center py-2">
                             <div className="w-full flex flex-col sm:flex-row gap-4 items-center flex-1 min-w-0">
