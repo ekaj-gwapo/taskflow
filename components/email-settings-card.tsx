@@ -131,7 +131,15 @@ export function EmailSettingsCard() {
       toast.success("Email verified successfully!")
       
       if (currentUser && data.user) {
-        login(data.user.role, data.user.id, data.user)
+        // Only update email-related fields from the server response.
+        // Do NOT replace the whole currentUser — that would overwrite the
+        // user's name, role, plan, avatar, etc. with whatever the API returns,
+        // causing visual glitches (wrong name, button color change, etc.).
+        login(currentUser.role, currentUser.id, {
+          ...currentUser,
+          email: data.user.email ?? currentUser.email,
+          emailVerified: data.user.emailVerified ?? true,
+        })
       }
     } catch (error: any) {
       toast.error(error.message)
