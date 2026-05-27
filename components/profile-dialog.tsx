@@ -99,6 +99,47 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     return canvas.toDataURL("image/jpeg")
   }
 
+  const handleApplyCrop = async () => {
+    if (!currentUser || !imageSrc || !croppedAreaPixels) return
+
+    setLoading(true)
+    try {
+      const token = localStorage.getItem("token")
+      const croppedImageBase64 = await getCroppedImg(imageSrc, croppedAreaPixels)
+      
+      const response = await fetch(`/api/users/${currentUser.id}/avatar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ avatarBase64: croppedImageBase64 })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        
+        // Merge the new avatar with the existing currentUser to preserve orgId,
+        // plan, etc. Otherwise, the app thinks the user has no org and redirects to onboarding.
+        login(currentUser.role, currentUser.id, {
+          ...currentUser,
+          avatar: data.user.avatar ?? currentUser.avatar,
+        })
+        
+        toast.success("Profile picture updated")
+        setImageSrc(null) // Exit crop mode, but keep dialog open
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || "Failed to update profile picture")
+      }
+    } catch (err) {
+      console.error("Failed to save avatar", err)
+      toast.error("An error occurred while saving the picture.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSave = async () => {
     if (!currentUser) return
 
@@ -106,20 +147,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     try {
       const token = localStorage.getItem("token")
 
-      // 1. Save Avatar if cropped
-      if (imageSrc && croppedAreaPixels) {
-        const croppedImageBase64 = await getCroppedImg(imageSrc, croppedAreaPixels)
-        await fetch(`/api/users/${currentUser.id}/avatar`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ avatarBase64: croppedImageBase64 })
-        })
-      }
-
-      // 2. Save Profile Details
+      // Save Profile Details
       const response = await fetch(`/api/users/${currentUser.id}`, {
         method: "PUT",
         headers: {
@@ -134,7 +162,6 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
         login(data.user.role.toLowerCase() as any, data.user.id, data.user)
         toast.success("Profile updated successfully")
         onOpenChange(false)
-        setImageSrc(null)
       } else {
         const errorData = await response.json()
         toast.error(errorData.error || "Failed to update profile")
@@ -462,7 +489,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                       Discard
                     </Button>
                     <Button
-                      onClick={handleSave}
+                      onClick={handleApplyCrop}
                       disabled={loading}
                       className="rounded-2xl h-12 px-8 font-bold shadow-xl"
                     >

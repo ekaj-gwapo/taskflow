@@ -17,7 +17,7 @@ export async function GET(
     const user = await db.getOne(`
       SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", 
              u.jobdescription AS "jobDescription", u.role, u.theme, u.mode, 
-             u.createdat AS "createdAt", u.orgid AS "orgId",
+             u.createdat AS "createdAt", u.orgid AS "orgId", u.avatarUrl as avatar,
              o.name as "organizationName", o.logo_url as "organizationLogo",
              o.plan as "plan", o.subscription_status as "subscriptionStatus",
              o.trial_ends_at as "trialEndsAt"
@@ -93,6 +93,21 @@ export async function PUT(
       (jobDescription !== undefined && jobDescription !== currentUserData.jobDescription);
 
     if (profileInfoChanged) {
+      // If the user's name has changed, update all historical records that statically store the name
+      // so that past transactions and comments reflect the new name.
+      if (name && name !== currentUserData.name) {
+        await Promise.all([
+          db.execute("UPDATE task_comments SET authorName = ? WHERE authorId = ?", [name, id]),
+          db.execute("UPDATE progress_notes SET authorName = ? WHERE authorId = ?", [name, id]),
+          db.execute("UPDATE step_notes SET authorName = ? WHERE authorId = ?", [name, id]),
+          db.execute("UPDATE extension_requests SET requestedByName = ? WHERE requestedById = ?", [name, id]),
+          db.execute("UPDATE extension_requests SET reviewedByName = ? WHERE reviewedById = ?", [name, id]),
+          db.execute("UPDATE activity_log SET userName = ? WHERE userId = ?", [name, id])
+        ]).catch(err => {
+          console.error("Non-fatal error updating historical names:", err);
+        });
+      }
+
       await logActivity({
         action: "PROFILE_UPDATED",
         entityId: id,
@@ -105,7 +120,7 @@ export async function PUT(
 
     const user = await db.getOne(`
       SELECT u.id, u.name, u.email, u.phone, u.location, u.jobtitle AS "jobTitle", 
-             u.jobdescription AS "jobDescription", u.role, u.theme, u.mode, u.orgid AS "orgId",
+             u.jobdescription AS "jobDescription", u.role, u.theme, u.mode, u.orgid AS "orgId", u.avatarUrl as avatar,
              o.name as "organizationName", o.logo_url as "organizationLogo",
              o.plan as "plan", o.subscription_status as "subscriptionStatus",
              o.trial_ends_at as "trialEndsAt"
