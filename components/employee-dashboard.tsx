@@ -87,7 +87,7 @@ function TaskRow({
       exit={{ opacity: 0, scale: 0.98 }}
       onClick={onSelect}
       className={cn(
-        "w-full flex items-center px-4 py-4 text-left cursor-pointer border-b border-border border-l-4 border-l-transparent hover:border-l-primary hover:bg-muted/30 transition-all duration-200 bg-white/50",
+        "w-full flex items-center px-4 py-4 text-left cursor-pointer border-b border-border border-l-4 border-l-transparent hover:border-l-primary hover:bg-muted/30 transition-all duration-200 bg-card/60",
         isSelected ? "bg-accent/70 border-l-primary" : ""
       )}
     >

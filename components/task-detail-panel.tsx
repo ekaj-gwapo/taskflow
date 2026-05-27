@@ -1069,6 +1069,7 @@ export function TaskDetailPanel({
           })()}
 
           {/* Glassmorphic Actions Layer (Archive / Delete Task) at the bottom */}
+          {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "head_admin" || showDeleteButton) && (
           <div className="mx-6 mt-6 p-5 rounded-2xl border border-border/40 bg-background/25 flex flex-col gap-4 shadow-sm hover:shadow-md transition-all duration-300">
             <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
               <Archive className="h-4 w-4" />
@@ -1169,6 +1170,7 @@ export function TaskDetailPanel({
               })()}
             </div>
           </div>
+          )}
         </div>
 
         {/* Action Required Section */}
