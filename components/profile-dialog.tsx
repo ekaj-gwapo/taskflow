@@ -38,15 +38,25 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [generatingKey, setGeneratingKey] = useState(false)
 
+  // Track whether we've seeded the form for the current open session.
+  // We intentionally do NOT re-seed on every `currentUser` change so that
+  // in-flight edits (e.g. name/phone) are not wiped when the email
+  // verification flow updates `currentUser` in context.
+  const initializedRef = useRef(false)
+
   useEffect(() => {
-    if (currentUser) {
+    if (open && currentUser && !initializedRef.current) {
       setName(currentUser.name || "")
       setPhone(currentUser.phone || "")
       setLocation(currentUser.location || "")
       setJobTitle(currentUser.jobTitle || "")
       setJobDescription(currentUser.jobDescription || "")
+      initializedRef.current = true
     }
-  }, [currentUser, open])
+    if (!open) {
+      initializedRef.current = false
+    }
+  }, [open, currentUser])
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels)
